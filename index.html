@@ -21,6 +21,7 @@
                 <a href="#features">Features</a>
                 <a href="#how-it-works">How it Works</a>
                 <a href="#portfolio">Vault</a>
+                <a href="#trading">Trade</a>
                 <a href="#token">Token</a>
                 <a href="#about">About</a>
             </div>
@@ -178,13 +179,95 @@
                     <input type="number" id="withdraw-amount" placeholder="0.00" step="0.01" oninput="updateWithdrawPreview()">
                     <span class="asset-symbol" id="withdraw-symbol">USDT</span>
                 </div>
-                <button class="btn-primary large" onclick="makeWithdraw()">Withdraw Now</button>
+                <button class="btn-primary large" onclick="makeWithdraw()">Request Withdrawal</button>
                 <p class="preview-text" id="withdraw-preview">Available: <span id="withdraw-available">4,250 USDT</span></p>
+            </div>
+
+            <div class="review-panel">
+                <div class="review-card">
+                    <div class="review-header">
+                        <h3>Pending Withdrawals</h3>
+                        <span class="review-count" id="withdrawal-count">0</span>
+                    </div>
+                    <div class="request-list" id="withdrawal-requests-list"></div>
+                </div>
+                <div class="review-card">
+                    <div class="review-header">
+                        <h3>Incoming Payment Confirmations</h3>
+                        <span class="review-count" id="payment-count">0</span>
+                    </div>
+                    <div class="request-list" id="payment-requests-list"></div>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Token -->
+    <section id="trading" class="trading-section">
+        <div class="section-header">
+            <h2>Trade Assets</h2>
+            <p>Buy and sell crypto and bank stocks in one place.</p>
+        </div>
+        <div class="trading-grid">
+            <div class="trading-card">
+                <h3>Markets</h3>
+                <div class="market-list">
+                    <div class="market-item"><span>BTC</span><strong>$64,221</strong></div>
+                    <div class="market-item"><span>ETH</span><strong>$3,412</strong></div>
+                    <div class="market-item"><span>MSFT</span><strong>$428.12</strong></div>
+                    <div class="market-item"><span>BAC</span><strong>$45.90</strong></div>
+                </div>
+                <form id="trade-form" class="trade-form">
+                    <div class="trade-row">
+                        <div class="contact-field">
+                            <label for="trade-action">Action</label>
+                            <select id="trade-action" name="action" required>
+                                <option value="buy">Buy</option>
+                                <option value="sell">Sell</option>
+                            </select>
+                        </div>
+                        <div class="contact-field">
+                            <label for="trade-market">Market</label>
+                            <select id="trade-market" name="market" required>
+                                <option value="Crypto">Crypto</option>
+                                <option value="Stocks">Stocks</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="trade-row">
+                        <div class="contact-field">
+                            <label for="trade-asset">Asset</label>
+                            <select id="trade-asset" name="asset" required>
+                                <option value="BTC">BTC</option>
+                                <option value="ETH">ETH</option>
+                                <option value="USDT">USDT</option>
+                                <option value="MSFT">MSFT</option>
+                                <option value="AAPL">AAPL</option>
+                                <option value="BAC">BAC</option>
+                            </select>
+                        </div>
+                        <div class="contact-field">
+                            <label for="trade-amount">Amount</label>
+                            <input id="trade-amount" name="amount" type="number" min="0.01" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="contact-field">
+                        <label for="trade-client-email">Client Email</label>
+                        <input id="trade-client-email" name="clientEmail" type="email" placeholder="client@example.com" required>
+                    </div>
+                    <button class="btn-primary large" type="submit">Place Order</button>
+                    <p id="trade-status" class="contact-status" aria-live="polite"></p>
+                </form>
+            </div>
+            <div class="trading-card">
+                <h3>Portfolio Positions</h3>
+                <div id="trade-positions" class="position-list"></div>
+                <h3>Recent Orders</h3>
+                <div id="trade-history" class="history-list"></div>
+            </div>
+        </div>
+    </section>
+
     <section id="token" class="token-section">
         <div class="token-content">
             <div class="token-info">
@@ -210,6 +293,35 @@
             <h2>About AlpsCoinChain</h2>
         </div>
         <p>AlpsCoinChain is a decentralized investment platform that combines the stability of traditional finance with the innovation of blockchain. Our mission is to make high-yield investing accessible, secure, and transparent by combining proven financial strategies with blockchain technology.</p>
+    </section>
+
+    <section class="contact-section">
+        <div class="section-header">
+            <h2>Contact Us</h2>
+            <p>Send a message directly to our team.</p>
+        </div>
+        <form id="contact-form" class="contact-form">
+            <div class="contact-grid">
+                <div class="contact-field">
+                    <label for="contact-name">Name</label>
+                    <input id="contact-name" name="name" type="text" required>
+                </div>
+                <div class="contact-field">
+                    <label for="contact-email">Email</label>
+                    <input id="contact-email" name="email" type="email" required>
+                </div>
+            </div>
+            <div class="contact-field">
+                <label for="contact-subject">Subject</label>
+                <input id="contact-subject" name="subject" type="text" required>
+            </div>
+            <div class="contact-field">
+                <label for="contact-message">Message</label>
+                <textarea id="contact-message" name="message" rows="6" required></textarea>
+            </div>
+            <button class="btn-primary large" type="submit">Send Message</button>
+            <p id="contact-status" class="contact-status" aria-live="polite"></p>
+        </form>
     </section>
 
     <!-- Footer -->

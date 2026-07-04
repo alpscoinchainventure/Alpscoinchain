@@ -31,6 +31,28 @@ A modern, fully-responsive cryptocurrency investment platform with a sleek dark 
 
 ## Getting Started
 
+### Email setup (recommended: Resend)
+
+1. Create a free Resend account at https://resend.com
+2. Verify your sending domain or use a sandbox address for testing
+3. Create an API key and copy it
+4. Create a file named .env in the project root with:
+
+```env
+PORT=3000
+RESEND_API_KEY=your_resend_api_key
+FROM_EMAIL=hello@yourdomain.com
+TO_EMAIL=your@email.com
+```
+
+5. Start the server:
+
+```bash
+npm start
+```
+
+6. Open the site and submit the contact form
+
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/mithyable/alpscoinchain.git

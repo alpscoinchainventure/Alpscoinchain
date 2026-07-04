@@ -529,6 +529,111 @@ body {
     font-weight: 500;
 }
 
+.review-panel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.review-card {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.25rem;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.review-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.review-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.request-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 0.75rem;
+    background: rgba(30, 41, 59, 0.8);
+}
+
+.request-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.request-details strong {
+    color: var(--text-primary);
+}
+
+.request-details span {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.request-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.approve-btn {
+    background: rgba(16, 185, 129, 0.18);
+    color: #6ee7b7;
+}
+
+.deny-btn {
+    background: rgba(248, 113, 113, 0.16);
+    color: #fda4af;
+}
+
+.empty-state {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    padding: 0.75rem 0;
+}
+
 /* Token Section */
 .token-section {
     max-width: 1200px;
@@ -595,11 +700,94 @@ body {
     100% { transform: rotateY(360deg); }
 }
 
+/* Trading Section */
+.trading-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 2rem 4rem;
+}
+
+.trading-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 1.5rem;
+}
+
+.trading-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+}
+
+.market-list {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.market-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0.95rem;
+    border-radius: 0.75rem;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.market-item span {
+    color: var(--text-secondary);
+}
+
+.trade-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.trade-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.position-list,
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.position-item,
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem 0.95rem;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 0.75rem;
+    background: rgba(15, 23, 42, 0.7);
+}
+
+.history-item {
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+.position-item span,
+.history-item span,
+.history-item small {
+    color: var(--text-secondary);
+}
+
 /* About Section */
 .about {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 4rem 2rem;
+    padding: 4rem 2rem 2rem;
     text-align: center;
 }
 
@@ -609,6 +797,66 @@ body {
     max-width: 600px;
     margin: 0 auto;
     line-height: 1.8;
+}
+
+.contact-section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 2rem 4rem;
+}
+
+.contact-form {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.contact-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.contact-field label {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.contact-field input,
+.contact-field select,
+.contact-field textarea {
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--border);
+    background: var(--darker-bg);
+    color: var(--text-primary);
+    font: inherit;
+}
+
+.contact-field textarea {
+    resize: vertical;
+}
+
+.contact-field input:focus,
+.contact-field select:focus,
+.contact-field textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.contact-status {
+    min-height: 1.4rem;
+    font-size: 0.95rem;
 }
 
 /* Footer */
@@ -742,5 +990,23 @@ footer {
     .balance-breakdown {
         flex-direction: column;
         gap: 0.5rem;
+    }
+
+    .review-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .request-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .trading-grid,
+    .trade-row {
+        grid-template-columns: 1fr;
     }
 }
