@@ -2,3 +2,4 @@ node_modules/
 .git/
 # Netlify redeploy
 # Cloudflare build refresh
+# Cloudflare settings refresh
