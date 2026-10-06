@@ -145,3 +145,4 @@ For issues or questions, please create an issue in the repository.
 ---
 
 **Built with ❤️ by AlpsCoinChain**
+Cloudflare deployment update.
