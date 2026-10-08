@@ -206,7 +206,7 @@
         </div>
     </section>
 
-    <!-- Token -->
+    <!-- Trading -->
     <section id="trading" class="trading-section">
         <div class="section-header">
             <h2>Trade Assets</h2>
@@ -263,6 +263,7 @@
                     <p id="trade-status" class="contact-status" aria-live="polite"></p>
                 </form>
             </div>
+
             <div class="trading-card">
                 <h3>Portfolio Positions</h3>
                 <div id="trade-positions" class="position-list"></div>
@@ -272,6 +273,7 @@
         </div>
     </section>
 
+    <!-- Token -->
     <section id="token" class="token-section">
         <div class="token-content">
             <div class="token-info">
@@ -299,6 +301,7 @@
         <p>AlpsCoinChain is a decentralized investment platform that combines the stability of traditional finance with the innovation of blockchain. Our mission is to make high-yield investing accessible, secure, and transparent by combining proven financial strategies with blockchain technology.</p>
     </section>
 
+    <!-- Contact -->
     <section class="contact-section">
         <div class="section-header">
             <h2>Contact Us</h2>
@@ -315,14 +318,17 @@
                     <input id="contact-email" name="email" type="email" required>
                 </div>
             </div>
+
             <div class="contact-field">
                 <label for="contact-subject">Subject</label>
                 <input id="contact-subject" name="subject" type="text" required>
             </div>
+
             <div class="contact-field">
                 <label for="contact-message">Message</label>
                 <textarea id="contact-message" name="message" rows="6" required></textarea>
             </div>
+
             <button class="btn-primary large" type="submit">Send Message</button>
             <p id="contact-status" class="contact-status" aria-live="polite"></p>
         </form>
@@ -335,6 +341,7 @@
                 <div class="logo">⛰️ AlpsCoinChain</div>
                 <p>Empowering the next generation of investors.</p>
             </div>
+
             <div class="footer-links">
                 <a href="#">Docs</a>
                 <a href="#">Audit Reports</a>
@@ -342,12 +349,15 @@
                 <a href="#">Twitter</a>
                 <a href="#">Discord</a>
             </div>
+
             <div class="footer-copyright">
                 © 2026 AlpsCoinChain. All rights reserved.
             </div>
         </div>
     </footer>
 
+    <!-- Supabase must load before script.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 </body>
-</html>
+    </html>
