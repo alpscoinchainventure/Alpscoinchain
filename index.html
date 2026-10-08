@@ -3,361 +3,445 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AlpsCoinChain - Secure, transparent, and high-yield DeFi investment platform. Stake, earn, and grow your portfolio with AlpsCoinChain.">
-    <title>AlpsCoinChain - Smart Investment Platform</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
-    <script>
-        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-    </script>
-    <script defer src="/_vercel/insights/script.js"></script>
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <span class="logo-icon">⛰️</span>
-                AlpsCoinChain
-            </div>
-            <div class="nav-links">
-                <a href="#home">Home</a>
-                <a href="#features">Features</a>
-                <a href="#how-it-works">How it Works</a>
-                <a href="#portfolio">Vault</a>
-                <a href="#trading">Trade</a>
-                <a href="#token">Token</a>
-                <a href="#about">About</a>
-            </div>
-            <div class="nav-actions">
-                <button class="btn-secondary" onclick="connectWallet()">Connect Wallet</button>
-                <button class="btn-primary" onclick="startInvesting()">Start Investing</button>
-            </div>
-        </div>
-    </nav>
+    <title>Client Login | AlpsCoinChain</title>
 
-    <!-- Hero -->
-    <section id="home" class="hero">
-        <div class="hero-content">
-            <div class="hero-badge">🚀 Next-Gen DeFi Investment</div>
-            <h1>Invest in the <span class="highlight">Alps</span> of Opportunity</h1>
-            <p>Secure, transparent, and high-yield investment platform powered by blockchain. Stake, earn, and grow your portfolio with AlpsCoinChain.</p>
-            <div class="hero-buttons">
-                <button class="btn-primary large" onclick="startInvesting()">Launch App</button>
-                <button class="btn-secondary large" onclick="viewWhitepaper()">Whitepaper</button>
-            </div>
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-number">$245M</div>
-                    <div class="stat-label">TVL</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-number">18.4%</div>
-                    <div class="stat-label">Avg APY</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-number">42k</div>
-                    <div class="stat-label">Investors</div>
-                </div>
-            </div>
-        </div>
-        <div class="hero-visual">
-            <div class="mountain-bg"></div>
-        </div>
-    </section>
-
-    <!-- Features -->
-    <section id="features" class="features">
-        <div class="section-header">
-            <h2>Why AlpsCoinChain?</h2>
-            <p>Built for the modern investor</p>
-        </div>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">🔒</div>
-                <h3>Secure Vaults</h3>
-                <p>Industry-leading smart contracts audited by top firms. Your assets are protected.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📈</div>
-                <h3>Yield Optimization</h3>
-                <p>AI-powered strategies that automatically maximize your returns across DeFi protocols.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🌐</div>
-                <h3>Cross-Chain</h3>
-                <p>Seamlessly bridge and invest across multiple blockchains with low fees.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">👥</div>
-                <h3>Community Governance</h3>
-                <p>DAO-powered decisions. Your $ALPS tokens give you real voting power.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- How it Works -->
-    <section id="how-it-works" class="how-it-works">
-        <div class="section-header">
-            <h2>How It Works</h2>
-            <p>Simple. Secure. Profitable.</p>
-        </div>
-        <div class="steps">
-            <div class="step">
-                <div class="step-number">1</div>
-                <div>
-                    <h3>Connect Wallet</h3>
-                    <p>Link your preferred crypto wallet in seconds.</p>
-                </div>
-            </div>
-            <div class="step">
-                <div class="step-number">2</div>
-                <div>
-                    <h3>Deposit Assets</h3>
-                    <p>Fund your account with USDT, ETH, BTC.</p>
-                </div>
-            </div>
-            <div class="step">
-                <div class="step-number">3</div>
-                <div>
-                    <h3>Earn Rewards</h3>
-                    <p>Watch your portfolio grow with automated compounding.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Portfolio / Vault Section -->
-    <section id="portfolio" class="portfolio-section">
-        <div class="section-header">
-            <h2>Portfolio Vault</h2>
-            <p>Deposit, Withdraw & Manage Your Assets</p>
-        </div>
-        <div class="portfolio-container">
-            <!-- Balance Overview -->
-            <div class="balance-card">
-                <h3>Your Portfolio Balance</h3>
-                <div class="total-balance" id="total-balance">$12,458.72</div>
-                <div class="balance-breakdown">
-                    <div>USDT: <span id="usdt-balance">4,250</span></div>
-                    <div>ETH: <span id="eth-balance">2.85</span></div>
-                    <div>BTC: <span id="btc-balance">0.42</span></div>
-                </div>
-            </div>
-
-            <!-- Deposit/Withdraw Tabs -->
-            <div class="vault-tabs">
-                <button class="tab-btn active" onclick="showTab(0)">Deposit</button>
-                <button class="tab-btn" onclick="showTab(1)">Withdraw</button>
-            </div>
-
-            <div id="deposit-tab" class="vault-form active">
-                <div class="asset-selector">
-                    <label>Select Asset</label>
-                    <select id="deposit-asset" onchange="updateAmountPreview()">
-                        <option value="USDT">USDT (Stablecoin)</option>
-                        <option value="ETH">ETH (Ethereum)</option>
-                        <option value="BTC">BTC (Bitcoin)</option>
-                    </select>
-                </div>
-                <div class="amount-input">
-                    <label>Amount</label>
-                    <input type="number" id="deposit-amount" placeholder="0.00" step="0.01" oninput="updateAmountPreview()">
-                    <span class="asset-symbol" id="deposit-symbol">USDT</span>
-                </div>
-                <button class="btn-primary large" onclick="makeDeposit()">Deposit Now</button>
-                <p class="preview-text" id="deposit-preview">Estimated after fees: <span id="deposit-estimated"></span></p>
-            </div>
-
-            <div id="withdraw-tab" class="vault-form">
-                <div class="asset-selector">
-                    <label>Select Asset</label>
-                    <select id="withdraw-asset" onchange="updateWithdrawPreview()">
-                        <option value="USDT">USDT (Stablecoin)</option>
-                        <option value="ETH">ETH (Ethereum)</option>
-                        <option value="BTC">BTC (Bitcoin)</option>
-                    </select>
-                </div>
-                <div class="amount-input">
-                    <label>Amount</label>
-                    <input type="number" id="withdraw-amount" placeholder="0.00" step="0.01" oninput="updateWithdrawPreview()">
-                    <span class="asset-symbol" id="withdraw-symbol">USDT</span>
-                </div>
-                <button class="btn-primary large" onclick="makeWithdraw()">Request Withdrawal</button>
-                <p class="preview-text" id="withdraw-preview">Available: <span id="withdraw-available">4,250 USDT</span></p>
-            </div>
-
-            <div class="review-panel">
-                <div class="review-card">
-                    <div class="review-header">
-                        <h3>Pending Withdrawals</h3>
-                        <span class="review-count" id="withdrawal-count">0</span>
-                    </div>
-                    <div class="request-list" id="withdrawal-requests-list"></div>
-                </div>
-                <div class="review-card">
-                    <div class="review-header">
-                        <h3>Incoming Payment Confirmations</h3>
-                        <span class="review-count" id="payment-count">0</span>
-                    </div>
-                    <div class="request-list" id="payment-requests-list"></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Trading -->
-    <section id="trading" class="trading-section">
-        <div class="section-header">
-            <h2>Trade Assets</h2>
-            <p>Buy and sell crypto and bank stocks in one place.</p>
-        </div>
-        <div class="trading-grid">
-            <div class="trading-card">
-                <h3>Markets</h3>
-                <div class="market-list">
-                    <div class="market-item"><span>BTC</span><strong>$64,221</strong></div>
-                    <div class="market-item"><span>ETH</span><strong>$3,412</strong></div>
-                    <div class="market-item"><span>MSFT</span><strong>$428.12</strong></div>
-                    <div class="market-item"><span>BAC</span><strong>$45.90</strong></div>
-                </div>
-                <form id="trade-form" class="trade-form">
-                    <div class="trade-row">
-                        <div class="contact-field">
-                            <label for="trade-action">Action</label>
-                            <select id="trade-action" name="action" required>
-                                <option value="buy">Buy</option>
-                                <option value="sell">Sell</option>
-                            </select>
-                        </div>
-                        <div class="contact-field">
-                            <label for="trade-market">Market</label>
-                            <select id="trade-market" name="market" required>
-                                <option value="Crypto">Crypto</option>
-                                <option value="Stocks">Stocks</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="trade-row">
-                        <div class="contact-field">
-                            <label for="trade-asset">Asset</label>
-                            <select id="trade-asset" name="asset" required>
-                                <option value="BTC">BTC</option>
-                                <option value="ETH">ETH</option>
-                                <option value="USDT">USDT</option>
-                                <option value="MSFT">MSFT</option>
-                                <option value="AAPL">AAPL</option>
-                                <option value="BAC">BAC</option>
-                            </select>
-                        </div>
-                        <div class="contact-field">
-                            <label for="trade-amount">Amount</label>
-                            <input id="trade-amount" name="amount" type="number" min="0.01" step="0.01" required>
-                        </div>
-                    </div>
-                    <div class="contact-field">
-                        <label for="trade-client-email">Client Email</label>
-                        <input id="trade-client-email" name="clientEmail" type="email" placeholder="client@example.com" required>
-                    </div>
-                    <button class="btn-primary large" type="submit">Place Order</button>
-                    <p id="trade-status" class="contact-status" aria-live="polite"></p>
-                </form>
-            </div>
-
-            <div class="trading-card">
-                <h3>Portfolio Positions</h3>
-                <div id="trade-positions" class="position-list"></div>
-                <h3>Recent Orders</h3>
-                <div id="trade-history" class="history-list"></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Token -->
-    <section id="token" class="token-section">
-        <div class="token-content">
-            <div class="token-info">
-                <h2>$ALPS Token</h2>
-                <p>The native utility and governance token of the AlpsCoinChain ecosystem.</p>
-                <ul>
-                    <li>Staking rewards up to 25% APY</li>
-                    <li>Governance voting rights</li>
-                    <li>Fee discounts</li>
-                    <li>Exclusive access to premium vaults</li>
-                </ul>
-                <button class="btn-primary" onclick="buyToken()">Buy $ALPS</button>
-            </div>
-            <div class="token-visual">
-                <div class="coin">⛰️</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- About -->
-    <section id="about" class="about">
-        <div class="section-header">
-            <h2>About AlpsCoinChain</h2>
-        </div>
-        <p>AlpsCoinChain is a decentralized investment platform that combines the stability of traditional finance with the innovation of blockchain. Our mission is to make high-yield investing accessible, secure, and transparent by combining proven financial strategies with blockchain technology.</p>
-    </section>
-
-    <!-- Contact -->
-    <section class="contact-section">
-        <div class="section-header">
-            <h2>Contact Us</h2>
-            <p>Send a message directly to our team.</p>
-        </div>
-        <form id="contact-form" class="contact-form">
-            <div class="contact-grid">
-                <div class="contact-field">
-                    <label for="contact-name">Name</label>
-                    <input id="contact-name" name="name" type="text" required>
-                </div>
-                <div class="contact-field">
-                    <label for="contact-email">Email</label>
-                    <input id="contact-email" name="email" type="email" required>
-                </div>
-            </div>
-
-            <div class="contact-field">
-                <label for="contact-subject">Subject</label>
-                <input id="contact-subject" name="subject" type="text" required>
-            </div>
-
-            <div class="contact-field">
-                <label for="contact-message">Message</label>
-                <textarea id="contact-message" name="message" rows="6" required></textarea>
-            </div>
-
-            <button class="btn-primary large" type="submit">Send Message</button>
-            <p id="contact-status" class="contact-status" aria-live="polite"></p>
-        </form>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        <div class="footer-content">
-            <div class="footer-col">
-                <div class="logo">⛰️ AlpsCoinChain</div>
-                <p>Empowering the next generation of investors.</p>
-            </div>
-
-            <div class="footer-links">
-                <a href="#">Docs</a>
-                <a href="#">Audit Reports</a>
-                <a href="#">Telegram</a>
-                <a href="#">Twitter</a>
-                <a href="#">Discord</a>
-            </div>
-
-            <div class="footer-copyright">
-                © 2026 AlpsCoinChain. All rights reserved.
-            </div>
-        </div>
-    </footer>
-
-    <!-- Supabase must load before script.js -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            font-family: Arial, sans-serif;
+            background: #0a0e27;
+            color: #f8fafc;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 460px;
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .brand h1 {
+            color: #6366f1;
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
+
+        .brand p {
+            color: #94a3b8;
+        }
+
+        .login-card {
+            background: #0f172a;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            background: #111827;
+            color: #94a3b8;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            background: #020617;
+            color: white;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #6366f1;
+        }
+
+        .password-row {
+            position: relative;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #6366f1;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+
+        .submit-btn:hover {
+            background: #4f46e5;
+        }
+
+        .forgot {
+            display: block;
+            text-align: right;
+            margin: 10px 0 20px;
+            color: #818cf8;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .message {
+            display: none;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #6ee7b7;
+        }
+
+        .message.error {
+            display: block;
+            background: rgba(248, 113, 113, 0.12);
+            border: 1px solid rgba(248, 113, 113, 0.35);
+            color: #fca5a5;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 22px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+
+        .signup-note {
+            margin-top: 18px;
+            color: #64748b;
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-container">
+
+    <div class="brand">
+        <h1>AlpsCoinChain</h1>
+        <p>Client Account Access</p>
+    </div>
+
+    <div class="login-card">
+
+        <div class="tabs">
+            <button type="button" class="tab active" id="loginTab">
+                Sign In
+            </button>
+
+            <button type="button" class="tab" id="signupTab">
+                Create Account
+            </button>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <form id="authForm">
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="you@example.com"
+                    required
+                    autocomplete="email"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Enter your password"
+                    required
+                    minlength="6"
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <div id="confirmPasswordGroup" class="form-group" style="display:none;">
+                <label for="confirmPassword">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    placeholder="Confirm your password"
+                    minlength="6"
+                    autocomplete="new-password"
+                >
+            </div>
+
+            <span id="forgotPassword" class="forgot">
+                Forgot your password?
+            </span>
+
+            <button type="submit" class="submit-btn" id="submitButton">
+                Sign In
+            </button>
+
+        </form>
+
+        <div class="signup-note">
+            By creating an account, you agree to use this platform responsibly.
+        </div>
+
+        <a href="index.html" class="back-link">
+            ← Back to AlpsCoinChain
+        </a>
+
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://uevofmlzpwrdidjnwxfd.supabase.co';
+
+    const SUPABASE_PUBLISHABLE_KEY =
+        'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+
+    const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+
+    let mode = 'login';
+
+    const loginTab = document.getElementById('loginTab');
+    const signupTab = document.getElementById('signupTab');
+    const authForm = document.getElementById('authForm');
+    const confirmPasswordGroup =
+        document.getElementById('confirmPasswordGroup');
+    const confirmPassword =
+        document.getElementById('confirmPassword');
+    const forgotPassword =
+        document.getElementById('forgotPassword');
+    const submitButton =
+        document.getElementById('submitButton');
+    const message =
+        document.getElementById('message');
+
+    function showMessage(text, type) {
+        message.textContent = text;
+        message.className = 'message ' + type;
+    }
+
+    function clearMessage() {
+        message.textContent = '';
+        message.className = 'message';
+    }
+
+    function setMode(newMode) {
+        mode = newMode;
+        clearMessage();
+
+        if (mode === 'login') {
+            loginTab.classList.add('active');
+            signupTab.classList.remove('active');
+
+            confirmPasswordGroup.style.display = 'none';
+            confirmPassword.required = false;
+
+            forgotPassword.style.display = 'block';
+            submitButton.textContent = 'Sign In';
+        } else {
+            signupTab.classList.add('active');
+            loginTab.classList.remove('active');
+
+            confirmPasswordGroup.style.display = 'block';
+            confirmPassword.required = true;
+
+            forgotPassword.style.display = 'none';
+            submitButton.textContent = 'Create Account';
+        }
+    }
+
+    loginTab.addEventListener('click', () => {
+        setMode('login');
+    });
+
+    signupTab.addEventListener('click', () => {
+        setMode('signup');
+    });
+
+    authForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        clearMessage();
+
+        const email =
+            document.getElementById('email').value.trim();
+
+        const password =
+            document.getElementById('password').value;
+
+        submitButton.disabled = true;
+
+        try {
+            if (mode === 'signup') {
+
+                if (password !== confirmPassword.value) {
+                    showMessage(
+                        'The passwords do not match.',
+                        'error'
+                    );
+                    return;
+                }
+
+                const { data, error } =
+                    await supabaseClient.auth.signUp({
+                        email,
+                        password
+                    });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data.session) {
+                    window.location.href =
+                        'client-dashboard.html';
+                    return;
+                }
+
+                showMessage(
+                    'Account created. Please check your email to confirm your account before signing in.',
+                    'success'
+                );
+
+            } else {
+
+                const { data, error } =
+                    await supabaseClient.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data.session) {
+                    window.location.href =
+                        'client-dashboard.html';
+                }
+            }
+
+        } catch (error) {
+            showMessage(
+                error.message || 'Unable to complete the request.',
+                'error'
+            );
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+
+    forgotPassword.addEventListener('click', async () => {
+
+        const email =
+            document.getElementById('email').value.trim();
+
+        if (!email) {
+            showMessage(
+                'Enter your email address first, then select Forgot your password.',
+                'error'
+            );
+            return;
+        }
+
+        try {
+            const redirectUrl =
+                window.location.origin + '/reset-password.html';
+
+            const { error } =
+                await supabaseClient.auth.resetPasswordForEmail(
+                    email,
+                    {
+                        redirectTo: redirectUrl
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            showMessage(
+                'Password reset instructions have been sent to your email.',
+                'success'
+            );
+
+        } catch (error) {
+            showMessage(
+                error.message || 'Unable to send the password reset email.',
+                'error'
+            );
+        }
+    });
+</script>
+
 </body>
 </html>
