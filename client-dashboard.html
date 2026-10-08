@@ -1,142 +1,262 @@
-<script>
-const SUPABASE_URL =
-    'https://uevofmlzpwrdidjnwxfd.supabase.co';
 
-const SUPABASE_PUBLISHABLE_KEY =
-    'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Dashboard | AlpsCoinChain</title>
 
-const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY,
-    {
-        auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1d2939;
+    }
+
+    header {
+      background: #142b4a;
+      color: white;
+      padding: 20px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    main {
+      max-width: 850px;
+      margin: 30px auto;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      margin-bottom: 18px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      overflow-wrap: anywhere;
+    }
+
+    .muted { color: #667085; }
+
+    button {
+      padding: 12px 18px;
+      border: 0;
+      border-radius: 7px;
+      background: #174ea6;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    input, textarea {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0 16px;
+      border: 1px solid #d0d5dd;
+      border-radius: 7px;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .notice {
+      padding: 12px;
+      border-radius: 7px;
+      background: #fff4e5;
+      color: #7a4100;
+      overflow-wrap: anywhere;
+    }
+
+    [hidden] { display: none !important; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>AlpsCoinChain Investment</h1>
+  </header>
+
+  <main>
+    <section id="loadingScreen" class="card">
+      <h2>Loading your dashboard…</h2>
+      <p class="muted">Please wait while we check your sign-in.</p>
+    </section>
+
+    <section id="errorScreen" class="card" hidden>
+      <h2>Dashboard could not load</h2>
+      <p id="errorMessage" class="notice">
+        Please try again.
+      </p>
+      <p><a href="/login.html">Return to login</a></p>
+      <button id="retryButton" type="button">Try again</button>
+    </section>
+
+    <section id="dashboard" hidden>
+      <div class="card">
+        <h2>Welcome to your dashboard</h2>
+        <p class="muted">Signed-in account</p>
+        <p><strong>Email:</strong> <span id="userEmail"></span></p>
+        <p><strong>Account ID:</strong> <span id="userId"></span></p>
+        <button id="logoutButton" type="button">Sign out</button>
+      </div>
+
+      <div class="card">
+        <h2>Account information</h2>
+        <p><strong>Account email:</strong> <span id="accountEmail"></span></p>
+        <p class="muted">
+          Account balances and transaction history have not been loaded
+          by this page.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>Contact support</h2>
+        <p class="muted">
+          This form is a placeholder and does not send messages yet.
+        </p>
+
+        <form id="supportForm">
+          <label for="supportSubject">Subject</label>
+          <input id="supportSubject" name="subject"
+                 maxlength="150" required>
+
+          <label for="supportText">Message</label>
+          <textarea id="supportText" name="message"
+                    maxlength="3000" required></textarea>
+
+          <button type="submit">Check support form</button>
+        </form>
+
+        <p id="supportMessage" role="status" hidden></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Load the Supabase library before the dashboard script. -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const SUPABASE_URL =
+      'https://uevofmlzpwrdidjnwxfd.supabase.co';
+
+    const SUPABASE_PUBLISHABLE_KEY =
+      'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+
+    const loadingScreen = document.getElementById('loadingScreen');
+    const dashboard = document.getElementById('dashboard');
+    const errorScreen = document.getElementById('errorScreen');
+    const errorMessage = document.getElementById('errorMessage');
+
+    let supabaseClient;
+
+    function showError(message) {
+      loadingScreen.hidden = true;
+      dashboard.hidden = true;
+      errorScreen.hidden = false;
+      errorMessage.textContent = message;
+    }
+
+    async function loadDashboard() {
+      loadingScreen.hidden = false;
+      dashboard.hidden = true;
+      errorScreen.hidden = true;
+
+      try {
+        if (!window.supabase ||
+            typeof window.supabase.createClient !== 'function') {
+          throw new Error(
+            'The Supabase library did not load. Check your connection and try again.'
+          );
         }
-    }
-);
 
-async function getValidSession() {
-    // First check the existing session.
-    let {
-        data: { session },
-        error
-    } = await supabaseClient.auth.getSession();
+        if (!supabaseClient) {
+          supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY,
+            {
+              auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true
+              }
+            }
+          );
+        }
 
-    if (error) {
-        console.error('Session check error:', error);
-        return null;
-    }
+        const { data, error } =
+          await supabaseClient.auth.getSession();
 
-    if (session) {
-        return session;
-    }
+        if (error) throw error;
 
-    // Give Supabase a moment to restore the session.
-    await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!data.session) {
+          window.location.replace('/login.html');
+          return;
+        }
 
-    const secondCheck =
-        await supabaseClient.auth.getSession();
+        const user = data.session.user;
 
-    if (secondCheck.error) {
-        console.error(
-            'Second session check error:',
-            secondCheck.error
+        document.getElementById('userEmail').textContent =
+          user.email || 'Not provided';
+
+        document.getElementById('accountEmail').textContent =
+          user.email || 'Not provided';
+
+        document.getElementById('userId').textContent =
+          user.id || 'Unavailable';
+
+        loadingScreen.hidden = true;
+        dashboard.hidden = false;
+
+      } catch (error) {
+        console.error('Dashboard initialization failed:', error);
+        showError(
+          error.message || 'An unexpected error prevented the dashboard from loading.'
         );
-        return null;
+      }
     }
 
-    return secondCheck.data.session;
-}
+    document.getElementById('logoutButton')
+      .addEventListener('click', async () => {
+        try {
+          if (supabaseClient) {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) throw error;
+          }
+          window.location.replace('/login.html');
+        } catch (error) {
+          showError('Sign-out failed. Please try again.');
+        }
+      });
 
-async function loadDashboard() {
-
-    const loadingScreen =
-        document.getElementById('loadingScreen');
-
-    const dashboard =
-        document.getElementById('dashboard');
-
-    const userEmail =
-        document.getElementById('userEmail');
-
-    const accountEmail =
-        document.getElementById('accountEmail');
-
-    const userId =
-        document.getElementById('userId');
-
-    const session = await getValidSession();
-
-    if (!session) {
-        window.location.replace('login.html');
-        return;
-    }
-
-    const user = session.user;
-
-    userEmail.textContent = user.email || '';
-    accountEmail.textContent = user.email || '';
-    userId.textContent = user.id;
-
-    loadingScreen.style.display = 'none';
-    dashboard.style.display = 'block';
-}
-
-function showTradeMessage(asset) {
-
-    const message =
-        document.getElementById('tradeMessage');
-
-    message.textContent =
-        `${asset} trading is available from your client account.`;
-
-    message.style.display = 'block';
-}
-
-document
-    .getElementById('logoutButton')
-    .addEventListener('click', async () => {
-
-        await supabaseClient.auth.signOut();
-
-        window.location.replace('login.html');
-    });
-
-document
-    .getElementById('supportForm')
-    .addEventListener('submit', async (event) => {
-
+    document.getElementById('supportForm')
+      .addEventListener('submit', (event) => {
         event.preventDefault();
 
-        const subject =
-            document.getElementById('supportSubject').value.trim();
-
-        const messageText =
-            document.getElementById('supportText').value.trim();
-
-        const message =
-            document.getElementById('supportMessage');
-
-        const session = await getValidSession();
-
-        if (!session) {
-            window.location.replace('login.html');
-            return;
-        }
-
-        if (!subject || !messageText) {
-            return;
-        }
-
+        const message = document.getElementById('supportMessage');
         message.textContent =
-            'Your support request has been prepared for submission.';
+          'The support form is not connected to email delivery yet. No message was sent.';
+        message.hidden = false;
+      });
 
-        message.style.display = 'block';
+    document.getElementById('retryButton')
+      .addEventListener('click', loadDashboard);
 
-        document.getElementById('supportForm').reset();
-    });
-
-loadDashboard();
-</script>
+    loadDashboard();
+  </script>
+</body>
+</html>
