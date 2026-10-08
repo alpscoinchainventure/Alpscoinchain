@@ -1,578 +1,142 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client Dashboard | AlpsCoinChain</title>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            min-height: 100vh;
-            font-family: Arial, sans-serif;
-            background: #0a0e27;
-            color: #f8fafc;
-        }
-
-        .navbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            padding: 18px 5%;
-            background: #0f172a;
-            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .brand {
-            color: #818cf8;
-            font-size: 22px;
-            font-weight: 700;
-        }
-
-        .user-area {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-email {
-            color: #94a3b8;
-            font-size: 14px;
-        }
-
-        .logout-btn {
-            border: 1px solid #334155;
-            background: #111827;
-            color: #f8fafc;
-            padding: 9px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .logout-btn:hover {
-            background: #1e293b;
-        }
-
-        .container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 35px auto;
-        }
-
-        .welcome {
-            margin-bottom: 28px;
-        }
-
-        .welcome h1 {
-            font-size: 30px;
-            margin-bottom: 8px;
-        }
-
-        .welcome p {
-            color: #94a3b8;
-        }
-
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            background: #0f172a;
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            border-radius: 15px;
-            padding: 22px;
-        }
-
-        .card-label {
-            color: #94a3b8;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .card-value {
-            font-size: 27px;
-            font-weight: 700;
-        }
-
-        .section {
-            background: #0f172a;
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-        }
-
-        .section h2 {
-            margin-bottom: 18px;
-            font-size: 20px;
-        }
-
-        .section-description {
-            color: #94a3b8;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
-            padding: 14px 0;
-            border-bottom: 1px solid #1e293b;
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            color: #94a3b8;
-        }
-
-        .status {
-            color: #34d399;
-            font-weight: 600;
-        }
-
-        .portfolio-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-        }
-
-        .asset-card {
-            background: #111827;
-            border: 1px solid #1e293b;
-            border-radius: 12px;
-            padding: 18px;
-        }
-
-        .asset-name {
-            color: #94a3b8;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .asset-value {
-            font-size: 22px;
-            font-weight: 700;
-        }
-
-        .asset-note {
-            color: #64748b;
-            font-size: 12px;
-            margin-top: 6px;
-        }
-
-        .actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .action-btn {
-            display: inline-block;
-            text-decoration: none;
-            padding: 12px 18px;
-            border-radius: 9px;
-            background: #6366f1;
-            color: white;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-        }
-
-        .action-btn:hover {
-            background: #4f46e5;
-        }
-
-        .secondary-btn {
-            background: #1e293b;
-        }
-
-        .secondary-btn:hover {
-            background: #334155;
-        }
-
-        .contact-box {
-            display: grid;
-            gap: 14px;
-        }
-
-        .contact-box input,
-        .contact-box textarea {
-            width: 100%;
-            padding: 13px 14px;
-            border-radius: 9px;
-            border: 1px solid #334155;
-            background: #111827;
-            color: #f8fafc;
-            font-family: inherit;
-        }
-
-        .contact-box textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-
-        .contact-box input:focus,
-        .contact-box textarea:focus {
-            outline: none;
-            border-color: #6366f1;
-        }
-
-        .message {
-            display: none;
-            padding: 12px 14px;
-            border-radius: 8px;
-            margin-bottom: 14px;
-            background: rgba(99, 102, 241, 0.12);
-            border: 1px solid rgba(99, 102, 241, 0.25);
-            color: #c7d2fe;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 60px 20px;
-            color: #94a3b8;
-        }
-
-        .back-top {
-            text-align: center;
-            margin: 30px 0;
-        }
-
-        .back-top a {
-            color: #818cf8;
-            text-decoration: none;
-        }
-
-        @media (max-width: 800px) {
-            .cards,
-            .portfolio-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .navbar {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .user-area {
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            .info-row {
-                flex-direction: column;
-                gap: 6px;
-            }
-        }
-    </style>
-</head>
-
-<body>
-
-<div id="loadingScreen" class="loading">
-    Checking your account...
-</div>
-
-<div id="dashboard" style="display:none;">
-
-    <nav class="navbar">
-        <div class="brand">AlpsCoinChain</div>
-
-        <div class="user-area">
-            <span id="userEmail" class="user-email"></span>
-
-            <button id="logoutButton" class="logout-btn">
-                Logout
-            </button>
-        </div>
-    </nav>
-
-    <main class="container">
-
-        <div class="welcome">
-            <h1>Client Dashboard</h1>
-            <p>Welcome to your AlpsCoinChain account.</p>
-        </div>
-
-        <div class="cards">
-
-            <div class="card">
-                <div class="card-label">Account</div>
-                <div class="card-value">Active</div>
-            </div>
-
-            <div class="card">
-                <div class="card-label">Authentication</div>
-                <div class="card-value">Verified</div>
-            </div>
-
-            <div class="card">
-                <div class="card-label">Portfolio</div>
-                <div class="card-value">Active</div>
-            </div>
-
-        </div>
-
-        <section class="section" id="portfolio">
-            <h2>Portfolio</h2>
-
-            <p class="section-description">
-                Your portfolio assets and account activity will appear here.
-            </p>
-
-            <div class="portfolio-grid">
-
-                <div class="asset-card">
-                    <div class="asset-name">USDT</div>
-                    <div class="asset-value">$0.00</div>
-                    <div class="asset-note">Current balance</div>
-                </div>
-
-                <div class="asset-card">
-                    <div class="asset-name">ETH</div>
-                    <div class="asset-value">0.00 ETH</div>
-                    <div class="asset-note">Current balance</div>
-                </div>
-
-                <div class="asset-card">
-                    <div class="asset-name">BTC</div>
-                    <div class="asset-value">0.00 BTC</div>
-                    <div class="asset-note">Current balance</div>
-                </div>
-
-            </div>
-        </section>
-
-        <section class="section" id="trading">
-            <h2>Trade Assets</h2>
-
-            <p class="section-description">
-                Select an asset and submit a trading request from your client account.
-            </p>
-
-            <div class="actions">
-                <button class="action-btn" onclick="showTradeMessage('BTC')">
-                    Trade BTC
-                </button>
-
-                <button class="action-btn" onclick="showTradeMessage('ETH')">
-                    Trade ETH
-                </button>
-
-                <button class="action-btn secondary-btn" onclick="showTradeMessage('USDT')">
-                    Trade USDT
-                </button>
-            </div>
-
-            <div id="tradeMessage" class="message" style="margin-top:18px;"></div>
-        </section>
-
-        <section class="section">
-            <h2>Account Information</h2>
-
-            <div class="info-row">
-                <span class="info-label">Email</span>
-                <span id="accountEmail">Loading...</span>
-            </div>
-
-            <div class="info-row">
-                <span class="info-label">User ID</span>
-                <span id="userId">Loading...</span>
-            </div>
-
-            <div class="info-row">
-                <span class="info-label">Account Status</span>
-                <span class="status">Active</span>
-            </div>
-        </section>
-
-        <section class="section" id="support">
-            <h2>Contact Support</h2>
-
-            <p class="section-description">
-                Send a message to the AlpsCoinChain support team.
-            </p>
-
-            <div id="supportMessage" class="message"></div>
-
-            <form id="supportForm" class="contact-box">
-
-                <input
-                    type="text"
-                    id="supportSubject"
-                    placeholder="Subject"
-                    required
-                >
-
-                <textarea
-                    id="supportText"
-                    placeholder="Write your message..."
-                    required
-                ></textarea>
-
-                <button type="submit" class="action-btn">
-                    Send Message
-                </button>
-
-            </form>
-        </section>
-
-        <section class="section">
-            <h2>Quick Actions</h2>
-
-            <div class="actions">
-
-                <a href="#portfolio" class="action-btn">
-                    Portfolio
-                </a>
-
-                <a href="#trading" class="action-btn">
-                    Trade Assets
-                </a>
-
-                <a href="#support" class="action-btn secondary-btn">
-                    Contact Support
-                </a>
-
-            </div>
-        </section>
-
-        <div class="back-top">
-            <a href="#top">Back to top</a>
-        </div>
-
-    </main>
-</div>
-
 <script>
-    const SUPABASE_URL =
-        'https://uevofmlzpwrdidjnwxfd.supabase.co';
+const SUPABASE_URL =
+    'https://uevofmlzpwrdidjnwxfd.supabase.co';
 
-    const SUPABASE_PUBLISHABLE_KEY =
-        'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+const SUPABASE_PUBLISHABLE_KEY =
+    'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
 
-    const supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
-    );
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY,
+    {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+        }
+    }
+);
 
-    async function loadDashboard() {
+async function getValidSession() {
+    // First check the existing session.
+    let {
+        data: { session },
+        error
+    } = await supabaseClient.auth.getSession();
 
-        const loadingScreen =
-            document.getElementById('loadingScreen');
+    if (error) {
+        console.error('Session check error:', error);
+        return null;
+    }
 
-        const dashboard =
-            document.getElementById('dashboard');
+    if (session) {
+        return session;
+    }
 
-        const userEmail =
-            document.getElementById('userEmail');
+    // Give Supabase a moment to restore the session.
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-        const accountEmail =
-            document.getElementById('accountEmail');
+    const secondCheck =
+        await supabaseClient.auth.getSession();
 
-        const userId =
-            document.getElementById('userId');
+    if (secondCheck.error) {
+        console.error(
+            'Second session check error:',
+            secondCheck.error
+        );
+        return null;
+    }
 
-        const {
-            data: { session },
-            error
-        } = await supabaseClient.auth.getSession();
+    return secondCheck.data.session;
+}
 
-        if (error || !session) {
-            window.location.href = 'login.html';
+async function loadDashboard() {
+
+    const loadingScreen =
+        document.getElementById('loadingScreen');
+
+    const dashboard =
+        document.getElementById('dashboard');
+
+    const userEmail =
+        document.getElementById('userEmail');
+
+    const accountEmail =
+        document.getElementById('accountEmail');
+
+    const userId =
+        document.getElementById('userId');
+
+    const session = await getValidSession();
+
+    if (!session) {
+        window.location.replace('login.html');
+        return;
+    }
+
+    const user = session.user;
+
+    userEmail.textContent = user.email || '';
+    accountEmail.textContent = user.email || '';
+    userId.textContent = user.id;
+
+    loadingScreen.style.display = 'none';
+    dashboard.style.display = 'block';
+}
+
+function showTradeMessage(asset) {
+
+    const message =
+        document.getElementById('tradeMessage');
+
+    message.textContent =
+        `${asset} trading is available from your client account.`;
+
+    message.style.display = 'block';
+}
+
+document
+    .getElementById('logoutButton')
+    .addEventListener('click', async () => {
+
+        await supabaseClient.auth.signOut();
+
+        window.location.replace('login.html');
+    });
+
+document
+    .getElementById('supportForm')
+    .addEventListener('submit', async (event) => {
+
+        event.preventDefault();
+
+        const subject =
+            document.getElementById('supportSubject').value.trim();
+
+        const messageText =
+            document.getElementById('supportText').value.trim();
+
+        const message =
+            document.getElementById('supportMessage');
+
+        const session = await getValidSession();
+
+        if (!session) {
+            window.location.replace('login.html');
             return;
         }
 
-        const user = session.user;
-
-        userEmail.textContent = user.email || '';
-        accountEmail.textContent = user.email || '';
-        userId.textContent = user.id;
-
-        loadingScreen.style.display = 'none';
-        dashboard.style.display = 'block';
-    }
-
-    function showTradeMessage(asset) {
-
-        const message =
-            document.getElementById('tradeMessage');
+        if (!subject || !messageText) {
+            return;
+        }
 
         message.textContent =
-            `${asset} trading is available from your client account.`;
+            'Your support request has been prepared for submission.';
 
         message.style.display = 'block';
-    }
 
-    document
-        .getElementById('logoutButton')
-        .addEventListener('click', async () => {
+        document.getElementById('supportForm').reset();
+    });
 
-            await supabaseClient.auth.signOut();
-
-            window.location.href = 'login.html';
-        });
-
-    document
-        .getElementById('supportForm')
-        .addEventListener('submit', async (event) => {
-
-            event.preventDefault();
-
-            const subject =
-                document.getElementById('supportSubject').value.trim();
-
-            const messageText =
-                document.getElementById('supportText').value.trim();
-
-            const message =
-                document.getElementById('supportMessage');
-
-            const {
-                data: { session }
-            } = await supabaseClient.auth.getSession();
-
-            if (!session) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            if (!subject || !messageText) {
-                return;
-            }
-
-            message.textContent =
-                'Your support request has been prepared for submission.';
-
-            message.style.display = 'block';
-
-            document.getElementById('supportForm').reset();
-        });
-
-    loadDashboard();
+loadDashboard();
 </script>
-
-</body>
-</html>
