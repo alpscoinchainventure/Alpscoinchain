@@ -14,6 +14,10 @@
             padding: 0;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             min-height: 100vh;
             font-family: Arial, sans-serif;
@@ -29,6 +33,9 @@
             padding: 18px 5%;
             background: #0f172a;
             border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .brand {
@@ -118,6 +125,12 @@
             font-size: 20px;
         }
 
+        .section-description {
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
         .info-row {
             display: flex;
             justify-content: space-between;
@@ -135,8 +148,38 @@
         }
 
         .status {
-            color: #fbbf24;
+            color: #34d399;
             font-weight: 600;
+        }
+
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .asset-card {
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .asset-name {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .asset-value {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .asset-note {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 6px;
         }
 
         .actions {
@@ -153,6 +196,8 @@
             background: #6366f1;
             color: white;
             font-weight: 600;
+            border: none;
+            cursor: pointer;
         }
 
         .action-btn:hover {
@@ -167,14 +212,62 @@
             background: #334155;
         }
 
+        .contact-box {
+            display: grid;
+            gap: 14px;
+        }
+
+        .contact-box input,
+        .contact-box textarea {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 9px;
+            border: 1px solid #334155;
+            background: #111827;
+            color: #f8fafc;
+            font-family: inherit;
+        }
+
+        .contact-box textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .contact-box input:focus,
+        .contact-box textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .message {
+            display: none;
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            color: #c7d2fe;
+        }
+
         .loading {
             text-align: center;
             padding: 60px 20px;
             color: #94a3b8;
         }
 
+        .back-top {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .back-top a {
+            color: #818cf8;
+            text-decoration: none;
+        }
+
         @media (max-width: 800px) {
-            .cards {
+            .cards,
+            .portfolio-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -186,6 +279,11 @@
             .user-area {
                 width: 100%;
                 justify-content: space-between;
+            }
+
+            .info-row {
+                flex-direction: column;
+                gap: 6px;
             }
         }
     </style>
@@ -237,6 +335,60 @@
 
         </div>
 
+        <section class="section" id="portfolio">
+            <h2>Portfolio</h2>
+
+            <p class="section-description">
+                Your portfolio assets and account activity will appear here.
+            </p>
+
+            <div class="portfolio-grid">
+
+                <div class="asset-card">
+                    <div class="asset-name">USDT</div>
+                    <div class="asset-value">$0.00</div>
+                    <div class="asset-note">Current balance</div>
+                </div>
+
+                <div class="asset-card">
+                    <div class="asset-name">ETH</div>
+                    <div class="asset-value">0.00 ETH</div>
+                    <div class="asset-note">Current balance</div>
+                </div>
+
+                <div class="asset-card">
+                    <div class="asset-name">BTC</div>
+                    <div class="asset-value">0.00 BTC</div>
+                    <div class="asset-note">Current balance</div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="section" id="trading">
+            <h2>Trade Assets</h2>
+
+            <p class="section-description">
+                Select an asset and submit a trading request from your client account.
+            </p>
+
+            <div class="actions">
+                <button class="action-btn" onclick="showTradeMessage('BTC')">
+                    Trade BTC
+                </button>
+
+                <button class="action-btn" onclick="showTradeMessage('ETH')">
+                    Trade ETH
+                </button>
+
+                <button class="action-btn secondary-btn" onclick="showTradeMessage('USDT')">
+                    Trade USDT
+                </button>
+            </div>
+
+            <div id="tradeMessage" class="message" style="margin-top:18px;"></div>
+        </section>
+
         <section class="section">
             <h2>Account Information</h2>
 
@@ -256,23 +408,60 @@
             </div>
         </section>
 
+        <section class="section" id="support">
+            <h2>Contact Support</h2>
+
+            <p class="section-description">
+                Send a message to the AlpsCoinChain support team.
+            </p>
+
+            <div id="supportMessage" class="message"></div>
+
+            <form id="supportForm" class="contact-box">
+
+                <input
+                    type="text"
+                    id="supportSubject"
+                    placeholder="Subject"
+                    required
+                >
+
+                <textarea
+                    id="supportText"
+                    placeholder="Write your message..."
+                    required
+                ></textarea>
+
+                <button type="submit" class="action-btn">
+                    Send Message
+                </button>
+
+            </form>
+        </section>
+
         <section class="section">
             <h2>Quick Actions</h2>
 
             <div class="actions">
-                <a href="index.html" class="action-btn">
+
+                <a href="#portfolio" class="action-btn">
                     Portfolio
                 </a>
 
-                <a href="index.html#trading" class="action-btn">
+                <a href="#trading" class="action-btn">
                     Trade Assets
                 </a>
 
-                <a href="index.html#contact" class="action-btn secondary-btn">
+                <a href="#support" class="action-btn secondary-btn">
                     Contact Support
                 </a>
+
             </div>
         </section>
+
+        <div class="back-top">
+            <a href="#top">Back to top</a>
+        </div>
 
     </main>
 </div>
@@ -326,6 +515,17 @@
         dashboard.style.display = 'block';
     }
 
+    function showTradeMessage(asset) {
+
+        const message =
+            document.getElementById('tradeMessage');
+
+        message.textContent =
+            `${asset} trading is available from your client account.`;
+
+        message.style.display = 'block';
+    }
+
     document
         .getElementById('logoutButton')
         .addEventListener('click', async () => {
@@ -333,6 +533,42 @@
             await supabaseClient.auth.signOut();
 
             window.location.href = 'login.html';
+        });
+
+    document
+        .getElementById('supportForm')
+        .addEventListener('submit', async (event) => {
+
+            event.preventDefault();
+
+            const subject =
+                document.getElementById('supportSubject').value.trim();
+
+            const messageText =
+                document.getElementById('supportText').value.trim();
+
+            const message =
+                document.getElementById('supportMessage');
+
+            const {
+                data: { session }
+            } = await supabaseClient.auth.getSession();
+
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (!subject || !messageText) {
+                return;
+            }
+
+            message.textContent =
+                'Your support request has been prepared for submission.';
+
+            message.style.display = 'block';
+
+            document.getElementById('supportForm').reset();
         });
 
     loadDashboard();
