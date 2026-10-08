@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AlpsCoinChain</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            background: #0a0e27;
+            color: #f8fafc;
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 430px;
+            background: #0f172a;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-radius: 16px;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #111827;
+            color: white;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #6366f1;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            background: #6366f1;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #4f46e5;
+        }
+
+        .secondary {
+            margin-top: 10px;
+            background: #1e293b;
+        }
+
+        .secondary:hover {
+            background: #334155;
+        }
+
+        .message {
+            min-height: 22px;
+            margin: 15px 0;
+            text-align: center;
+            color: #fbbf24;
+            font-size: 14px;
+        }
+
+        .links {
+            margin-top: 18px;
+            text-align: center;
+        }
+
+        .links button {
+            width: auto;
+            padding: 0;
+            background: none;
+            color: #818cf8;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-card">
+    <h1>AlpsCoinChain</h1>
+    <p class="subtitle">Sign in to your account</p>
+
+    <form id="loginForm">
+        <label for="email">Email</label>
+        <input
+            id="email"
+            type="email"
+            placeholder="Enter your email"
+            required
+        >
+
+        <label for="password">Password</label>
+        <input
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+            required
+        >
+
+        <div id="message" class="message"></div>
+
+        <button type="submit" id="loginButton">Sign In</button>
+    </form>
+
+    <button type="button" class="secondary" id="signupButton">
+        Create Account
+    </button>
+
+    <div class="links">
+        <button type="button" id="forgotButton">
+            Forgot password?
+        </button>
+    </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://uevofmlzpwrdidjnwxfd.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
+
+const loginForm = document.getElementById("loginForm");
+const loginButton = document.getElementById("loginButton");
+const signupButton = document.getElementById("signupButton");
+const forgotButton = document.getElementById("forgotButton");
+const message = document.getElementById("message");
+
+loginForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    message.textContent = "";
+    loginButton.disabled = true;
+    loginButton.textContent = "Signing in...";
+
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email,
+            password
+        });
+
+    if (error) {
+        message.textContent = error.message;
+        loginButton.disabled = false;
+        loginButton.textContent = "Sign In";
+        return;
+    }
+
+    if (data.session) {
+        window.location.href = "client-dashboard.html";
+        return;
+    }
+
+    message.textContent = "Login succeeded, but no session was created.";
+    loginButton.disabled = false;
+    loginButton.textContent = "Sign In";
+});
+
+signupButton.addEventListener("click", async function() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+        message.textContent = "Enter an email and password first.";
+        return;
+    }
+
+    message.textContent = "Creating account...";
+
+    const { error } = await supabaseClient.auth.signUp({
+        email,
+        password
+    });
+
+    if (error) {
+        message.textContent = error.message;
+        return;
+    }
+
+    message.textContent =
+        "Account created. Check your email to confirm your account.";
+});
+
+forgotButton.addEventListener("click", async function() {
+    const email = document.getElementById("email").value.trim();
+
+    if (!email) {
+        message.textContent = "Enter your email address first.";
+        return;
+    }
+
+    message.textContent = "Sending password reset email...";
+
+    const { error } =
+        await supabaseClient.auth.resetPasswordForEmail(email, {
+            redirectTo:
+                window.location.origin + "/reset-password.html"
+        });
+
+    if (error) {
+        message.textContent = error.message;
+        return;
+    }
+
+    message.textContent =
+        "Password reset email sent. Check your inbox.";
+});
+</script>
+
+</body>
+</html>
