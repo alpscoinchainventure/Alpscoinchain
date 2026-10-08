@@ -1,16 +1,16 @@
 {
-"version": 2,
-"builds": [
-{
-"src": "server.js",
-"use": "@vercel/node",
-"config": {
-"includeFiles": ["/*.html", "/.css", "**/.js"]
-}
-}
-],
-"routes": [
-{ "src": "/api/(.)", "dest": "server.js" },
-{ "src": "/(.)", "dest": "server.js" }
-]
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["**/*.html", "**/*.css", "**/*.js"]
+      }
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "server.js" },
+    { "src": "/(.*)", "dest": "server.js" }
+  ]
 }
