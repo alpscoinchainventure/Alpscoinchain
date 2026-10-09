@@ -1,3 +1,4 @@
+
 import 'dotenv/config';
 import express from 'express';
 import nodemailer from 'nodemailer';
@@ -10,6 +11,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3000;
+
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
@@ -82,6 +84,28 @@ async function sendEmail({ to, subject, text, html }) {
     html
   });
 }
+
+/*
+ * TEMPORARY DIAGNOSTIC ROUTE
+ * Used to check whether Vercel can return visible HTML.
+ */
+app.get('/dashboard-test', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.status(200).type('html').send(
+    '<!DOCTYPE html>' +
+    '<html lang="en">' +
+    '<head>' +
+    '<meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<title>Dashboard Test</title>' +
+    '</head>' +
+    '<body style="font-family:Arial,sans-serif;padding:30px;color:#142b4a">' +
+    '<h1>AlpsCoinChain Test Page Works</h1>' +
+    '<p>The server is returning HTML correctly.</p>' +
+    '</body>' +
+    '</html>'
+  );
+});
 
 app.post('/api/contact', async (req, res) => {
   const { name, email, subject, message } = req.body;
@@ -204,11 +228,7 @@ app.post('/api/trade', async (req, res) => {
 });
 
 /*
- * Serve real HTML files before the SPA fallback.
- * This is important for:
- * /login.html
- * /client-dashboard.html
- * /reset-password.html
+ * Serve the actual HTML pages.
  */
 app.get('/login.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
