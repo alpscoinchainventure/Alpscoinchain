@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Admin Dashboard | AlpsCoinChain</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080d1b;
+      --panel: #111a2e;
+      --panel2: #17233b;
+      --line: #263654;
+      --text: #eef4ff;
+      --muted: #9baac4;
+      --accent: #7c9cff;
+      --good: #65d6a0;
+      --warn: #ffd27a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 Arial, sans-serif;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px clamp(16px, 4vw, 42px);
+      border-bottom: 1px solid var(--line);
+      background: #0d1527;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    .brand span {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 18px 48px;
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: clamp(25px, 4vw, 34px);
+      margin: 0 0 6px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0 0 14px;
+    }
+
+    .muted { color: var(--muted); }
+    .small { font-size: 13px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 10px;
+      border: 1px solid #36534c;
+      border-radius: 999px;
+      color: var(--good);
+      font-size: 12px;
+      background: #102a28;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .panel, .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px;
+      min-width: 0;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .stat-value {
+      font-size: 30px;
+      font-weight: 750;
+      margin: 8px 0 3px;
+      overflow-wrap: anywhere;
+    }
+
+    .stat-note {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .section { margin-top: 18px; }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .action {
+      padding: 16px;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .action strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .action p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 15px;
+      background: var(--accent);
+      color: #081125;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .secondary {
+      background: #23324d;
+      color: var(--text);
+    }
+
+    .notice {
+      padding: 12px 14px;
+      border-radius: 9px;
+      background: #18253b;
+      color: #cbd8ef;
+      overflow-wrap: anywhere;
+    }
+
+    .notice.error {
+      background: #3b1b27;
+      color: #ffc4cb;
+    }
+
+    .notice.warn {
+      background: #352b17;
+      color: #ffe0a0;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    [hidden] { display: none !important; }
+
+    a { color: var(--accent); }
+
+    @media (max-width: 850px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 520px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .grid, .actions { grid-template-columns: 1fr; }
+      .stat-value { font-size: 26px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">
+      AlpsCoinChain
+      <span>Administration</span>
+    </div>
+
+    <button id="signOutButton" class="secondary"
+      type="button" hidden>
+      Sign out
+    </button>
+  </header>
+
+  <main>
+    <section id="loading" class="panel">
+      <h2>Checking administrator access…</h2>
+      <p class="muted">
+        Please wait while we verify your signed-in account.
+      </p>
+    </section>
+
+    <section id="denied" class="panel" hidden>
+      <h1>Administrator access required</h1>
+
+      <p id="deniedMessage" class="notice error">
+        This account is not authorized to open the admin dashboard.
+      </p>
+
+      <p class="muted">
+        You must sign in with an account whose profile role is
+        admin.
+      </p>
+
+      <p>
+        <a href="/login.html">Go to login</a>
+        ·
+        <a href="/">Return to website</a>
+      </p>
+    </section>
+
+    <div id="adminApp" hidden>
+      <div class="top">
+        <div>
+          <h1>Admin Dashboard</h1>
+          <p class="muted" style="margin:0">
+            Platform overview and operational tools
+          </p>
+        </div>
+
+        <div>
+          <span class="pill">● Admin session verified</span>
+          <p id="adminEmail" class="muted small"
+            style="text-align:right;margin:8px 0 0"></p>
+        </div>
+      </div>
+
+      <div class="notice warn">
+        <strong>Test mode:</strong>
+        The figures below are test-record counts only.
+        They are not client balances, investment performance,
+        or confirmed financial transactions.
+      </div>
+
+      <section class="grid section" aria-label="Test record counts">
+        <div class="stat">
+          <div class="stat-label">Test deposits</div>
+          <div class="stat-value" id="depositCount">—</div>
+          <div class="stat-note">Records visible under current database policies</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">Test withdrawals</div>
+          <div class="stat-value" id="withdrawalCount">—</div>
+          <div class="stat-note">Records visible under current database policies</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">Test transactions</div>
+          <div class="stat-value" id="transactionCount">—</div>
+          <div class="stat-note">Records visible under current database policies</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">Administrator</div>
+          <div class="stat-value" style="font-size:17px">
+            Verified
+          </div>
+          <div class="stat-note">Supabase session and profile role checked</div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>Management areas</h2>
+
+        <div class="actions">
+          <div class="action">
+            <strong>Client accounts</strong>
+            <p>Next phase: search accounts and review profile status.</p>
+          </div>
+
+          <div class="action">
+            <strong>Deposits</strong>
+            <p>Next phase: review test deposit requests and statuses.</p>
+          </div>
+
+          <div class="action">
+            <strong>Withdrawals</strong>
+            <p>Next phase: review test withdrawal requests and statuses.</p>
+          </div>
+
+          <div class="action">
+            <strong>Transactions</strong>
+            <p>Inspect test transaction records in the table below.</p>
+          </div>
+
+          <div class="action">
+            <strong>Support</strong>
+            <p>Support requests currently arrive by email at the configured support inbox.</p>
+          </div>
+
+          <div class="action">
+            <strong>Security</strong>
+            <p>Access depends on the Supabase profile role and database access policies.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <div class="top" style="margin-bottom:10px">
+          <div>
+            <h2 style="margin-bottom:4px">Recent test transactions</h2>
+            <p class="muted small" style="margin:0">
+              Most recent records permitted by database access policies.
+            </p>
+          </div>
+
+          <button id="refreshButton" class="secondary" type="button">
+            Refresh
+          </button>
+        </div>
+
+        <div id="dataNotice" class="notice" role="status">
+          Loading test records…
+        </div>
+
+        <div class="table-wrap" style="margin-top:12px">
+          <table>
+            <thead>
+              <tr>
+                <th>Created</th>
+                <th>User ID</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Asset</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="transactionRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="muted small" style="margin-top:20px">
+        Administrative actions that modify accounts or transaction
+        statuses are not enabled in this first version.
+      </p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    (() => {
+      const SUPABASE_URL =
+        'https://uevofmlzpwrdidjnwxfd.supabase.co';
+
+      const SUPABASE_PUBLISHABLE_KEY =
+        'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+
+      const $ = id => document.getElementById(id);
+      let client;
+
+      function deny(message) {
+        $('loading').hidden = true;
+        $('adminApp').hidden = true;
+        $('denied').hidden = false;
+        $('deniedMessage').textContent = message;
+        $('signOutButton').hidden = true;
+      }
+
+      async function loadCounts() {
+        $('refreshButton').disabled = true;
+        $('dataNotice').textContent = 'Loading test records…';
+
+        try {
+          const queries = [
+            ['test_deposits', 'depositCount'],
+            ['test_withdrawals', 'withdrawalCount'],
+            ['test_transactions', 'transactionCount']
+          ];
+
+          let anyError = false;
+
+          for (const [table, target] of queries) {
+            const { count, error } = await client
+              .from(table)
+              .select('*', { count: 'exact', head: true });
+
+            if (error) {
+              $(target).textContent = '—';
+              anyError = true;
+              console.warn('Count query failed:', table, error.message);
+            } else {
+              $(target).textContent = String(count ?? 0);
+            }
+          }
+
+          const { data, error } = await client
+            .from('test_transactions')
+            .select('id,user_id,type,amount,asset,status,created_at')
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+          const body = $('transactionRows');
+          body.replaceChildren();
+
+          if (error) {
+            $('dataNotice').textContent =
+              'Administrator role verified, but database policies did not allow transaction records to load. Review Supabase row-level security policies before enabling record management.';
+            $('dataNotice').className = 'notice warn';
+            return;
+          }
+
+          if (!data || data.length === 0) {
+            $('dataNotice').textContent = anyError
+              ? 'Some counts could not be loaded. No transaction rows are currently visible.'
+              : 'No test transaction records are currently visible.';
+            $('dataNotice').className = 'notice';
+            return;
+          }
+
+          $('dataNotice').textContent =
+            'Showing up to 10 test transaction records visible to this account.';
+          $('dataNotice').className = 'notice';
+
+          for (const row of data) {
+            const tr = document.createElement('tr');
+
+            const values = [
+              row.created_at
+                ? new Date(row.created_at).toLocaleString()
+                : '—',
+              row.user_id || '—',
+              row.type || 'Transaction',
+              row.amount == null ? '—' : String(row.amount),
+              row.asset || '—',
+              row.status || 'Unknown'
+            ];
+
+            for (const value of values) {
+              const td = document.createElement('td');
+              td.textContent = String(value);
+              tr.appendChild(td);
+            }
+
+            body.appendChild(tr);
+          }
+        } catch (error) {
+          console.error('Failed to load test records:', error);
+          $('dataNotice').textContent =
+            'Could not load test records. Please refresh and try again.';
+          $('dataNotice').className = 'notice error';
+        } finally {
+          $('refreshButton').disabled = false;
+        }
+      }
+
+      async function init() {
+        if (
+          !window.supabase ||
+          typeof window.supabase.createClient !== 'function'
+        ) {
+          deny('The authentication library could not load. Check your connection and try again.');
+          return;
+        }
+
+        client = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_PUBLISHABLE_KEY
+        );
+
+        const { data, error } = await client.auth.getSession();
+
+        if (error || !data.session) {
+          deny('Please sign in first, then open the admin dashboard.');
+          return;
+        }
+
+        const user = data.session.user;
+
+        const { data: profile, error: profileError } = await client
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (
+          profileError ||
+          !profile ||
+          String(profile.role).toLowerCase() !== 'admin'
+        ) {
+          deny('This account does not have a readable profile with the admin role. Check the profiles table and its row-level security policies.');
+          return;
+        }
+
+        $('adminEmail').textContent = user.email || 'Administrator';
+        $('loading').hidden = true;
+        $('adminApp').hidden = false;
+        $('signOutButton').hidden = false;
+
+        await loadCounts();
+      }
+
+      $('refreshButton').addEventListener('click', loadCounts);
+
+      $('signOutButton').addEventListener('click', async () => {
+        $('signOutButton').disabled = true;
+
+        const { error } = await client.auth.signOut();
+
+        if (error) {
+          $('dataNotice').textContent =
+            'Sign-out failed. Please try again.';
+          $('dataNotice').className = 'notice error';
+          $('signOutButton').disabled = false;
+          return;
+        }
+
+        window.location.replace('/login.html');
+      });
+
+      init().catch(error => {
+        console.error('Admin dashboard initialization failed:', error);
+        deny('The admin dashboard could not initialize. Please retry after checking the deployment logs.');
+      });
+    })();
+  </script>
+</body>
+</html>
