@@ -1,10 +1,13 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | AlpsCoinChain</title>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -52,6 +55,7 @@
 
         input {
             width: 100%;
+            min-width: 0;
             padding: 13px;
             margin-bottom: 16px;
             border-radius: 8px;
@@ -63,6 +67,19 @@
 
         input:focus {
             border-color: #6366f1;
+        }
+
+        .password-field {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .password-field input {
+            flex: 1;
+            min-width: 0;
+            margin-bottom: 0;
         }
 
         button {
@@ -80,6 +97,33 @@
             background: #4f46e5;
         }
 
+        button:focus-visible {
+            outline: 2px solid #a5b4fc;
+            outline-offset: 3px;
+        }
+
+        button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .password-toggle {
+            flex: 0 0 76px;
+            width: 76px;
+            align-self: stretch;
+            padding: 10px;
+            margin-bottom: 0;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+
+        .password-toggle:hover {
+            background: #334155;
+        }
+
         .secondary {
             margin-top: 10px;
             background: #1e293b;
@@ -95,6 +139,7 @@
             text-align: center;
             color: #fbbf24;
             font-size: 14px;
+            overflow-wrap: anywhere;
         }
 
         .links {
@@ -109,148 +154,220 @@
             color: #818cf8;
             font-weight: 600;
         }
+
+        .links button:hover {
+            background: none;
+            color: #a5b4fc;
+            text-decoration: underline;
+        }
     </style>
 </head>
 
 <body>
+    <main class="login-card">
+        <h1>AlpsCoinChain</h1>
+        <p class="subtitle">Sign in to your account</p>
 
-<div class="login-card">
-    <h1>AlpsCoinChain</h1>
-    <p class="subtitle">Sign in to your account</p>
+        <form id="loginForm">
+            <label for="email">Email</label>
+            <input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                autocomplete="email"
+                required
+            >
 
-    <form id="loginForm">
-        <label for="email">Email</label>
-        <input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            required
+            <label for="password">Password</label>
+
+            <div class="password-field">
+                <input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button
+                    type="button"
+                    id="togglePassword"
+                    class="password-toggle"
+                    aria-controls="password"
+                    aria-pressed="false"
+                >Show</button>
+            </div>
+
+            <div
+                id="message"
+                class="message"
+                role="status"
+                aria-live="polite"
+            ></div>
+
+            <button type="submit" id="loginButton">
+                Sign In
+            </button>
+        </form>
+
+        <button
+            type="button"
+            class="secondary"
+            id="signupButton"
         >
-
-        <label for="password">Password</label>
-        <input
-            id="password"
-            type="password"
-            placeholder="Enter your password"
-            required
-        >
-
-        <div id="message" class="message"></div>
-
-        <button type="submit" id="loginButton">Sign In</button>
-    </form>
-
-    <button type="button" class="secondary" id="signupButton">
-        Create Account
-    </button>
-
-    <div class="links">
-        <button type="button" id="forgotButton">
-            Forgot password?
+            Create Account
         </button>
-    </div>
-</div>
 
-<script>
-const SUPABASE_URL = "https://uevofmlzpwrdidjnwxfd.supabase.co";
+        <div class="links">
+            <button type="button" id="forgotButton">
+                Forgot password?
+            </button>
+        </div>
+    </main>
 
-const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
+    <script>
+        const SUPABASE_URL =
+            "https://uevofmlzpwrdidjnwxfd.supabase.co";
 
-const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-);
+        const SUPABASE_PUBLISHABLE_KEY =
+            "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
 
-const loginForm = document.getElementById("loginForm");
-const loginButton = document.getElementById("loginButton");
-const signupButton = document.getElementById("signupButton");
-const forgotButton = document.getElementById("forgotButton");
-const message = document.getElementById("message");
+        const supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY
+        );
 
-loginForm.addEventListener("submit", async function(event) {
-    event.preventDefault();
+        const loginForm = document.getElementById("loginForm");
+        const loginButton = document.getElementById("loginButton");
+        const signupButton = document.getElementById("signupButton");
+        const forgotButton = document.getElementById("forgotButton");
+        const passwordInput = document.getElementById("password");
+        const togglePassword = document.getElementById("togglePassword");
+        const emailInput = document.getElementById("email");
+        const message = document.getElementById("message");
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+        // Show or hide the password beside the password field.
+        togglePassword.addEventListener("click", function() {
+            const showingPassword = passwordInput.type === "password";
 
-    message.textContent = "";
-    loginButton.disabled = true;
-    loginButton.textContent = "Signing in...";
+            passwordInput.type = showingPassword ? "text" : "password";
+            togglePassword.textContent = showingPassword ? "Hide" : "Show";
+            togglePassword.setAttribute(
+                "aria-pressed",
+                String(showingPassword)
+            );
 
-    const { data, error } =
-        await supabaseClient.auth.signInWithPassword({
-            email,
-            password
+            passwordInput.focus();
         });
 
-    if (error) {
-        message.textContent = error.message;
-        loginButton.disabled = false;
-        loginButton.textContent = "Sign In";
-        return;
-    }
+        // Sign in an existing account.
+        loginForm.addEventListener("submit", async function(event) {
+            event.preventDefault();
 
-    if (data.session) {
-        window.location.href = "client-dashboard.html";
-        return;
-    }
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
 
-    message.textContent = "Login succeeded, but no session was created.";
-    loginButton.disabled = false;
-    loginButton.textContent = "Sign In";
-});
+            message.textContent = "";
+            loginButton.disabled = true;
+            loginButton.textContent = "Signing in...";
 
-signupButton.addEventListener("click", async function() {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+            try {
+                const { data, error } =
+                    await supabaseClient.auth.signInWithPassword({
+                        email,
+                        password
+                    });
 
-    if (!email || !password) {
-        message.textContent = "Enter an email and password first.";
-        return;
-    }
+                if (error) {
+                    message.textContent = error.message;
+                    return;
+                }
 
-    message.textContent = "Creating account...";
+                if (data.session) {
+                    window.location.href = "client-dashboard.html";
+                    return;
+                }
 
-    const { error } = await supabaseClient.auth.signUp({
-        email,
-        password
-    });
-
-    if (error) {
-        message.textContent = error.message;
-        return;
-    }
-
-    message.textContent =
-        "Account created. Check your email to confirm your account.";
-});
-
-forgotButton.addEventListener("click", async function() {
-    const email = document.getElementById("email").value.trim();
-
-    if (!email) {
-        message.textContent = "Enter your email address first.";
-        return;
-    }
-
-    message.textContent = "Sending password reset email...";
-
-    const { error } =
-        await supabaseClient.auth.resetPasswordForEmail(email, {
-            redirectTo:
-                window.location.origin + "/reset-password.html"
+                message.textContent =
+                    "Login succeeded, but no session was created.";
+            } catch (error) {
+                message.textContent =
+                    "Unable to sign in right now. Please try again.";
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = "Sign In";
+            }
         });
 
-    if (error) {
-        message.textContent = error.message;
-        return;
-    }
+        // Create an account.
+        signupButton.addEventListener("click", async function() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
 
-    message.textContent =
-        "Password reset email sent. Check your inbox.";
-});
-</script>
+            if (!email || !password) {
+                message.textContent =
+                    "Enter an email address and password first.";
+                return;
+            }
 
+            message.textContent = "Creating account...";
+            signupButton.disabled = true;
+
+            try {
+                const { error } = await supabaseClient.auth.signUp({
+                    email,
+                    password
+                });
+
+                if (error) {
+                    message.textContent = error.message;
+                    return;
+                }
+
+                message.textContent =
+                    "Account request submitted. Check your email for confirmation.";
+            } catch (error) {
+                message.textContent =
+                    "Unable to create the account right now. Please try again.";
+            } finally {
+                signupButton.disabled = false;
+            }
+        });
+
+        // Request a password-reset email.
+        forgotButton.addEventListener("click", async function() {
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                message.textContent =
+                    "Enter your email address first.";
+                return;
+            }
+
+            message.textContent = "Sending password reset email...";
+            forgotButton.disabled = true;
+
+            try {
+                const { error } =
+                    await supabaseClient.auth.resetPasswordForEmail(email, {
+                        redirectTo:
+                            window.location.origin + "/reset-password.html"
+                    });
+
+                if (error) {
+                    message.textContent = error.message;
+                    return;
+                }
+
+                message.textContent =
+                    "If the account is eligible, a password-reset email will be sent. Check your inbox.";
+            } catch (error) {
+                message.textContent =
+                    "Unable to request a reset email right now. Please try again.";
+            } finally {
+                forgotButton.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
