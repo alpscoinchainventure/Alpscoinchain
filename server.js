@@ -1,4 +1,3 @@
-
 import 'dotenv/config';
 import express from 'express';
 import nodemailer from 'nodemailer';
@@ -171,7 +170,7 @@ async function sendEmail({
   });
 }
 
-// Serve the dashboard without browser caching.
+// Client dashboard: disable browser caching.
 app.get('/client-dashboard.html', (req, res) => {
   res.set({
     'Cache-Control': 'no-store, no-cache, must-revalidate',
@@ -180,6 +179,17 @@ app.get('/client-dashboard.html', (req, res) => {
   });
 
   res.sendFile(path.join(__dirname, 'client-dashboard.html'));
+});
+
+// Admin dashboard: disable browser caching.
+app.get('/admin-dashboard.html', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0'
+  });
+
+  res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
 });
 
 // Serve static files without automatically serving index.html.
@@ -284,8 +294,7 @@ app.post('/api/contact', async (req, res) => {
     });
   }
 
-  // Next, acknowledge the request to the customer.
-  // Failure here must not mark the original request as failed.
+  // Acknowledgment failure must not undo successful support delivery.
   try {
     const acknowledgment = buildAcknowledgment(subject);
 
@@ -313,6 +322,7 @@ app.post('/api/contact', async (req, res) => {
 
 /*
  * Trade notification endpoint.
+ * This sends an email notification only; it does not execute trades.
  */
 app.post('/api/trade', async (req, res) => {
   const {
