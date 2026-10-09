@@ -1,84 +1,177 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Client Dashboard | AlpsCoinChain</title>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #f4f7fb;
       color: #1d2939;
+      line-height: 1.6;
     }
 
     header {
       background: #142b4a;
-      color: white;
+      color: #fff;
       padding: 20px;
+    }
+
+    .header-content {
+      max-width: 1000px;
+      margin: 0 auto;
     }
 
     header h1 {
       margin: 0;
-      font-size: 22px;
+      font-size: 23px;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      color: #d0dced;
+      font-size: 14px;
     }
 
     main {
-      max-width: 850px;
-      margin: 30px auto;
+      max-width: 1000px;
+      margin: 28px auto;
       padding: 0 16px;
     }
 
     .card {
-      background: white;
+      background: #fff;
       padding: 22px;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
       border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
       overflow-wrap: anywhere;
     }
 
-    .activity-item {
-      border: 1px solid #e4e7ec;
-      box-shadow: none;
-      margin: 12px 0;
-      padding: 14px;
+    .card h2 {
+      margin-top: 0;
+      color: #142b4a;
+      font-size: 20px;
     }
 
-    .muted { color: #667085; }
+    .muted {
+      color: #667085;
+    }
+
+    .account-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .info-box {
+      background: #f8fafc;
+      border: 1px solid #e4e7ec;
+      border-radius: 9px;
+      padding: 14px;
+      min-width: 0;
+    }
+
+    .info-label {
+      display: block;
+      color: #667085;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .info-value {
+      display: block;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: #eef2f6;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status-active {
+      background: #ecfdf3;
+      color: #027a48;
+    }
+
+    .status-pending {
+      background: #fffaeb;
+      color: #b54708;
+    }
+
+    .status-suspended {
+      background: #fef3f2;
+      color: #b42318;
+    }
 
     button {
       padding: 12px 18px;
       border: 0;
       border-radius: 7px;
       background: #174ea6;
-      color: white;
+      color: #fff;
       font-size: 15px;
       cursor: pointer;
     }
 
+    button:hover {
+      background: #123d83;
+    }
+
     button:disabled {
-      opacity: .6;
+      opacity: 0.6;
       cursor: not-allowed;
     }
 
-    input, textarea {
+    .secondary-button {
+      background: #eaf0f8;
+      color: #174ea6;
+    }
+
+    .secondary-button:hover {
+      background: #dbe6f5;
+    }
+
+    input,
+    textarea {
       display: block;
       width: 100%;
       padding: 12px;
-      margin: 10px 0 16px;
+      margin: 8px 0 16px;
       border: 1px solid #d0d5dd;
       border-radius: 7px;
       font: inherit;
+      background: #fff;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: 2px solid #84adff;
+      border-color: #174ea6;
     }
 
     textarea {
-      min-height: 110px;
+      min-height: 120px;
       resize: vertical;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
     }
 
     .notice {
@@ -99,80 +192,304 @@
       color: #b42318;
     }
 
-    [hidden] { display: none !important; }
+    .activity-item {
+      border: 1px solid #e4e7ec;
+      border-radius: 9px;
+      padding: 15px;
+      margin: 12px 0;
+      background: #fff;
+    }
+
+    .activity-item h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: #142b4a;
+    }
+
+    .activity-item p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+
+    .activity-status {
+      display: inline-block;
+      background: #eef2f6;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .section-description {
+      margin-top: -5px;
+      font-size: 14px;
+    }
+
+    footer {
+      text-align: center;
+      color: #667085;
+      font-size: 13px;
+      padding: 20px 16px 30px;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 17px;
+      }
+
+      header h1 {
+        font-size: 20px;
+      }
+
+      main {
+        margin-top: 18px;
+        padding: 0 12px;
+      }
+
+      .card {
+        padding: 17px;
+      }
+
+      .account-grid {
+        grid-template-columns: 1fr;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .button-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
   </style>
 </head>
 
 <body>
+
   <header>
-    <h1>AlpsCoinChain Investment</h1>
+    <div class="header-content">
+      <h1>AlpsCoinChain Investment</h1>
+      <p>Client account dashboard</p>
+    </div>
   </header>
 
   <main>
+
+    <!-- Loading screen -->
     <section id="loadingScreen" class="card">
-      <h2>Loading your dashboard…</h2>
-      <p class="muted">Please wait while we check your sign-in.</p>
+      <h2>Loading your dashboard...</h2>
+      <p class="muted">
+        Please wait while we check your sign-in.
+      </p>
     </section>
 
+    <!-- Error screen -->
     <section id="errorScreen" class="card" hidden>
       <h2>Dashboard could not load</h2>
+
       <p id="errorMessage" class="notice error">
         Please try again.
       </p>
-      <p><a href="/login.html">Return to login</a></p>
-      <button id="retryButton" type="button">Try again</button>
+
+      <div class="button-row">
+        <button id="retryButton" type="button">
+          Try again
+        </button>
+
+        <button
+          id="errorLoginButton"
+          type="button"
+          class="secondary-button"
+        >
+          Return to login
+        </button>
+      </div>
     </section>
 
+    <!-- Client dashboard -->
     <section id="dashboard" hidden>
+
+      <!-- Welcome -->
       <div class="card">
         <h2>Welcome to your dashboard</h2>
-        <p class="muted">Signed-in account</p>
-        <p><strong>Email:</strong> <span id="userEmail"></span></p>
-        <p><strong>Account ID:</strong> <span id="userId"></span></p>
-        <button id="logoutButton" type="button">Sign out</button>
+
+        <p class="muted">
+          Manage your account information and review your account activity.
+        </p>
+
+        <p>
+          <strong>Signed-in email:</strong>
+          <span id="userEmail">Loading...</span>
+        </p>
+
+        <p>
+          <strong>Account ID:</strong>
+          <span id="userId">Loading...</span>
+        </p>
+
+        <button id="logoutButton" type="button">
+          Sign out
+        </button>
       </div>
 
+      <!-- Account information -->
       <div class="card">
         <h2>Account information</h2>
-        <p><strong>Account email:</strong> <span id="accountEmail"></span></p>
-        <p class="muted">
-          Your available balance is not calculated on this page.
-          See Recent Account Activity for available test records.
+
+        <div class="account-grid">
+
+          <div class="info-box">
+            <span class="info-label">Account email</span>
+            <span id="accountEmail" class="info-value">
+              Loading...
+            </span>
+          </div>
+
+          <div class="info-box">
+            <span class="info-label">Full name</span>
+            <span id="profileName" class="info-value">
+              Loading...
+            </span>
+          </div>
+
+          <div class="info-box">
+            <span class="info-label">Account status</span>
+            <span
+              id="profileStatus"
+              class="info-value"
+              aria-live="polite"
+            >
+              Loading...
+            </span>
+          </div>
+
+          <div class="info-box">
+            <span class="info-label">Account role</span>
+            <span id="profileRole" class="info-value">
+              Loading...
+            </span>
+          </div>
+
+        </div>
+
+        <p class="muted section-description" style="margin-top: 18px;">
+          Your verified portfolio balance is not yet available.
+          Balance calculations will be introduced after the secure
+          financial ledger has been implemented and tested.
         </p>
       </div>
 
+      <!-- Portfolio placeholder -->
       <div class="card">
-        <h2>Recent Account Activity</h2>
+        <h2>Portfolio overview</h2>
+
         <p class="muted">
-          Activity shown here comes from test database tables.
-          These records do not represent a verified available balance.
+          Your portfolio summary will appear here when the financial
+          ledger is implemented and verified.
         </p>
-        <p id="activityMessage" role="status">
+
+        <div class="notice">
+          <strong>Portfolio status:</strong>
+          Balance information is not currently available.
+          No portfolio balance is being calculated by this page.
+        </div>
+      </div>
+
+      <!-- Recent activity -->
+      <div class="card">
+        <h2>Recent account activity</h2>
+
+        <p class="muted section-description">
+          The records below come from test database tables.
+          They are not a verified financial statement or available balance.
+        </p>
+
+        <p id="activityMessage" role="status" aria-live="polite">
           Activity has not loaded yet.
         </p>
+
         <div id="activityList"></div>
-        <button id="refreshActivityButton" type="button">
+
+        <button
+          id="refreshActivityButton"
+          type="button"
+          class="secondary-button"
+        >
           Refresh activity
         </button>
       </div>
 
+      <!-- Deposit and withdrawal information -->
+      <div class="card">
+        <h2>Deposits and withdrawals</h2>
+
+        <p class="muted">
+          Deposit and withdrawal request tracking will be connected
+          after the secure request-processing workflow is implemented.
+        </p>
+
+        <div class="notice">
+          This dashboard does not initiate deposits, send withdrawals,
+          or confirm that funds have moved.
+        </div>
+      </div>
+
+      <!-- KYC placeholder -->
+      <div class="card">
+        <h2>Identity verification</h2>
+
+        <p class="muted">
+          Identity verification will be handled through a secure,
+          private document-submission process.
+        </p>
+
+        <div class="notice">
+          <strong>Verification status:</strong>
+          The KYC workflow has not yet been connected to this dashboard.
+        </div>
+      </div>
+
+      <!-- Support form -->
       <div class="card">
         <h2>Contact support</h2>
+
         <p class="muted">
-          Send a message to our support team. Do not include passwords
-          or sensitive financial information.
+          Send a message to our support team. Do not include passwords,
+          authentication codes, private keys, or sensitive financial
+          information.
         </p>
 
         <form id="supportForm">
-          <label for="supportSubject">Subject</label>
+
+          <label for="supportSubject">
+            Subject
+          </label>
+
           <input
             id="supportSubject"
             name="subject"
+            type="text"
             maxlength="150"
             required
           >
 
-          <label for="supportText">Message</label>
+          <label for="supportText">
+            Message
+          </label>
+
           <textarea
             id="supportText"
             name="message"
@@ -183,6 +500,7 @@
           <button id="supportSubmitButton" type="submit">
             Send to support
           </button>
+
         </form>
 
         <p
@@ -193,60 +511,215 @@
           hidden
         ></p>
       </div>
+
     </section>
+
   </main>
 
+  <footer>
+    <p>
+      AlpsCoinChain Investment Ventures
+    </p>
+    <p>
+      Account information and activity are subject to verification.
+    </p>
+  </footer>
+
+  <!-- Supabase client library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
+    'use strict';
+
     const SUPABASE_URL =
       'https://uevofmlzpwrdidjnwxfd.supabase.co';
 
     const SUPABASE_PUBLISHABLE_KEY =
       'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
 
-    const loadingScreen = document.getElementById('loadingScreen');
-    const dashboard = document.getElementById('dashboard');
-    const errorScreen = document.getElementById('errorScreen');
-    const errorMessage = document.getElementById('errorMessage');
+    const loadingScreen =
+      document.getElementById('loadingScreen');
+
+    const dashboard =
+      document.getElementById('dashboard');
+
+    const errorScreen =
+      document.getElementById('errorScreen');
+
+    const errorMessage =
+      document.getElementById('errorMessage');
 
     let supabaseClient = null;
     let currentUser = null;
+
+    let dashboardLoadInProgress = false;
+    let activityLoadInProgress = false;
+
+    // --------------------------------------------------
+    // Screen helpers
+    // --------------------------------------------------
 
     function showError(message) {
       loadingScreen.hidden = true;
       dashboard.hidden = true;
       errorScreen.hidden = false;
-      errorMessage.textContent = message;
+
+      errorMessage.textContent =
+        message || 'Please try again.';
     }
 
     function setSupportStatus(message, type = '') {
-      const status = document.getElementById('supportMessage');
+      const status =
+        document.getElementById('supportMessage');
+
       status.textContent = message;
-      status.className = 'notice' + (type ? ' ' + type : '');
+
+      status.className =
+        'notice' + (type ? ' ' + type : '');
+
       status.hidden = false;
     }
 
-    function escapeHtml(value) {
-      return String(value ?? '').replace(/[&<>"']/g, character => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-      })[character]);
+    function formatDate(value) {
+      if (!value) {
+        return 'Date unavailable';
+      }
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return 'Date unavailable';
+      }
+
+      return date.toLocaleString();
     }
+
+    function formatAmount(value) {
+      const amount = Number(value);
+
+      if (!Number.isFinite(amount)) {
+        return 'Unavailable';
+      }
+
+      return amount.toLocaleString(undefined, {
+        maximumFractionDigits: 8
+      });
+    }
+
+    function formatStatus(value) {
+      if (!value) {
+        return 'Unknown';
+      }
+
+      return String(value)
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, character =>
+          character.toUpperCase()
+        );
+    }
+
+    // --------------------------------------------------
+    // Profile information
+    // --------------------------------------------------
+
+    async function loadProfileDetails() {
+      const nameElement =
+        document.getElementById('profileName');
+
+      const statusElement =
+        document.getElementById('profileStatus');
+
+      const roleElement =
+        document.getElementById('profileRole');
+
+      nameElement.textContent = 'Loading...';
+      statusElement.textContent = 'Loading...';
+      roleElement.textContent = 'Loading...';
+
+      statusElement.className = 'info-value';
+
+      if (!supabaseClient || !currentUser) {
+        nameElement.textContent = 'Unavailable';
+        statusElement.textContent = 'Unavailable';
+        roleElement.textContent = 'Unavailable';
+        return;
+      }
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('profiles')
+          .select('full_name, account_status, role')
+          .eq('id', currentUser.id)
+          .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data) {
+          nameElement.textContent = 'Profile unavailable';
+          statusElement.textContent = 'Unknown';
+          roleElement.textContent = 'Unknown';
+          return;
+        }
+
+        nameElement.textContent =
+          data.full_name || 'Name not provided';
+
+        statusElement.textContent =
+          formatStatus(data.account_status);
+
+        roleElement.textContent =
+          formatStatus(data.role);
+
+        const normalizedStatus =
+          String(data.account_status || '').toLowerCase();
+
+        if (normalizedStatus === 'active') {
+          statusElement.classList.add('status-active');
+        } else if (normalizedStatus === 'pending') {
+          statusElement.classList.add('status-pending');
+        } else if (normalizedStatus === 'suspended') {
+          statusElement.classList.add('status-suspended');
+        }
+
+      } catch (error) {
+        console.error(
+          'Profile loading failed:',
+          error
+        );
+
+        nameElement.textContent = 'Unable to load';
+        statusElement.textContent = 'Unable to load';
+        roleElement.textContent = 'Unable to load';
+      }
+    }
+
+    // --------------------------------------------------
+    // Recent test activity
+    // --------------------------------------------------
 
     async function loadActivity() {
       const activityMessage =
         document.getElementById('activityMessage');
+
       const activityList =
         document.getElementById('activityList');
+
       const refreshButton =
         document.getElementById('refreshActivityButton');
 
-      activityMessage.textContent = 'Loading account activity…';
+      if (activityLoadInProgress) {
+        return;
+      }
+
+      activityLoadInProgress = true;
+
+      activityMessage.textContent =
+        'Loading account activity...';
+
       activityList.replaceChildren();
+
       refreshButton.disabled = true;
 
       try {
@@ -259,30 +732,47 @@
         const results = await Promise.all([
           supabaseClient
             .from('test_deposits')
-            .select('id, user_id, amount, asset, status, reference, created_at')
+            .select(
+              'id, user_id, amount, asset, status, reference, created_at'
+            )
             .eq('user_id', currentUser.id)
-            .order('created_at', { ascending: false })
+            .order('created_at', {
+              ascending: false
+            })
             .limit(50),
 
           supabaseClient
             .from('test_withdrawals')
-            .select('id, user_id, amount, asset, status, created_at')
+            .select(
+              'id, user_id, amount, asset, status, created_at'
+            )
             .eq('user_id', currentUser.id)
-            .order('created_at', { ascending: false })
+            .order('created_at', {
+              ascending: false
+            })
             .limit(50),
 
           supabaseClient
             .from('test_transactions')
-            .select('id, user_id, type, amount, asset, status, reference, created_at')
+            .select(
+              'id, user_id, type, amount, asset, status, reference, created_at'
+            )
             .eq('user_id', currentUser.id)
-            .order('created_at', { ascending: false })
+            .order('created_at', {
+              ascending: false
+            })
             .limit(50)
         ]);
 
-        const failed = results.find(result => result.error);
+        const failedResult =
+          results.find(result => result.error);
 
-        if (failed) {
-          console.error('Activity query failed:', failed.error);
+        if (failedResult) {
+          console.error(
+            'Activity query failed:',
+            failedResult.error
+          );
+
           throw new Error(
             'Activity could not be loaded. Check database access and try again.'
           );
@@ -293,61 +783,134 @@
             ...row,
             activityType: 'Deposit'
           })),
+
           ...results[1].data.map(row => ({
             ...row,
             activityType: 'Withdrawal'
           })),
+
           ...results[2].data.map(row => ({
             ...row,
             activityType: row.type || 'Transaction'
           }))
         ];
 
-        entries.sort((a, b) =>
-          new Date(b.created_at || 0) - new Date(a.created_at || 0)
-        );
+        entries.sort((a, b) => {
+          const dateA =
+            new Date(a.created_at || 0).getTime();
+
+          const dateB =
+            new Date(b.created_at || 0).getTime();
+
+          return dateB - dateA;
+        });
 
         if (entries.length === 0) {
           activityMessage.textContent =
             'No test activity records were found for your account.';
+
           return;
         }
 
         activityMessage.textContent =
-          'Showing up to 50 records from each test table.';
+          'Showing test records from your account. These records do not represent a verified financial statement.';
 
-        const fragment = document.createDocumentFragment();
+        const fragment =
+          document.createDocumentFragment();
 
         entries.forEach(row => {
-          const item = document.createElement('div');
-          item.className = 'card activity-item';
+          const item =
+            document.createElement('div');
 
-          const date = row.created_at
-            ? new Date(row.created_at).toLocaleString()
-            : 'Date unavailable';
+          item.className = 'activity-item';
 
-          const amount = Number(row.amount);
-          const amountText = Number.isFinite(amount)
-            ? amount.toLocaleString(undefined, {
-                maximumFractionDigits: 8
-              })
-            : 'Unavailable';
+          const heading =
+            document.createElement('h3');
 
-          const referenceHtml = row.reference
-            ? '<p><strong>Reference:</strong> ' +
-              escapeHtml(row.reference) + '</p>'
-            : '';
+          heading.textContent =
+            formatStatus(row.activityType);
 
-          item.innerHTML =
-            '<strong>' + escapeHtml(row.activityType) + '</strong>' +
-            '<p><strong>Amount:</strong> ' +
-              escapeHtml(amountText) + ' ' +
-              escapeHtml(row.asset || '') + '</p>' +
-            '<p><strong>Status:</strong> ' +
-              escapeHtml(row.status || 'Unknown') + '</p>' +
-            '<p><strong>Date:</strong> ' +
-              escapeHtml(date) + '</p>' +
-            referenceHtml;
+          item.appendChild(heading);
+
+          const amountParagraph =
+            document.createElement('p');
+
+          const amountLabel =
+            document.createElement('strong');
+
+          amountLabel.textContent = 'Amount: ';
+
+          amountParagraph.appendChild(amountLabel);
+
+          amountParagraph.appendChild(
+            document.createTextNode(
+              formatAmount(row.amount) +
+              ' ' +
+              String(row.asset || '')
+            )
+          );
+
+          item.appendChild(amountParagraph);
+
+          const statusParagraph =
+            document.createElement('p');
+
+          const statusLabel =
+            document.createElement('strong');
+
+          statusLabel.textContent = 'Status: ';
+
+          statusParagraph.appendChild(statusLabel);
+
+          const statusBadge =
+            document.createElement('span');
+
+          statusBadge.className = 'activity-status';
+
+          statusBadge.textContent =
+            formatStatus(row.status);
+
+          statusParagraph.appendChild(statusBadge);
+
+          item.appendChild(statusParagraph);
+
+          const dateParagraph =
+            document.createElement('p');
+
+          const dateLabel =
+            document.createElement('strong');
+
+          dateLabel.textContent = 'Date: ';
+
+          dateParagraph.appendChild(dateLabel);
+
+          dateParagraph.appendChild(
+            document.createTextNode(
+              formatDate(row.created_at)
+            )
+          );
+
+          item.appendChild(dateParagraph);
+
+          if (row.reference) {
+            const referenceParagraph =
+              document.createElement('p');
+
+            const referenceLabel =
+              document.createElement('strong');
+
+            referenceLabel.textContent = 'Reference: ';
+
+            referenceParagraph.appendChild(referenceLabel);
+
+            referenceParagraph.appendChild(
+              document.createTextNode(
+                String(row.reference)
+              )
+            );
+
+            item.appendChild(referenceParagraph);
+          }
 
           fragment.appendChild(item);
         });
@@ -355,15 +918,32 @@
         activityList.appendChild(fragment);
 
       } catch (error) {
-        console.error('Could not load account activity:', error);
+        console.error(
+          'Could not load account activity:',
+          error
+        );
+
         activityMessage.textContent =
-          error.message || 'Account activity could not be loaded.';
+          error.message ||
+          'Account activity could not be loaded.';
+
       } finally {
         refreshButton.disabled = false;
+        activityLoadInProgress = false;
       }
     }
 
+    // --------------------------------------------------
+    // Dashboard initialization
+    // --------------------------------------------------
+
     async function loadDashboard() {
+      if (dashboardLoadInProgress) {
+        return;
+      }
+
+      dashboardLoadInProgress = true;
+
       loadingScreen.hidden = false;
       dashboard.hidden = true;
       errorScreen.hidden = true;
@@ -379,23 +959,26 @@
         }
 
         if (!supabaseClient) {
-          supabaseClient = window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_PUBLISHABLE_KEY,
-            {
-              auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true
+          supabaseClient =
+            window.supabase.createClient(
+              SUPABASE_URL,
+              SUPABASE_PUBLISHABLE_KEY,
+              {
+                auth: {
+                  persistSession: true,
+                  autoRefreshToken: true,
+                  detectSessionInUrl: true
+                }
               }
-            }
-          );
+            );
         }
 
         const { data, error } =
           await supabaseClient.auth.getSession();
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
 
         if (!data.session) {
           window.location.replace('/login.html');
@@ -416,55 +999,115 @@
         loadingScreen.hidden = true;
         dashboard.hidden = false;
 
-        await loadActivity();
+        await Promise.all([
+          loadProfileDetails(),
+          loadActivity()
+        ]);
 
       } catch (error) {
-        console.error('Dashboard initialization failed:', error);
+        console.error(
+          'Dashboard initialization failed:',
+          error
+        );
+
         showError(
           error.message ||
           'An unexpected error prevented the dashboard from loading.'
         );
+
+      } finally {
+        dashboardLoadInProgress = false;
       }
     }
 
+    // --------------------------------------------------
+    // Sign out
+    // --------------------------------------------------
+
     document.getElementById('logoutButton')
       .addEventListener('click', async () => {
+        const button =
+          document.getElementById('logoutButton');
+
+        button.disabled = true;
+        button.textContent = 'Signing out...';
+
         try {
           if (supabaseClient) {
-            const { error } = await supabaseClient.auth.signOut();
-            if (error) throw error;
+            const { error } =
+              await supabaseClient.auth.signOut();
+
+            if (error) {
+              throw error;
+            }
           }
 
           currentUser = null;
+
           window.location.replace('/login.html');
 
         } catch (error) {
-          showError('Sign-out failed. Please try again.');
+          console.error('Sign-out failed:', error);
+
+          button.disabled = false;
+          button.textContent = 'Sign out';
+
+          alert(
+            'Sign-out failed. Please try again.'
+          );
         }
       });
 
+    // --------------------------------------------------
+    // Refresh account activity
+    // --------------------------------------------------
+
     document.getElementById('refreshActivityButton')
       .addEventListener('click', loadActivity);
+
+    // --------------------------------------------------
+    // Return to login
+    // --------------------------------------------------
+
+    document.getElementById('errorLoginButton')
+      .addEventListener('click', () => {
+        window.location.href = '/login.html';
+      });
+
+    // --------------------------------------------------
+    // Retry dashboard initialization
+    // --------------------------------------------------
+
+    document.getElementById('retryButton')
+      .addEventListener('click', loadDashboard);
+
+    // --------------------------------------------------
+    // Contact support
+    // --------------------------------------------------
 
     document.getElementById('supportForm')
       .addEventListener('submit', async event => {
         event.preventDefault();
 
         const form = event.currentTarget;
+
         const button =
           document.getElementById('supportSubmitButton');
 
         const subject =
-          document.getElementById('supportSubject').value.trim();
+          document.getElementById('supportSubject')
+            .value.trim();
 
         const message =
-          document.getElementById('supportText').value.trim();
+          document.getElementById('supportText')
+            .value.trim();
 
         if (!subject || !message) {
           setSupportStatus(
             'Please enter both a subject and a message.',
             'error'
           );
+
           return;
         }
 
@@ -473,22 +1116,28 @@
             'Your session has expired. Please sign in again.',
             'error'
           );
+
           return;
         }
 
         button.disabled = true;
-        button.textContent = 'Sending…';
+        button.textContent = 'Sending...';
 
-        setSupportStatus('Sending your message to support…');
+        setSupportStatus(
+          'Sending your message to support...'
+        );
 
         try {
           const response = await fetch('/api/contact', {
             method: 'POST',
+
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
             },
+
             credentials: 'same-origin',
+
             body: JSON.stringify({
               name: currentUser.email,
               email: currentUser.email,
@@ -497,11 +1146,15 @@
             })
           });
 
-          const responseText = await response.text();
+          const responseText =
+            await response.text();
+
           let result = {};
 
           try {
-            result = responseText ? JSON.parse(responseText) : {};
+            result = responseText
+              ? JSON.parse(responseText)
+              : {};
           } catch {
             throw new Error(
               'The server returned an unexpected response. Please try again later.'
@@ -517,30 +1170,37 @@
 
           setSupportStatus(
             result.message ||
-              'Your message was accepted by the email provider.',
+            'Your message was accepted by the email provider.',
             'success'
           );
 
           form.reset();
 
         } catch (error) {
-          console.error('Support message failed:', error);
+          console.error(
+            'Support message failed:',
+            error
+          );
 
           setSupportStatus(
             error.message ||
-              'Unable to send your message. Please try again later.',
+            'Unable to send your message. Please try again later.',
             'error'
           );
+
         } finally {
           button.disabled = false;
           button.textContent = 'Send to support';
         }
       });
 
-    document.getElementById('retryButton')
-      .addEventListener('click', loadDashboard);
+    // --------------------------------------------------
+    // Start dashboard
+    // --------------------------------------------------
 
     loadDashboard();
+
   </script>
+
 </body>
 </html>
