@@ -3,21 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex,nofollow">
-  <title>Admin Dashboard | AlpsCoinChain</title>
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin Dashboard | AlpsCoinChain Investment</title>
 
   <style>
     :root {
       color-scheme: dark;
-      --bg: #080d1b;
-      --panel: #111a2e;
-      --panel2: #17233b;
-      --line: #263654;
-      --text: #eef4ff;
-      --muted: #9baac4;
-      --accent: #7c9cff;
-      --good: #65d6a0;
-      --warn: #ffd27a;
+      --bg: #0b1120;
+      --panel: #131d30;
+      --panel2: #18243a;
+      --text: #edf3ff;
+      --muted: #a6b4ca;
+      --line: #2b3b55;
+      --accent: #65d6b0;
+      --danger: #ff9292;
     }
 
     * { box-sizing: border-box; }
@@ -26,556 +25,664 @@
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font: 15px/1.5 Arial, sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.6;
     }
 
     header {
+      padding: 18px 22px;
+      background: #101a2c;
+      border-bottom: 1px solid var(--line);
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 20px clamp(16px, 4vw, 42px);
-      border-bottom: 1px solid var(--line);
-      background: #0d1527;
-    }
-
-    .brand {
-      font-weight: 800;
-      letter-spacing: .2px;
-    }
-
-    .brand span {
-      display: block;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--muted);
-      letter-spacing: 1.3px;
-      text-transform: uppercase;
-    }
-
-    main {
-      max-width: 1200px;
-      margin: 30px auto;
-      padding: 0 18px 48px;
-    }
-
-    .top {
-      display: flex;
-      align-items: flex-start;
       justify-content: space-between;
       gap: 16px;
       flex-wrap: wrap;
-      margin-bottom: 24px;
     }
 
-    h1 {
-      font-size: clamp(25px, 4vw, 34px);
-      margin: 0 0 6px;
+    header strong { font-size: 19px; }
+
+    main {
+      width: min(1150px, 100%);
+      margin: 0 auto;
+      padding: 25px 18px 45px;
     }
 
-    h2 {
-      font-size: 18px;
-      margin: 0 0 14px;
-    }
+    h1 { margin: 0 0 5px; font-size: 27px; }
+    h2 { margin: 0 0 12px; font-size: 19px; }
+    p { margin: 6px 0 12px; }
 
-    .muted { color: var(--muted); }
+    .muted, .small { color: var(--muted); }
     .small { font-size: 13px; }
 
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 6px 10px;
-      border: 1px solid #36534c;
-      border-radius: 999px;
-      color: var(--good);
-      font-size: 12px;
-      background: #102a28;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .panel, .stat {
+    .panel {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 20px;
+      border-radius: 13px;
+      padding: 19px;
+      margin-top: 20px;
       min-width: 0;
     }
 
-    .stat-label {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .stat-value {
-      font-size: 30px;
-      font-weight: 750;
-      margin: 8px 0 3px;
-      overflow-wrap: anywhere;
-    }
-
-    .stat-note {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .section { margin-top: 18px; }
-
-    .actions {
+    .stats {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      gap: 14px;
+      margin-top: 20px;
     }
 
-    .action {
-      padding: 16px;
+    .stat {
+      padding: 17px;
       background: var(--panel2);
       border: 1px solid var(--line);
-      border-radius: 10px;
+      border-radius: 12px;
     }
 
-    .action strong {
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    .action p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 8px;
-      padding: 11px 15px;
-      background: var(--accent);
-      color: #081125;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-    }
-
-    .secondary {
-      background: #23324d;
-      color: var(--text);
-    }
+    .stat-label { color: var(--muted); font-size: 14px; }
+    .stat-value { font-size: 29px; font-weight: bold; margin-top: 5px; }
 
     .notice {
       padding: 12px 14px;
-      border-radius: 9px;
-      background: #18253b;
-      color: #cbd8ef;
+      background: #17283a;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-top: 12px;
       overflow-wrap: anywhere;
     }
 
-    .notice.error {
-      background: #3b1b27;
-      color: #ffc4cb;
+    .success { color: var(--accent); }
+    .error { color: var(--danger); }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 14px 0;
     }
 
-    .notice.warn {
-      background: #352b17;
-      color: #ffe0a0;
+    input, button {
+      font: inherit;
+      border-radius: 8px;
     }
 
-    .table-wrap { overflow-x: auto; }
+    input {
+      flex: 1;
+      min-width: 190px;
+      padding: 11px 12px;
+      color: var(--text);
+      background: #0d1527;
+      border: 1px solid var(--line);
+    }
+
+    button {
+      border: 1px solid var(--line);
+      padding: 10px 15px;
+      color: var(--text);
+      background: #24334b;
+      cursor: pointer;
+    }
+
+    button:hover { filter: brightness(1.15); }
+    button:disabled { opacity: 0.55; cursor: wait; }
+
+    .primary {
+      background: #17694f;
+      border-color: #248566;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 12px;
+    }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 600px;
+      min-width: 520px;
     }
 
     th, td {
-      text-align: left;
       padding: 12px 10px;
+      text-align: left;
       border-bottom: 1px solid var(--line);
-      font-size: 13px;
       overflow-wrap: anywhere;
     }
 
-    th {
+    th { color: var(--muted); font-size: 13px; }
+    td { font-size: 14px; }
+
+    .management-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 13px;
+    }
+
+    .management-item {
+      padding: 14px;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+    }
+
+    .management-item strong { display: block; margin-bottom: 5px; }
+
+    footer {
+      margin-top: 25px;
+      text-align: center;
       color: var(--muted);
-      font-weight: 600;
+      font-size: 12px;
     }
 
-    [hidden] { display: none !important; }
-
-    a { color: var(--accent); }
-
-    @media (max-width: 850px) {
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    @media (max-width: 520px) {
-      header {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .grid, .actions { grid-template-columns: 1fr; }
-      .stat-value { font-size: 26px; }
+    @media (max-width: 650px) {
+      .stats { grid-template-columns: 1fr; }
+      .management-grid { grid-template-columns: 1fr; }
+      main { padding: 18px 12px 35px; }
+      header { padding: 15px; }
+      h1 { font-size: 23px; }
     }
   </style>
 </head>
 
 <body>
   <header>
-    <div class="brand">
-      AlpsCoinChain
-      <span>Administration</span>
-    </div>
-
-    <button id="signOutButton" class="secondary"
-      type="button" hidden>
-      Sign out
-    </button>
+    <strong>AlpsCoinChain Investment</strong>
+    <button id="signOutButton" type="button">Sign out</button>
   </header>
 
   <main>
-    <section id="loading" class="panel">
-      <h2>Checking administrator access…</h2>
-      <p class="muted">
-        Please wait while we verify your signed-in account.
-      </p>
+    <section>
+      <h1>Admin Dashboard</h1>
+      <p class="muted">Platform overview and operational tools.</p>
+      <div id="sessionNotice" class="notice" role="status">
+        Verifying administrator session…
+      </div>
+      <p class="small" id="accountEmail"></p>
     </section>
 
-    <section id="denied" class="panel" hidden>
-      <h1>Administrator access required</h1>
-
-      <p id="deniedMessage" class="notice error">
-        This account is not authorized to open the admin dashboard.
-      </p>
-
-      <p class="muted">
-        You must sign in with an account whose profile role is
-        admin.
-      </p>
-
-      <p>
-        <a href="/login.html">Go to login</a>
-        ·
-        <a href="/">Return to website</a>
-      </p>
+    <section class="stats" aria-label="Test record counts">
+      <div class="stat">
+        <div class="stat-label">Test deposits</div>
+        <div class="stat-value" id="depositCount">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Test withdrawals</div>
+        <div class="stat-value" id="withdrawalCount">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Test transactions</div>
+        <div class="stat-value" id="transactionCount">—</div>
+      </div>
     </section>
 
-    <div id="adminApp" hidden>
-      <div class="top">
-        <div>
-          <h1>Admin Dashboard</h1>
-          <p class="muted" style="margin:0">
-            Platform overview and operational tools
-          </p>
-        </div>
-
-        <div>
-          <span class="pill">● Admin session verified</span>
-          <p id="adminEmail" class="muted small"
-            style="text-align:right;margin:8px 0 0"></p>
-        </div>
-      </div>
-
-      <div class="notice warn">
-        <strong>Test mode:</strong>
-        The figures below are test-record counts only.
-        They are not client balances, investment performance,
-        or confirmed financial transactions.
-      </div>
-
-      <section class="grid section" aria-label="Test record counts">
-        <div class="stat">
-          <div class="stat-label">Test deposits</div>
-          <div class="stat-value" id="depositCount">—</div>
-          <div class="stat-note">Records visible under current database policies</div>
-        </div>
-
-        <div class="stat">
-          <div class="stat-label">Test withdrawals</div>
-          <div class="stat-value" id="withdrawalCount">—</div>
-          <div class="stat-note">Records visible under current database policies</div>
-        </div>
-
-        <div class="stat">
-          <div class="stat-label">Test transactions</div>
-          <div class="stat-value" id="transactionCount">—</div>
-          <div class="stat-note">Records visible under current database policies</div>
-        </div>
-
-        <div class="stat">
-          <div class="stat-label">Administrator</div>
-          <div class="stat-value" style="font-size:17px">
-            Verified
-          </div>
-          <div class="stat-note">Supabase session and profile role checked</div>
-        </div>
-      </section>
-
-      <section class="panel section">
-        <h2>Management areas</h2>
-
-        <div class="actions">
-          <div class="action">
-            <strong>Client accounts</strong>
-            <p>Next phase: search accounts and review profile status.</p>
-          </div>
-
-          <div class="action">
-            <strong>Deposits</strong>
-            <p>Next phase: review test deposit requests and statuses.</p>
-          </div>
-
-          <div class="action">
-            <strong>Withdrawals</strong>
-            <p>Next phase: review test withdrawal requests and statuses.</p>
-          </div>
-
-          <div class="action">
-            <strong>Transactions</strong>
-            <p>Inspect test transaction records in the table below.</p>
-          </div>
-
-          <div class="action">
-            <strong>Support</strong>
-            <p>Support requests currently arrive by email at the configured support inbox.</p>
-          </div>
-
-          <div class="action">
-            <strong>Security</strong>
-            <p>Access depends on the Supabase profile role and database access policies.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel section">
-        <div class="top" style="margin-bottom:10px">
-          <div>
-            <h2 style="margin-bottom:4px">Recent test transactions</h2>
-            <p class="muted small" style="margin:0">
-              Most recent records permitted by database access policies.
-            </p>
-          </div>
-
-          <button id="refreshButton" class="secondary" type="button">
-            Refresh
-          </button>
-        </div>
-
-        <div id="dataNotice" class="notice" role="status">
-          Loading test records…
-        </div>
-
-        <div class="table-wrap" style="margin-top:12px">
-          <table>
-            <thead>
-              <tr>
-                <th>Created</th>
-                <th>User ID</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Asset</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="transactionRows"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <p class="muted small" style="margin-top:20px">
-        Administrative actions that modify accounts or transaction
-        statuses are not enabled in this first version.
-      </p>
+    <div class="notice">
+      <strong>Test mode:</strong>
+      These figures are counts of test records only. They are not client
+      balances, investment performance, or confirmed financial transactions.
     </div>
+
+    <section class="panel" aria-labelledby="accountsHeading">
+      <h2 id="accountsHeading">Client accounts</h2>
+      <p class="muted small">
+        Read-only profile list. Only profiles permitted by Supabase
+        row-level security policies will appear.
+      </p>
+
+      <div class="search-row">
+        <input
+          id="accountSearch"
+          type="search"
+          placeholder="Search account ID or role"
+          aria-label="Search account IDs or roles"
+        >
+        <button id="refreshAccountsButton" type="button">
+          Refresh accounts
+        </button>
+      </div>
+
+      <div id="accountsNotice" class="notice" role="status">
+        Client profiles have not been loaded yet.
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Account ID</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody id="accountRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Administrator verified</h2>
+      <p class="muted">
+        Access is checked against the signed-in user's Supabase profile role.
+      </p>
+      <button id="refreshButton" class="primary" type="button">
+        Refresh dashboard
+      </button>
+      <div id="dashboardNotice" class="notice" role="status">
+        Dashboard data has not been loaded yet.
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Management areas</h2>
+      <div class="management-grid">
+        <div class="management-item">
+          <strong>Client accounts</strong>
+          <span class="muted small">
+            Search visible profile IDs and roles. Account changes are disabled.
+          </span>
+        </div>
+
+        <div class="management-item">
+          <strong>Deposits</strong>
+          <span class="muted small">
+            Deposit-request review is not enabled in this version.
+          </span>
+        </div>
+
+        <div class="management-item">
+          <strong>Withdrawals</strong>
+          <span class="muted small">
+            Withdrawal processing is not enabled in this version.
+          </span>
+        </div>
+
+        <div class="management-item">
+          <strong>Transactions</strong>
+          <span class="muted small">
+            Review the test transaction records below.
+          </span>
+        </div>
+
+        <div class="management-item">
+          <strong>Support</strong>
+          <span class="muted small">
+            Support requests use the configured support channel.
+          </span>
+        </div>
+
+        <div class="management-item">
+          <strong>Security</strong>
+          <span class="muted small">
+            Database policies must enforce permissions independently of this page.
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Recent test transactions</h2>
+      <p class="muted small">
+        Up to 10 test transaction records visible to this account.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>User ID</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Asset</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="transactionRows"></tbody>
+        </table>
+      </div>
+
+      <div id="transactionsNotice" class="notice" role="status">
+        Transactions have not been loaded yet.
+      </div>
+
+      <p class="muted small">
+        Administrative actions that modify accounts or transaction statuses
+        are not enabled in this version.
+      </p>
+    </section>
+
+    <footer>
+      AlpsCoinChain Investment Ventures · Administrative test dashboard
+    </footer>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    (() => {
-      const SUPABASE_URL =
-        'https://uevofmlzpwrdidjnwxfd.supabase.co';
+    'use strict';
 
-      const SUPABASE_PUBLISHABLE_KEY =
-        'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+    const SUPABASE_URL =
+      'https://uevofmlzpwrdidjnwxfd.supabase.co';
 
-      const $ = id => document.getElementById(id);
-      let client;
+    const SUPABASE_ANON_KEY =
+      'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
 
-      function deny(message) {
-        $('loading').hidden = true;
-        $('adminApp').hidden = true;
-        $('denied').hidden = false;
-        $('deniedMessage').textContent = message;
-        $('signOutButton').hidden = true;
+    const client = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    const $ = (id) => document.getElementById(id);
+
+    let visibleProfiles = [];
+    let dashboardUser = null;
+
+    function setNotice(id, message, isError = false) {
+      const element = $(id);
+      element.textContent = message;
+      element.className = isError ? 'notice error' : 'notice';
+    }
+
+    function addCell(row, value) {
+      const cell = document.createElement('td');
+      cell.textContent =
+        value === null || value === undefined || value === ''
+          ? '—'
+          : String(value);
+      row.appendChild(cell);
+    }
+
+    function renderAccounts() {
+      const query = $('accountSearch').value.trim().toLowerCase();
+      const body = $('accountRows');
+
+      body.replaceChildren();
+
+      const filtered = visibleProfiles.filter((profile) =>
+        String(profile.id || '').toLowerCase().includes(query) ||
+        String(profile.role || '').toLowerCase().includes(query)
+      );
+
+      if (!filtered.length) {
+        setNotice(
+          'accountsNotice',
+          visibleProfiles.length
+            ? 'No visible accounts match your search.'
+            : 'No profiles are visible under the current database policies.'
+        );
+        return;
       }
 
-      async function loadCounts() {
-        $('refreshButton').disabled = true;
-        $('dataNotice').textContent = 'Loading test records…';
+      setNotice(
+        'accountsNotice',
+        'Showing ' + filtered.length + ' of ' + visibleProfiles.length +
+        ' visible profiles. This may not include every registered user.'
+      );
 
-        try {
-          const queries = [
-            ['test_deposits', 'depositCount'],
-            ['test_withdrawals', 'withdrawalCount'],
-            ['test_transactions', 'transactionCount']
-          ];
+      for (const profile of filtered) {
+        const row = document.createElement('tr');
+        addCell(row, profile.id);
+        addCell(row, profile.role || 'Unspecified');
+        body.appendChild(row);
+      }
+    }
 
-          let anyError = false;
+    async function loadAccounts() {
+      const button = $('refreshAccountsButton');
+      button.disabled = true;
+      setNotice('accountsNotice', 'Loading visible profiles…');
 
-          for (const [table, target] of queries) {
-            const { count, error } = await client
-              .from(table)
-              .select('*', { count: 'exact', head: true });
+      try {
+        const { data, error } = await client
+          .from('profiles')
+          .select('id, role')
+          .order('id', { ascending: true })
+          .limit(200);
 
-            if (error) {
-              $(target).textContent = '—';
-              anyError = true;
-              console.warn('Count query failed:', table, error.message);
-            } else {
-              $(target).textContent = String(count ?? 0);
-            }
-          }
+        if (error) {
+          visibleProfiles = [];
+          $('accountRows').replaceChildren();
 
-          const { data, error } = await client
-            .from('test_transactions')
-            .select('id,user_id,type,amount,asset,status,created_at')
-            .order('created_at', { ascending: false })
-            .limit(10);
+          setNotice(
+            'accountsNotice',
+            'Profiles could not be loaded. Check the profiles table and Supabase row-level security policies.',
+            true
+          );
 
-          const body = $('transactionRows');
-          body.replaceChildren();
+          console.error('Profile query failed:', error.message);
+          return;
+        }
+
+        visibleProfiles = Array.isArray(data) ? data : [];
+        renderAccounts();
+      } catch (error) {
+        setNotice(
+          'accountsNotice',
+          'An unexpected error occurred while loading profiles.',
+          true
+        );
+        console.error(error);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function loadCounts() {
+      const definitions = [
+        { table: 'test_deposits', target: 'depositCount' },
+        { table: 'test_withdrawals', target: 'withdrawalCount' },
+        { table: 'test_transactions', target: 'transactionCount' }
+      ];
+
+      const results = await Promise.all(
+        definitions.map(async ({ table, target }) => {
+          const { count, error } = await client
+            .from(table)
+            .select('*', { count: 'exact', head: true });
 
           if (error) {
-            $('dataNotice').textContent =
-              'Administrator role verified, but database policies did not allow transaction records to load. Review Supabase row-level security policies before enabling record management.';
-            $('dataNotice').className = 'notice warn';
-            return;
+            $(target).textContent = '—';
+            console.error('Count query failed for ' + table + ':', error.message);
+            return table + ': unavailable';
           }
 
-          if (!data || data.length === 0) {
-            $('dataNotice').textContent = anyError
-              ? 'Some counts could not be loaded. No transaction rows are currently visible.'
-              : 'No test transaction records are currently visible.';
-            $('dataNotice').className = 'notice';
-            return;
-          }
+          $(target).textContent = String(count ?? 0);
+          return null;
+        })
+      );
 
-          $('dataNotice').textContent =
-            'Showing up to 10 test transaction records visible to this account.';
-          $('dataNotice').className = 'notice';
+      const errors = results.filter(Boolean);
 
-          for (const row of data) {
-            const tr = document.createElement('tr');
-
-            const values = [
-              row.created_at
-                ? new Date(row.created_at).toLocaleString()
-                : '—',
-              row.user_id || '—',
-              row.type || 'Transaction',
-              row.amount == null ? '—' : String(row.amount),
-              row.asset || '—',
-              row.status || 'Unknown'
-            ];
-
-            for (const value of values) {
-              const td = document.createElement('td');
-              td.textContent = String(value);
-              tr.appendChild(td);
-            }
-
-            body.appendChild(tr);
-          }
-        } catch (error) {
-          console.error('Failed to load test records:', error);
-          $('dataNotice').textContent =
-            'Could not load test records. Please refresh and try again.';
-          $('dataNotice').className = 'notice error';
-        } finally {
-          $('refreshButton').disabled = false;
-        }
+      if (errors.length) {
+        setNotice(
+          'dashboardNotice',
+          'Some test counts could not be loaded: ' + errors.join('; ') +
+          '. Check table names and database policies.',
+          true
+        );
+      } else {
+        setNotice(
+          'dashboardNotice',
+          'Test-record counts refreshed successfully. These are not financial balances.'
+        );
       }
+    }
 
-      async function init() {
-        if (
-          !window.supabase ||
-          typeof window.supabase.createClient !== 'function'
-        ) {
-          deny('The authentication library could not load. Check your connection and try again.');
+    async function loadTransactions() {
+      const body = $('transactionRows');
+      body.replaceChildren();
+      setNotice('transactionsNotice', 'Loading test transactions…');
+
+      try {
+        const { data, error } = await client
+          .from('test_transactions')
+          .select('created_at, user_id, type, amount, asset, status')
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (error) {
+          setNotice(
+            'transactionsNotice',
+            'Transactions could not be loaded. Check the table columns and database policies.',
+            true
+          );
+          console.error('Transaction query failed:', error.message);
           return;
         }
 
-        client = window.supabase.createClient(
-          SUPABASE_URL,
-          SUPABASE_PUBLISHABLE_KEY
-        );
+        if (!data || data.length === 0) {
+          setNotice(
+            'transactionsNotice',
+            'No test transaction records are visible to this account.'
+          );
+          return;
+        }
 
+        for (const transaction of data) {
+          const row = document.createElement('tr');
+
+          let created = '—';
+          if (transaction.created_at) {
+            const date = new Date(transaction.created_at);
+            if (!Number.isNaN(date.getTime())) {
+              created = date.toLocaleString();
+            }
+          }
+
+          addCell(row, created);
+          addCell(row, transaction.user_id);
+          addCell(row, transaction.type);
+          addCell(row, transaction.amount);
+          addCell(row, transaction.asset);
+          addCell(row, transaction.status);
+
+          body.appendChild(row);
+        }
+
+        setNotice(
+          'transactionsNotice',
+          'Showing ' + data.length + ' visible test transaction record(s).'
+        );
+      } catch (error) {
+        setNotice(
+          'transactionsNotice',
+          'An unexpected error occurred while loading test transactions.',
+          true
+        );
+        console.error(error);
+      }
+    }
+
+    async function refreshDashboard() {
+      $('refreshButton').disabled = true;
+
+      try {
+        await Promise.all([
+          loadCounts(),
+          loadAccounts(),
+          loadTransactions()
+        ]);
+      } catch (error) {
+        setNotice(
+          'dashboardNotice',
+          'The dashboard could not refresh all data.',
+          true
+        );
+        console.error(error);
+      } finally {
+        $('refreshButton').disabled = false;
+      }
+    }
+
+    async function init() {
+      setNotice('sessionNotice', 'Verifying administrator session…');
+
+      try {
         const { data, error } = await client.auth.getSession();
 
-        if (error || !data.session) {
-          deny('Please sign in first, then open the admin dashboard.');
+        if (error) throw error;
+
+        const session = data.session;
+
+        if (!session || !session.user) {
+          window.location.replace('/login.html');
           return;
         }
 
-        const user = data.session.user;
+        dashboardUser = session.user;
 
         const { data: profile, error: profileError } = await client
           .from('profiles')
           .select('role')
-          .eq('id', user.id)
+          .eq('id', dashboardUser.id)
           .maybeSingle();
 
-        if (
-          profileError ||
-          !profile ||
-          String(profile.role).toLowerCase() !== 'admin'
-        ) {
-          deny('This account does not have a readable profile with the admin role. Check the profiles table and its row-level security policies.');
+        if (profileError) {
+          setNotice(
+            'sessionNotice',
+            'Could not verify your administrator role. Check the profiles table and database policies.',
+            true
+          );
+          console.error('Role check failed:', profileError.message);
           return;
         }
 
-        $('adminEmail').textContent = user.email || 'Administrator';
-        $('loading').hidden = true;
-        $('adminApp').hidden = false;
-        $('signOutButton').hidden = false;
+        if (!profile || profile.role !== 'admin') {
+          setNotice(
+            'sessionNotice',
+            'Administrator access was not confirmed. Returning to login.',
+            true
+          );
 
-        await loadCounts();
+          await client.auth.signOut();
+          window.location.replace('/login.html');
+          return;
+        }
+
+        $('accountEmail').textContent =
+          'Signed-in administrator: ' + (dashboardUser.email || 'Email unavailable');
+
+        setNotice(
+          'sessionNotice',
+          'Administrator session verified.',
+          false
+        );
+
+        $('refreshButton').addEventListener('click', refreshDashboard);
+        $('refreshAccountsButton').addEventListener('click', loadAccounts);
+        $('accountSearch').addEventListener('input', renderAccounts);
+
+        $('signOutButton').addEventListener('click', async () => {
+          $('signOutButton').disabled = true;
+
+          try {
+            const { error: signOutError } = await client.auth.signOut();
+
+            if (signOutError) throw signOutError;
+
+            window.location.replace('/login.html');
+          } catch (error) {
+            setNotice(
+              'sessionNotice',
+              'Sign-out failed. Please try again.',
+              true
+            );
+            console.error(error);
+            $('signOutButton').disabled = false;
+          }
+        });
+
+        await refreshDashboard();
+
+      } catch (error) {
+        setNotice(
+          'sessionNotice',
+          'An error occurred while checking the administrator session.',
+          true
+        );
+        console.error(error);
       }
+    }
 
-      $('refreshButton').addEventListener('click', loadCounts);
-
-      $('signOutButton').addEventListener('click', async () => {
-        $('signOutButton').disabled = true;
-
-        const { error } = await client.auth.signOut();
-
-        if (error) {
-          $('dataNotice').textContent =
-            'Sign-out failed. Please try again.';
-          $('dataNotice').className = 'notice error';
-          $('signOutButton').disabled = false;
-          return;
-        }
-
-        window.location.replace('/login.html');
-      });
-
-      init().catch(error => {
-        console.error('Admin dashboard initialization failed:', error);
-        deny('The admin dashboard could not initialize. Please retry after checking the deployment logs.');
-      });
-    })();
+    init();
   </script>
 </body>
 </html>
