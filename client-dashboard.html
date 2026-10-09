@@ -135,7 +135,9 @@
           Activity shown here comes from test database tables.
           These records do not represent a verified available balance.
         </p>
-        <p id="activityMessage" role="status">Activity has not loaded yet.</p>
+        <p id="activityMessage" role="status">
+          Activity has not loaded yet.
+        </p>
         <div id="activityList"></div>
         <button id="refreshActivityButton" type="button">
           Refresh activity
@@ -145,22 +147,34 @@
       <div class="card">
         <h2>Contact support</h2>
         <p class="muted">
-          This form is a placeholder and does not send messages yet.
+          Send a message to our support team. Do not include passwords
+          or sensitive financial information.
         </p>
 
         <form id="supportForm">
           <label for="supportSubject">Subject</label>
-          <input id="supportSubject" name="subject"
-                 maxlength="150" required>
+          <input
+            id="supportSubject"
+            name="subject"
+            maxlength="150"
+            required
+          >
 
           <label for="supportText">Message</label>
-          <textarea id="supportText" name="message"
-                    maxlength="3000" required></textarea>
+          <textarea
+            id="supportText"
+            name="message"
+            maxlength="3000"
+            required
+          ></textarea>
 
-          <button type="submit">Check support form</button>
+          <button id="supportSubmitButton" type="submit">
+            Send to support
+          </button>
         </form>
 
-        <p id="supportMessage" role="status" hidden></p>
+        <p id="supportMessage" class="notice"
+           role="status" aria-live="polite" hidden></p>
       </div>
     </section>
   </main>
@@ -213,10 +227,11 @@
 
       try {
         if (!supabaseClient || !currentUser) {
-          throw new Error('Your session is unavailable. Please sign in again.');
+          throw new Error(
+            'Your session is unavailable. Please sign in again.'
+          );
         }
 
-        // Explicit user_id filters supplement database row-level security.
         const results = await Promise.all([
           supabaseClient
             .from('test_deposits')
@@ -241,10 +256,11 @@
         ]);
 
         const failed = results.find(result => result.error);
+
         if (failed) {
           console.error('Activity query failed:', failed.error);
           throw new Error(
-            'Activity could not be loaded. Please check your database access and try again.'
+            'Activity could not be loaded. Check database access and try again.'
           );
         }
 
@@ -263,10 +279,9 @@
           }))
         ];
 
-        entries.sort((a, b) => {
-          return new Date(b.created_at || 0) -
-                 new Date(a.created_at || 0);
-        });
+        entries.sort((a, b) =>
+          new Date(b.created_at || 0) - new Date(a.created_at || 0)
+        );
 
         if (entries.length === 0) {
           activityMessage.textContent =
@@ -406,13 +421,73 @@
       .addEventListener('click', loadActivity);
 
     document.getElementById('supportForm')
-      .addEventListener('submit', event => {
+      .addEventListener('submit', async event => {
         event.preventDefault();
 
-        const message = document.getElementById('supportMessage');
-        message.textContent =
-          'The support form is not connected to email delivery yet. No message was sent.';
-        message.hidden = false;
+        const form = event.currentTarget;
+        const button = document.getElementById('supportSubmitButton');
+        const status = document.getElementById('supportMessage');
+        const subject =
+          document.getElementById('supportSubject').value.trim();
+        const message =
+          document.getElementById('supportText').value.trim();
+
+        if (!subject || !message) {
+          status.textContent =
+            'Please enter both a subject and a message.';
+          status.hidden = false;
+          return;
+        }
+
+        if (!currentUser || !currentUser.email) {
+          status.textContent =
+            'Your session has expired. Please sign in again.';
+          status.hidden = false;
+          return;
+        }
+
+        button.disabled = true;
+        button.textContent = 'Sending…';
+        status.hidden = true;
+
+        try {
+          const response = await fetch('/api/contact', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: currentUser.email,
+              email: currentUser.email,
+              subject,
+              message
+            })
+          });
+
+          const result = await response.json().catch(() => ({}));
+
+          if (!response.ok || !result.success) {
+            throw new Error(
+              result.message ||
+              'Your message could not be sent. Please try again later.'
+            );
+          }
+
+          status.textContent =
+            'Your support message was sent successfully.';
+          status.hidden = false;
+          form.reset();
+
+        } catch (error) {
+          console.error('Support message failed:', error);
+          status.textContent =
+            error.message ||
+            'Unable to send your message right now.';
+          status.hidden = false;
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Send to support';
+        }
       });
 
     document.getElementById('retryButton')
