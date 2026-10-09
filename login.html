@@ -246,7 +246,7 @@
         const emailInput = document.getElementById("email");
         const message = document.getElementById("message");
 
-        // Show or hide the password beside the password field.
+        // Show or hide the password.
         togglePassword.addEventListener("click", function() {
             const showingPassword = passwordInput.type === "password";
 
@@ -299,39 +299,9 @@
             }
         });
 
-        // Create an account.
-        signupButton.addEventListener("click", async function() {
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-
-            if (!email || !password) {
-                message.textContent =
-                    "Enter an email address and password first.";
-                return;
-            }
-
-            message.textContent = "Creating account...";
-            signupButton.disabled = true;
-
-            try {
-                const { error } = await supabaseClient.auth.signUp({
-                    email,
-                    password
-                });
-
-                if (error) {
-                    message.textContent = error.message;
-                    return;
-                }
-
-                message.textContent =
-                    "Account request submitted. Check your email for confirmation.";
-            } catch (error) {
-                message.textContent =
-                    "Unable to create the account right now. Please try again.";
-            } finally {
-                signupButton.disabled = false;
-            }
+        // Open the separate registration page.
+        signupButton.addEventListener("click", function() {
+            window.location.href = "signup.html";
         });
 
         // Request a password-reset email.
