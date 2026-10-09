@@ -42,6 +42,13 @@
       overflow-wrap: anywhere;
     }
 
+    .activity-item {
+      border: 1px solid #e4e7ec;
+      box-shadow: none;
+      margin: 12px 0;
+      padding: 14px;
+    }
+
     .muted { color: #667085; }
 
     button {
@@ -99,9 +106,7 @@
 
     <section id="errorScreen" class="card" hidden>
       <h2>Dashboard could not load</h2>
-      <p id="errorMessage" class="notice">
-        Please try again.
-      </p>
+      <p id="errorMessage" class="notice">Please try again.</p>
       <p><a href="/login.html">Return to login</a></p>
       <button id="retryButton" type="button">Try again</button>
     </section>
@@ -119,9 +124,22 @@
         <h2>Account information</h2>
         <p><strong>Account email:</strong> <span id="accountEmail"></span></p>
         <p class="muted">
-          Account balances and transaction history have not been loaded
-          by this page.
+          Your available balance is not calculated on this page.
+          See Recent Account Activity for available test records.
         </p>
+      </div>
+
+      <div class="card">
+        <h2>Recent Account Activity</h2>
+        <p class="muted">
+          Activity shown here comes from test database tables.
+          These records do not represent a verified available balance.
+        </p>
+        <p id="activityMessage" role="status">Activity has not loaded yet.</p>
+        <div id="activityList"></div>
+        <button id="refreshActivityButton" type="button">
+          Refresh activity
+        </button>
       </div>
 
       <div class="card">
@@ -147,7 +165,6 @@
     </section>
   </main>
 
-  <!-- Load the Supabase library before the dashboard script. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -162,13 +179,149 @@
     const errorScreen = document.getElementById('errorScreen');
     const errorMessage = document.getElementById('errorMessage');
 
-    let supabaseClient;
+    let supabaseClient = null;
+    let currentUser = null;
 
     function showError(message) {
       loadingScreen.hidden = true;
       dashboard.hidden = true;
       errorScreen.hidden = false;
       errorMessage.textContent = message;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[character]);
+    }
+
+    async function loadActivity() {
+      const activityMessage =
+        document.getElementById('activityMessage');
+      const activityList =
+        document.getElementById('activityList');
+      const refreshButton =
+        document.getElementById('refreshActivityButton');
+
+      activityMessage.textContent = 'Loading account activity…';
+      activityList.replaceChildren();
+      refreshButton.disabled = true;
+
+      try {
+        if (!supabaseClient || !currentUser) {
+          throw new Error('Your session is unavailable. Please sign in again.');
+        }
+
+        // Explicit user_id filters supplement database row-level security.
+        const results = await Promise.all([
+          supabaseClient
+            .from('test_deposits')
+            .select('id, user_id, amount, asset, status, reference, created_at')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false })
+            .limit(50),
+
+          supabaseClient
+            .from('test_withdrawals')
+            .select('id, user_id, amount, asset, status, created_at')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false })
+            .limit(50),
+
+          supabaseClient
+            .from('test_transactions')
+            .select('id, user_id, type, amount, asset, status, reference, created_at')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false })
+            .limit(50)
+        ]);
+
+        const failed = results.find(result => result.error);
+        if (failed) {
+          console.error('Activity query failed:', failed.error);
+          throw new Error(
+            'Activity could not be loaded. Please check your database access and try again.'
+          );
+        }
+
+        const entries = [
+          ...results[0].data.map(row => ({
+            ...row,
+            activityType: 'Deposit'
+          })),
+          ...results[1].data.map(row => ({
+            ...row,
+            activityType: 'Withdrawal'
+          })),
+          ...results[2].data.map(row => ({
+            ...row,
+            activityType: row.type || 'Transaction'
+          }))
+        ];
+
+        entries.sort((a, b) => {
+          return new Date(b.created_at || 0) -
+                 new Date(a.created_at || 0);
+        });
+
+        if (entries.length === 0) {
+          activityMessage.textContent =
+            'No test activity records were found for your account.';
+          return;
+        }
+
+        activityMessage.textContent =
+          'Showing up to 50 records from each test table.';
+
+        const fragment = document.createDocumentFragment();
+
+        entries.forEach(row => {
+          const item = document.createElement('div');
+          item.className = 'card activity-item';
+
+          const date = row.created_at
+            ? new Date(row.created_at).toLocaleString()
+            : 'Date unavailable';
+
+          const amount = Number(row.amount);
+          const amountText = Number.isFinite(amount)
+            ? amount.toLocaleString(undefined, {
+                maximumFractionDigits: 8
+              })
+            : 'Unavailable';
+
+          const referenceHtml = row.reference
+            ? '<p><strong>Reference:</strong> ' +
+              escapeHtml(row.reference) + '</p>'
+            : '';
+
+          item.innerHTML =
+            '<strong>' + escapeHtml(row.activityType) + '</strong>' +
+            '<p><strong>Amount:</strong> ' +
+              escapeHtml(amountText) + ' ' +
+              escapeHtml(row.asset || '') + '</p>' +
+            '<p><strong>Status:</strong> ' +
+              escapeHtml(row.status || 'Unknown') + '</p>' +
+            '<p><strong>Date:</strong> ' +
+              escapeHtml(date) + '</p>' +
+            referenceHtml;
+
+          fragment.appendChild(item);
+        });
+
+        activityList.appendChild(fragment);
+
+      } catch (error) {
+        console.error('Could not load account activity:', error);
+        activityMessage.textContent =
+          error.message || 'Account activity could not be loaded.';
+      } finally {
+        refreshButton.disabled = false;
+      }
     }
 
     async function loadDashboard() {
@@ -208,24 +361,27 @@
           return;
         }
 
-        const user = data.session.user;
+        currentUser = data.session.user;
 
         document.getElementById('userEmail').textContent =
-          user.email || 'Not provided';
+          currentUser.email || 'Not provided';
 
         document.getElementById('accountEmail').textContent =
-          user.email || 'Not provided';
+          currentUser.email || 'Not provided';
 
         document.getElementById('userId').textContent =
-          user.id || 'Unavailable';
+          currentUser.id || 'Unavailable';
 
         loadingScreen.hidden = true;
         dashboard.hidden = false;
 
+        await loadActivity();
+
       } catch (error) {
         console.error('Dashboard initialization failed:', error);
         showError(
-          error.message || 'An unexpected error prevented the dashboard from loading.'
+          error.message ||
+          'An unexpected error prevented the dashboard from loading.'
         );
       }
     }
@@ -237,14 +393,20 @@
             const { error } = await supabaseClient.auth.signOut();
             if (error) throw error;
           }
+
+          currentUser = null;
           window.location.replace('/login.html');
+
         } catch (error) {
           showError('Sign-out failed. Please try again.');
         }
       });
 
+    document.getElementById('refreshActivityButton')
+      .addEventListener('click', loadActivity);
+
     document.getElementById('supportForm')
-      .addEventListener('submit', (event) => {
+      .addEventListener('submit', event => {
         event.preventDefault();
 
         const message = document.getElementById('supportMessage');
