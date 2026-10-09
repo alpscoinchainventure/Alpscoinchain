@@ -1,4 +1,6 @@
-const VERCEL_ORIGIN = "https://alpscoinchain-b9e0bzu6m-alpscoinchaininvestmentventures.vercel.app";
+
+const VERCEL_ORIGIN =
+  "https://alpscoinchain-fzvb1lpcm-alpscoinchaininvestmentventures.vercel.app";
 
 export default {
   async fetch(request) {
