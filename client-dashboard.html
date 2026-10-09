@@ -89,6 +89,16 @@
       overflow-wrap: anywhere;
     }
 
+    .notice.success {
+      background: #ecfdf3;
+      color: #05603a;
+    }
+
+    .notice.error {
+      background: #fef3f2;
+      color: #b42318;
+    }
+
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -106,7 +116,9 @@
 
     <section id="errorScreen" class="card" hidden>
       <h2>Dashboard could not load</h2>
-      <p id="errorMessage" class="notice">Please try again.</p>
+      <p id="errorMessage" class="notice error">
+        Please try again.
+      </p>
       <p><a href="/login.html">Return to login</a></p>
       <button id="retryButton" type="button">Try again</button>
     </section>
@@ -173,8 +185,13 @@
           </button>
         </form>
 
-        <p id="supportMessage" class="notice"
-           role="status" aria-live="polite" hidden></p>
+        <p
+          id="supportMessage"
+          class="notice"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></p>
       </div>
     </section>
   </main>
@@ -201,6 +218,13 @@
       dashboard.hidden = true;
       errorScreen.hidden = false;
       errorMessage.textContent = message;
+    }
+
+    function setSupportStatus(message, type = '') {
+      const status = document.getElementById('supportMessage');
+      status.textContent = message;
+      status.className = 'notice' + (type ? ' ' + type : '');
+      status.hidden = false;
     }
 
     function escapeHtml(value) {
@@ -345,8 +369,10 @@
       errorScreen.hidden = true;
 
       try {
-        if (!window.supabase ||
-            typeof window.supabase.createClient !== 'function') {
+        if (
+          !window.supabase ||
+          typeof window.supabase.createClient !== 'function'
+        ) {
           throw new Error(
             'The Supabase library did not load. Check your connection and try again.'
           );
@@ -425,37 +451,44 @@
         event.preventDefault();
 
         const form = event.currentTarget;
-        const button = document.getElementById('supportSubmitButton');
-        const status = document.getElementById('supportMessage');
+        const button =
+          document.getElementById('supportSubmitButton');
+
         const subject =
           document.getElementById('supportSubject').value.trim();
+
         const message =
           document.getElementById('supportText').value.trim();
 
         if (!subject || !message) {
-          status.textContent =
-            'Please enter both a subject and a message.';
-          status.hidden = false;
+          setSupportStatus(
+            'Please enter both a subject and a message.',
+            'error'
+          );
           return;
         }
 
         if (!currentUser || !currentUser.email) {
-          status.textContent =
-            'Your session has expired. Please sign in again.';
-          status.hidden = false;
+          setSupportStatus(
+            'Your session has expired. Please sign in again.',
+            'error'
+          );
           return;
         }
 
         button.disabled = true;
         button.textContent = 'Sending…';
-        status.hidden = true;
+
+        setSupportStatus('Sending your message to support…');
 
         try {
           const response = await fetch('/api/contact', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
             },
+            credentials: 'same-origin',
             body: JSON.stringify({
               name: currentUser.email,
               email: currentUser.email,
@@ -464,26 +497,40 @@
             })
           });
 
-          const result = await response.json().catch(() => ({}));
+          const responseText = await response.text();
+          let result = {};
+
+          try {
+            result = responseText ? JSON.parse(responseText) : {};
+          } catch {
+            throw new Error(
+              'The server returned an unexpected response. Please try again later.'
+            );
+          }
 
           if (!response.ok || !result.success) {
             throw new Error(
               result.message ||
-              'Your message could not be sent. Please try again later.'
+              'The server could not accept your support message.'
             );
           }
 
-          status.textContent =
-            'Your support message was sent successfully.';
-          status.hidden = false;
+          setSupportStatus(
+            result.message ||
+              'Your message was accepted by the email provider.',
+            'success'
+          );
+
           form.reset();
 
         } catch (error) {
           console.error('Support message failed:', error);
-          status.textContent =
+
+          setSupportStatus(
             error.message ||
-            'Unable to send your message right now.';
-          status.hidden = false;
+              'Unable to send your message. Please try again later.',
+            'error'
+          );
         } finally {
           button.disabled = false;
           button.textContent = 'Send to support';
