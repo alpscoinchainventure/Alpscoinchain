@@ -1,4 +1,3 @@
-
 import 'dotenv/config';
 import express from 'express';
 import nodemailer from 'nodemailer';
@@ -16,9 +15,23 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
+// Parse incoming request bodies.
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve the dashboard directly before static-file middleware.
+// Disable browser caching while diagnosing the blank dashboard.
+app.get('/client-dashboard.html', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+
+  res.sendFile(path.join(__dirname, 'client-dashboard.html'));
+});
+
+// Serve other static files without automatically serving index.html.
 app.use(express.static(__dirname, {
   index: false
 }));
@@ -45,6 +58,7 @@ async function sendEmail({ to, subject, text, html }) {
     process.env.SMTP_USER ||
     'delivered@resend.dev';
 
+  // Use Resend when an API key is configured.
   if (resend) {
     await resend.emails.send({
       from: fromEmail,
@@ -56,6 +70,7 @@ async function sendEmail({ to, subject, text, html }) {
     return;
   }
 
+  // Otherwise, use the configured SMTP provider.
   const smtpHost = process.env.SMTP_HOST;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
@@ -86,11 +101,12 @@ async function sendEmail({ to, subject, text, html }) {
 }
 
 /*
- * TEMPORARY DIAGNOSTIC ROUTE
- * Used to check whether Vercel can return visible HTML.
+ * Temporary diagnostic route.
+ * Checks whether the server can return visible HTML.
  */
 app.get('/dashboard-test', (req, res) => {
   res.set('Cache-Control', 'no-store');
+
   res.status(200).type('html').send(
     '<!DOCTYPE html>' +
     '<html lang="en">' +
@@ -107,6 +123,9 @@ app.get('/dashboard-test', (req, res) => {
   );
 });
 
+/*
+ * Contact form email endpoint.
+ */
 app.post('/api/contact', async (req, res) => {
   const { name, email, subject, message } = req.body;
 
@@ -158,6 +177,9 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
+/*
+ * Trade notification endpoint.
+ */
 app.post('/api/trade', async (req, res) => {
   const {
     clientEmail,
@@ -228,16 +250,23 @@ app.post('/api/trade', async (req, res) => {
 });
 
 /*
- * Serve the actual HTML pages.
+ * Login page.
  */
 app.get('/login.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
 });
 
+/*
+ * Dashboard route.
+ * The earlier no-cache route handles dashboard requests first.
+ */
 app.get('/client-dashboard.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'client-dashboard.html'));
 });
 
+/*
+ * Password-reset page.
+ */
 app.get('/reset-password.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'reset-password.html'));
 });
@@ -250,7 +279,7 @@ app.get('/', (req, res) => {
 });
 
 /*
- * SPA fallback for other routes.
+ * Fallback for other routes.
  */
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
