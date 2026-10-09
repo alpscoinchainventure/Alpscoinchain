@@ -1,3 +1,4 @@
+
 import 'dotenv/config';
 import express from 'express';
 import nodemailer from 'nodemailer';
@@ -42,6 +43,69 @@ function getSupportRecipient() {
     process.env.SMTP_USER ||
     ''
   );
+}
+
+// Monday-Friday, 08:00-18:00 UK local time.
+// Europe/London automatically handles GMT and BST.
+function isWithinSupportHours(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(date);
+
+  const values = Object.fromEntries(
+    parts
+      .filter(part => part.type !== 'literal')
+      .map(part => [part.type, part.value])
+  );
+
+  const weekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+    .includes(values.weekday);
+
+  const minutes =
+    Number(values.hour) * 60 + Number(values.minute);
+
+  return weekday && minutes >= 480 && minutes < 1080;
+}
+
+// Build an automatic acknowledgment for the customer.
+function buildAcknowledgment(subject) {
+  const duringBusinessHours = isWithinSupportHours();
+
+  const message = duringBusinessHours
+    ? 'Thank you for contacting AlpsCoinChain Investment Ventures. We have received your support request during our business hours. Our support team will review your enquiry as soon as possible.'
+    : 'Thank you for contacting AlpsCoinChain Investment Ventures. We have received your support request outside our business hours. Our support team operates Monday to Friday, 08:00-18:00 UK time, and will review your request during the next business period.';
+
+  const text =
+    'Hello,\n\n' +
+    message +
+    '\n\nYour subject: ' + subject +
+    '\n\nThis is an automatic acknowledgment, not a personal response. If you need to add information, you can reply to this email.\n\n' +
+    'Kind regards,\n' +
+    'AlpsCoinChain Investment Ventures\n' +
+    'Support Team';
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937">
+      <p>Hello,</p>
+      <p>${escapeHtml(message)}</p>
+      <p><strong>Your subject:</strong> ${escapeHtml(subject)}</p>
+      <p>This is an automatic acknowledgment, not a personal response.
+      If you need to add information, you can reply to this email.</p>
+      <p>Kind regards,<br>
+      AlpsCoinChain Investment Ventures<br>
+      Support Team</p>
+    </div>
+  `;
+
+  return {
+    subject: 'We received your support request: ' + subject,
+    text,
+    html
+  };
 }
 
 async function sendEmail({
@@ -143,8 +207,9 @@ app.get('/dashboard-test', (req, res) => {
 
 /*
  * Support contact endpoint.
- * Support requests go to the configured support mailbox.
- * Reply-To is set to the customer's submitted email address.
+ * 1. Send the support request to the support inbox.
+ * 2. Set Reply-To to the customer's email.
+ * 3. Send an automatic acknowledgment to the customer.
  */
 app.post('/api/contact', async (req, res) => {
   const name = String(req.body?.name || '').trim();
@@ -171,7 +236,6 @@ app.post('/api/contact', async (req, res) => {
     });
   }
 
-  // Basic email-format check.
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({
       success: false,
@@ -197,22 +261,18 @@ app.post('/api/contact', async (req, res) => {
     <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
   `;
 
+  // First, deliver the original request to the support mailbox.
   try {
     await sendEmail({
       to: recipient,
       replyTo: email,
-      subject: `[AlpsCoinChain Support] ${subject}`,
+      subject: '[AlpsCoinChain Support] ' + subject,
       text:
-        `Account: ${name}\n` +
-        `Reply email: ${email}\n` +
-        `Subject: ${subject}\n\n` +
-        `Message:\n${message}`,
+        'Account: ' + name + '\n' +
+        'Reply email: ' + email + '\n' +
+        'Subject: ' + subject + '\n\n' +
+        'Message:\n' + message,
       html: htmlMessage
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: 'Your support message was accepted by the email provider.'
     });
   } catch (error) {
     console.error('Support email delivery failed:', error);
@@ -221,6 +281,32 @@ app.post('/api/contact', async (req, res) => {
       success: false,
       message:
         'Your message could not be sent. Please try again later or contact support through the official support channel.'
+    });
+  }
+
+  // Next, acknowledge the request to the customer.
+  // Failure here must not mark the original request as failed.
+  try {
+    const acknowledgment = buildAcknowledgment(subject);
+
+    await sendEmail({
+      to: email,
+      replyTo: recipient,
+      ...acknowledgment
+    });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        'Your support request was received, and an acknowledgment email was accepted by the email provider.'
+    });
+  } catch (error) {
+    console.error('Support acknowledgment email failed:', error);
+
+    return res.status(200).json({
+      success: true,
+      message:
+        'Your support request was received, but we could not send the automatic acknowledgment email.'
     });
   }
 });
@@ -276,26 +362,30 @@ app.post('/api/trade', async (req, res) => {
     <p><strong>Asset:</strong> ${escapeHtml(asset)}</p>
     <p><strong>Market:</strong> ${escapeHtml(market || 'N/A')}</p>
     <p><strong>Amount:</strong> ${escapeHtml(parsedAmount.toString())}</p>
-    <p>This email is a notification only; it does not confirm trade execution.</p>
+    <p>This is a notification only; it does not confirm trade execution.</p>
   `;
 
   try {
     await sendEmail({
       to: String(clientEmail),
-      subject: `[AlpsCoinChain] ${actionLabel} order notification for ${String(asset).slice(0, 100)}`,
+      subject:
+        '[AlpsCoinChain] ' + actionLabel +
+        ' order notification for ' + String(asset).slice(0, 100),
       text:
-        `Client: ${clientEmail}\n` +
-        `Action: ${actionLabel}\n` +
-        `Asset: ${asset}\n` +
-        `Amount: ${parsedAmount}\n` +
-        `Market: ${market || 'N/A'}\n\n` +
+        'Client: ' + clientEmail + '\n' +
+        'Action: ' + actionLabel + '\n' +
+        'Asset: ' + asset + '\n' +
+        'Amount: ' + parsedAmount + '\n' +
+        'Market: ' + (market || 'N/A') + '\n\n' +
         'This is a notification only; it does not confirm trade execution.',
       html: htmlMessage
     });
 
     return res.json({
       success: true,
-      message: `${actionLabel} notification email was accepted by the email provider.`
+      message:
+        actionLabel +
+        ' notification email was accepted by the email provider.'
     });
   } catch (error) {
     console.error('Trade notification failed:', error);
@@ -328,5 +418,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`AlpsCoinChain server listening on port ${port}`);
+  console.log('AlpsCoinChain server listening on port ' + port);
 });
