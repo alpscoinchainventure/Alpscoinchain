@@ -1,4 +1,3 @@
-
 import 'dotenv/config';
 import express from 'express';
 import nodemailer from 'nodemailer';
@@ -45,7 +44,13 @@ function getSupportRecipient() {
   );
 }
 
-async function sendEmail({ to, subject, text, html }) {
+async function sendEmail({
+  to,
+  subject,
+  text,
+  html,
+  replyTo
+}) {
   if (!to) {
     throw new Error(
       'Support email recipient is not configured. Set TO_EMAIL in the deployment environment.'
@@ -58,6 +63,7 @@ async function sendEmail({ to, subject, text, html }) {
     const result = await resend.emails.send({
       from: fromEmail,
       to: [to],
+      ...(replyTo ? { replyTo } : {}),
       subject,
       text,
       html
@@ -94,6 +100,7 @@ async function sendEmail({ to, subject, text, html }) {
   await transporter.sendMail({
     from: fromEmail,
     to,
+    ...(replyTo ? { replyTo } : {}),
     subject,
     text,
     html
@@ -104,8 +111,8 @@ async function sendEmail({ to, subject, text, html }) {
 app.get('/client-dashboard.html', (req, res) => {
   res.set({
     'Cache-Control': 'no-store, no-cache, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
+    Pragma: 'no-cache',
+    Expires: '0'
   });
 
   res.sendFile(path.join(__dirname, 'client-dashboard.html'));
@@ -136,8 +143,8 @@ app.get('/dashboard-test', (req, res) => {
 
 /*
  * Support contact endpoint.
- * The authenticated dashboard supplies the signed-in user's email.
- * This endpoint sends to the configured support recipient.
+ * Support requests go to the configured support mailbox.
+ * Reply-To is set to the customer's submitted email address.
  */
 app.post('/api/contact', async (req, res) => {
   const name = String(req.body?.name || '').trim();
@@ -193,6 +200,7 @@ app.post('/api/contact', async (req, res) => {
   try {
     await sendEmail({
       to: recipient,
+      replyTo: email,
       subject: `[AlpsCoinChain Support] ${subject}`,
       text:
         `Account: ${name}\n` +
