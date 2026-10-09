@@ -5,15 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Create Account | AlpsCoinChain</title>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       min-height: 100vh;
@@ -35,10 +30,7 @@
       padding: 30px;
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 8px;
-    }
+    h1 { text-align: center; margin-bottom: 8px; }
 
     .subtitle {
       text-align: center;
@@ -64,9 +56,7 @@
       outline: none;
     }
 
-    input:focus {
-      border-color: #6366f1;
-    }
+    input:focus { border-color: #6366f1; }
 
     button {
       width: 100%;
@@ -79,9 +69,7 @@
       cursor: pointer;
     }
 
-    button:hover {
-      background: #4f46e5;
-    }
+    button:hover { background: #4f46e5; }
 
     button:disabled {
       opacity: 0.65;
@@ -93,9 +81,7 @@
       background: #1e293b;
     }
 
-    .secondary:hover {
-      background: #334155;
-    }
+    .secondary:hover { background: #334155; }
 
     .message {
       min-height: 22px;
@@ -113,14 +99,8 @@
       font-size: 14px;
     }
 
-    a {
-      color: #a5b4fc;
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
+    a { color: #a5b4fc; text-decoration: none; }
+    a:hover { text-decoration: underline; }
   </style>
 </head>
 
@@ -131,60 +111,34 @@
 
     <form id="signupForm">
       <label for="fullName">Full name</label>
-      <input
-        id="fullName"
-        type="text"
+      <input id="fullName" type="text"
         placeholder="Enter your full name"
-        autocomplete="name"
-        required
-      >
+        autocomplete="name" required>
 
       <label for="email">Email address</label>
-      <input
-        id="email"
-        type="email"
+      <input id="email" type="email"
         placeholder="Enter your email"
-        autocomplete="email"
-        required
-      >
+        autocomplete="email" required>
 
       <label for="password">Password</label>
-      <input
-        id="password"
-        type="password"
+      <input id="password" type="password"
         placeholder="Create a password (at least 8 characters)"
-        autocomplete="new-password"
-        minlength="8"
-        required
-      >
+        autocomplete="new-password" minlength="8" required>
 
       <label for="confirmPassword">Confirm password</label>
-      <input
-        id="confirmPassword"
-        type="password"
+      <input id="confirmPassword" type="password"
         placeholder="Enter your password again"
-        autocomplete="new-password"
-        minlength="8"
-        required
-      >
+        autocomplete="new-password" minlength="8" required>
 
-      <div
-        id="message"
-        class="message"
-        role="status"
-        aria-live="polite"
-      ></div>
+      <div id="message" class="message"
+        role="status" aria-live="polite"></div>
 
       <button id="signupButton" type="submit">
         Create Account
       </button>
     </form>
 
-    <button
-      class="secondary"
-      type="button"
-      id="backButton"
-    >
+    <button class="secondary" type="button" id="backButton">
       Back to Sign In
     </button>
 
@@ -211,30 +165,23 @@
     const message = document.getElementById("message");
 
     document.getElementById("backButton").addEventListener(
-      "click",
-      function () {
+      "click", function () {
         window.location.href = "login.html";
       }
     );
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
+      message.textContent = "";
 
-      const fullName = document
-        .getElementById("fullName")
-        .value.trim();
-
-      const email = document
-        .getElementById("email")
-        .value.trim();
-
+      const fullName =
+        document.getElementById("fullName").value.trim();
+      const email =
+        document.getElementById("email").value.trim();
       const password =
         document.getElementById("password").value;
-
       const confirmPassword =
         document.getElementById("confirmPassword").value;
-
-      message.textContent = "";
 
       if (!fullName) {
         message.textContent = "Please enter your full name.";
@@ -259,14 +206,12 @@
       try {
         const { data, error } =
           await supabaseClient.auth.signUp({
-            email: email,
-            password: password,
+            email,
+            password,
             options: {
-              data: {
-                full_name: fullName
-              },
+              data: { full_name: fullName },
               emailRedirectTo:
-                window.location.origin + "/login.html"
+                window.location.origin + "/auth-callback.html"
             }
           });
 
@@ -277,17 +222,17 @@
 
         if (data.session) {
           message.textContent =
-            "Your account was created. Redirecting...";
-
+            "Account created. Opening your dashboard...";
           window.location.href = "client-dashboard.html";
           return;
         }
 
         message.textContent =
-          "Registration submitted. Please check your email " +
-          "to confirm your account, then sign in.";
+          "Registration submitted. Check your email and confirm " +
+          "your account before signing in.";
       } catch (error) {
         message.textContent =
+          error.message ||
           "Unable to create your account right now. Please try again.";
       } finally {
         button.disabled = false;
