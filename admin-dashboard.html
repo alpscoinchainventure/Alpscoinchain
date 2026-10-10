@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -431,11 +432,8 @@
       setNotice('accountsNotice', 'Loading visible profiles…');
 
       try {
-        const { data, error } = await client
-          .from('profiles')
-          .select('id, role')
-          .order('id', { ascending: true })
-          .limit(200);
+        // The database function verifies that the caller is an administrator.
+        const { data, error } = await client.rpc('admin_list_profiles');
 
         if (error) {
           visibleProfiles = [];
@@ -443,7 +441,7 @@
 
           setNotice(
             'accountsNotice',
-            'Profiles could not be loaded. Check the profiles table and Supabase row-level security policies.',
+            'Profiles could not be loaded. Check the admin_list_profiles function and its permissions.',
             true
           );
 
