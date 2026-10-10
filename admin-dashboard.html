@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -101,18 +100,28 @@
       margin: 14px 0;
     }
 
-    input, button {
+    input, button, textarea {
       font: inherit;
       border-radius: 8px;
+    }
+
+    input, textarea {
+      padding: 11px 12px;
+      color: var(--text);
+      background: #0d1527;
+      border: 1px solid var(--line);
+      width: 100%;
     }
 
     input {
       flex: 1;
       min-width: 190px;
-      padding: 11px 12px;
-      color: var(--text);
-      background: #0d1527;
-      border: 1px solid var(--line);
+    }
+
+    textarea {
+      min-height: 85px;
+      resize: vertical;
+      margin-top: 8px;
     }
 
     button {
@@ -129,6 +138,18 @@
     .primary {
       background: #17694f;
       border-color: #248566;
+    }
+
+    .danger-button {
+      background: #4a252c;
+      border-color: #874747;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      min-width: 175px;
     }
 
     .table-wrap {
@@ -166,7 +187,10 @@
       border-radius: 9px;
     }
 
-    .management-item strong { display: block; margin-bottom: 5px; }
+    .management-item strong {
+      display: block;
+      margin-bottom: 5px;
+    }
 
     footer {
       margin-top: 25px;
@@ -181,6 +205,7 @@
       main { padding: 18px 12px 35px; }
       header { padding: 15px; }
       h1 { font-size: 23px; }
+      .panel { padding: 14px; }
     }
   </style>
 </head>
@@ -195,9 +220,11 @@
     <section>
       <h1>Admin Dashboard</h1>
       <p class="muted">Platform overview and operational tools.</p>
+
       <div id="sessionNotice" class="notice" role="status">
         Verifying administrator session…
       </div>
+
       <p class="small" id="accountEmail"></p>
     </section>
 
@@ -206,10 +233,12 @@
         <div class="stat-label">Test deposits</div>
         <div class="stat-value" id="depositCount">—</div>
       </div>
+
       <div class="stat">
         <div class="stat-label">Test withdrawals</div>
         <div class="stat-value" id="withdrawalCount">—</div>
       </div>
+
       <div class="stat">
         <div class="stat-label">Test transactions</div>
         <div class="stat-value" id="transactionCount">—</div>
@@ -224,6 +253,7 @@
 
     <section class="panel" aria-labelledby="accountsHeading">
       <h2 id="accountsHeading">Client accounts</h2>
+
       <p class="muted small">
         Read-only profile list. Only profiles permitted by Supabase
         row-level security policies will appear.
@@ -236,6 +266,7 @@
           placeholder="Search account ID or role"
           aria-label="Search account IDs or roles"
         >
+
         <button id="refreshAccountsButton" type="button">
           Refresh accounts
         </button>
@@ -259,20 +290,68 @@
     </section>
 
     <section class="panel">
-      <h2>Administrator verified</h2>
+      <h2>Administrator verification</h2>
+
       <p class="muted">
-        Access is checked against the signed-in user's Supabase profile role.
+        Your signed-in account must have an active administrator profile.
+        The database function also checks authorization before every review.
       </p>
+
       <button id="refreshButton" class="primary" type="button">
         Refresh dashboard
       </button>
+
       <div id="dashboardNotice" class="notice" role="status">
         Dashboard data has not been loaded yet.
       </div>
     </section>
 
+    <!-- TEST DEPOSIT REVIEW -->
+    <section class="panel" aria-labelledby="depositReviewHeading">
+      <h2 id="depositReviewHeading">Pending test deposit requests</h2>
+
+      <div class="notice">
+        <strong>TEST ONLY:</strong>
+        Approving or rejecting a request changes its test-request status only.
+        It does not credit a client balance, change an account balance,
+        or move money.
+      </div>
+
+      <p class="muted small">
+        Only pending requests are shown. Reviews are submitted to the
+        server-side admin_review_test_deposit function and recorded in the
+        administrator audit log.
+      </p>
+
+      <button id="refreshDepositsButton" type="button">
+        Refresh test deposits
+      </button>
+
+      <div id="depositReviewNotice" class="notice" role="status">
+        Test deposit requests have not been loaded yet.
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Request ID</th>
+              <th>Client ID</th>
+              <th>Amount</th>
+              <th>Asset</th>
+              <th>Reference</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="depositReviewRows"></tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="panel">
       <h2>Management areas</h2>
+
       <div class="management-grid">
         <div class="management-item">
           <strong>Client accounts</strong>
@@ -284,7 +363,7 @@
         <div class="management-item">
           <strong>Deposits</strong>
           <span class="muted small">
-            Deposit-request review is not enabled in this version.
+            Test deposit review is enabled above. No balances are changed.
           </span>
         </div>
 
@@ -320,6 +399,7 @@
 
     <section class="panel">
       <h2>Recent test transactions</h2>
+
       <p class="muted small">
         Up to 10 test transaction records visible to this account.
       </p>
@@ -345,8 +425,8 @@
       </div>
 
       <p class="muted small">
-        Administrative actions that modify accounts or transaction statuses
-        are not enabled in this version.
+        These test transactions do not establish real deposits, withdrawals,
+        investment returns, or available client funds.
       </p>
     </section>
 
@@ -375,6 +455,7 @@
 
     let visibleProfiles = [];
     let dashboardUser = null;
+    let reviewInProgress = false;
 
     function setNotice(id, message, isError = false) {
       const element = $(id);
@@ -384,11 +465,23 @@
 
     function addCell(row, value) {
       const cell = document.createElement('td');
+
       cell.textContent =
         value === null || value === undefined || value === ''
           ? '—'
           : String(value);
+
       row.appendChild(cell);
+    }
+
+    function formatDate(value) {
+      if (!value) return '—';
+
+      const date = new Date(value);
+
+      return Number.isNaN(date.getTime())
+        ? '—'
+        : date.toLocaleString();
     }
 
     function renderAccounts() {
@@ -420,8 +513,10 @@
 
       for (const profile of filtered) {
         const row = document.createElement('tr');
+
         addCell(row, profile.id);
         addCell(row, profile.role || 'Unspecified');
+
         body.appendChild(row);
       }
     }
@@ -429,11 +524,12 @@
     async function loadAccounts() {
       const button = $('refreshAccountsButton');
       button.disabled = true;
+
       setNotice('accountsNotice', 'Loading visible profiles…');
 
       try {
-        // The database function verifies that the caller is an administrator.
-        const { data, error } = await client.rpc('admin_list_profiles');
+        const { data, error } =
+          await client.rpc('admin_list_profiles');
 
         if (error) {
           visibleProfiles = [];
@@ -451,13 +547,16 @@
 
         visibleProfiles = Array.isArray(data) ? data : [];
         renderAccounts();
+
       } catch (error) {
         setNotice(
           'accountsNotice',
           'An unexpected error occurred while loading profiles.',
           true
         );
+
         console.error(error);
+
       } finally {
         button.disabled = false;
       }
@@ -478,7 +577,12 @@
 
           if (error) {
             $(target).textContent = '—';
-            console.error('Count query failed for ' + table + ':', error.message);
+
+            console.error(
+              'Count query failed for ' + table + ':',
+              error.message
+            );
+
             return table + ': unavailable';
           }
 
@@ -492,7 +596,8 @@
       if (errors.length) {
         setNotice(
           'dashboardNotice',
-          'Some test counts could not be loaded: ' + errors.join('; ') +
+          'Some test counts could not be loaded: ' +
+          errors.join('; ') +
           '. Check table names and database policies.',
           true
         );
@@ -506,8 +611,13 @@
 
     async function loadTransactions() {
       const body = $('transactionRows');
+
       body.replaceChildren();
-      setNotice('transactionsNotice', 'Loading test transactions…');
+
+      setNotice(
+        'transactionsNotice',
+        'Loading test transactions…'
+      );
 
       try {
         const { data, error } = await client
@@ -522,7 +632,12 @@
             'Transactions could not be loaded. Check the table columns and database policies.',
             true
           );
-          console.error('Transaction query failed:', error.message);
+
+          console.error(
+            'Transaction query failed:',
+            error.message
+          );
+
           return;
         }
 
@@ -531,21 +646,14 @@
             'transactionsNotice',
             'No test transaction records are visible to this account.'
           );
+
           return;
         }
 
         for (const transaction of data) {
           const row = document.createElement('tr');
 
-          let created = '—';
-          if (transaction.created_at) {
-            const date = new Date(transaction.created_at);
-            if (!Number.isNaN(date.getTime())) {
-              created = date.toLocaleString();
-            }
-          }
-
-          addCell(row, created);
+          addCell(row, formatDate(transaction.created_at));
           addCell(row, transaction.user_id);
           addCell(row, transaction.type);
           addCell(row, transaction.amount);
@@ -557,15 +665,256 @@
 
         setNotice(
           'transactionsNotice',
-          'Showing ' + data.length + ' visible test transaction record(s).'
+          'Showing ' + data.length +
+          ' visible test transaction record(s).'
         );
+
       } catch (error) {
         setNotice(
           'transactionsNotice',
           'An unexpected error occurred while loading test transactions.',
           true
         );
+
         console.error(error);
+      }
+    }
+
+    async function loadPendingTestDeposits() {
+      const button = $('refreshDepositsButton');
+      const body = $('depositReviewRows');
+
+      button.disabled = true;
+      body.replaceChildren();
+
+      setNotice(
+        'depositReviewNotice',
+        'Loading pending test deposit requests…'
+      );
+
+      try {
+        const { data, error } = await client
+          .from('test_deposits')
+          .select(
+            'id, user_id, amount, asset, status, reference, created_at'
+          )
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) {
+          setNotice(
+            'depositReviewNotice',
+            'Pending test deposits could not be loaded. Check test_deposits SELECT permissions and row-level security policies.',
+            true
+          );
+
+          console.error(
+            'Pending test deposit query failed:',
+            error.message
+          );
+
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          setNotice(
+            'depositReviewNotice',
+            'No pending test deposit requests are visible.'
+          );
+
+          return;
+        }
+
+        for (const deposit of data) {
+          const row = document.createElement('tr');
+
+          addCell(row, formatDate(deposit.created_at));
+          addCell(row, deposit.id);
+          addCell(row, deposit.user_id);
+          addCell(row, deposit.amount);
+          addCell(row, deposit.asset);
+          addCell(row, deposit.reference);
+
+          const actionCell = document.createElement('td');
+          const actions = document.createElement('div');
+
+          actions.className = 'action-buttons';
+
+          const approveButton = document.createElement('button');
+
+          approveButton.type = 'button';
+          approveButton.className = 'primary';
+          approveButton.textContent = 'Approve TEST';
+
+          approveButton.addEventListener('click', () => {
+            reviewTestDeposit(deposit.id, 'approved');
+          });
+
+          const rejectButton = document.createElement('button');
+
+          rejectButton.type = 'button';
+          rejectButton.className = 'danger-button';
+          rejectButton.textContent = 'Reject TEST';
+
+          rejectButton.addEventListener('click', () => {
+            reviewTestDeposit(deposit.id, 'rejected');
+          });
+
+          actions.append(approveButton, rejectButton);
+          actionCell.appendChild(actions);
+          row.appendChild(actionCell);
+          body.appendChild(row);
+        }
+
+        setNotice(
+          'depositReviewNotice',
+          'Showing ' + data.length +
+          ' pending TEST request(s). Reviews change request status only; no balance is changed.'
+        );
+
+      } catch (error) {
+        setNotice(
+          'depositReviewNotice',
+          'An unexpected error occurred while loading test deposits.',
+          true
+        );
+
+        console.error(error);
+
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function reviewTestDeposit(depositId, decision) {
+      if (reviewInProgress) return;
+
+      if (decision !== 'approved' && decision !== 'rejected') {
+        setNotice(
+          'depositReviewNotice',
+          'Invalid review decision.',
+          true
+        );
+
+        return;
+      }
+
+      let reason = null;
+
+      if (decision === 'rejected') {
+        reason = window.prompt(
+          'Enter a reason for rejecting this TEST deposit request:'
+        );
+
+        if (reason === null) return;
+
+        reason = reason.trim();
+
+        if (!reason) {
+          setNotice(
+            'depositReviewNotice',
+            'A reason is required to reject a request.',
+            true
+          );
+
+          return;
+        }
+      } else {
+        const confirmed = window.confirm(
+          'Approve this TEST deposit request? This updates its test status only. It will NOT credit a client balance or move money.'
+        );
+
+        if (!confirmed) return;
+      }
+
+      reviewInProgress = true;
+
+      $('refreshDepositsButton').disabled = true;
+      $('refreshButton').disabled = true;
+
+      $('depositReviewRows')
+        .querySelectorAll('button')
+        .forEach((button) => {
+          button.disabled = true;
+        });
+
+      setNotice(
+        'depositReviewNotice',
+        'Submitting review to Supabase…'
+      );
+
+      try {
+        const { data, error } = await client.rpc(
+          'admin_review_test_deposit',
+          {
+            p_deposit_id: depositId,
+            p_decision: decision,
+            p_reason: reason
+          }
+        );
+
+        if (error) {
+          setNotice(
+            'depositReviewNotice',
+            'Review failed: ' + error.message +
+            '. Refresh the request list before trying again.',
+            true
+          );
+
+          console.error(
+            'Test deposit review failed:',
+            error
+          );
+
+          return;
+        }
+
+        if (
+          !data ||
+          data.success !== true ||
+          data.balance_credited !== false ||
+          data.request_id !== depositId ||
+          data.status !== decision
+        ) {
+          setNotice(
+            'depositReviewNotice',
+            'The review response could not be verified. Refresh the list and check the request status before retrying.',
+            true
+          );
+
+          console.error(
+            'Unexpected test deposit review response:',
+            data
+          );
+
+          return;
+        }
+
+        setNotice(
+          'depositReviewNotice',
+          'Test request ' + data.status +
+          ' successfully. No client balance was changed.'
+        );
+
+        await Promise.all([
+          loadPendingTestDeposits(),
+          loadCounts()
+        ]);
+
+      } catch (error) {
+        setNotice(
+          'depositReviewNotice',
+          'An unexpected error occurred during review. Refresh the list and check the request status before retrying.',
+          true
+        );
+
+        console.error(error);
+
+      } finally {
+        reviewInProgress = false;
+        $('refreshDepositsButton').disabled = false;
+        $('refreshButton').disabled = false;
       }
     }
 
@@ -576,25 +925,33 @@
         await Promise.all([
           loadCounts(),
           loadAccounts(),
-          loadTransactions()
+          loadTransactions(),
+          loadPendingTestDeposits()
         ]);
+
       } catch (error) {
         setNotice(
           'dashboardNotice',
           'The dashboard could not refresh all data.',
           true
         );
+
         console.error(error);
+
       } finally {
         $('refreshButton').disabled = false;
       }
     }
 
     async function init() {
-      setNotice('sessionNotice', 'Verifying administrator session…');
+      setNotice(
+        'sessionNotice',
+        'Verifying administrator session…'
+      );
 
       try {
-        const { data, error } = await client.auth.getSession();
+        const { data, error } =
+          await client.auth.getSession();
 
         if (error) throw error;
 
@@ -607,66 +964,99 @@
 
         dashboardUser = session.user;
 
-        const { data: profile, error: profileError } = await client
-          .from('profiles')
-          .select('role')
-          .eq('id', dashboardUser.id)
-          .maybeSingle();
+        const { data: profile, error: profileError } =
+          await client
+            .from('profiles')
+            .select('role, account_status')
+            .eq('id', dashboardUser.id)
+            .maybeSingle();
 
         if (profileError) {
           setNotice(
             'sessionNotice',
-            'Could not verify your administrator role. Check the profiles table and database policies.',
+            'Could not verify your administrator role and account status. Check the profiles table and database policies.',
             true
           );
-          console.error('Role check failed:', profileError.message);
+
+          console.error(
+            'Role check failed:',
+            profileError.message
+          );
+
           return;
         }
 
-        if (!profile || profile.role !== 'admin') {
+        if (
+          !profile ||
+          profile.role !== 'admin' ||
+          profile.account_status !== 'active'
+        ) {
           setNotice(
             'sessionNotice',
-            'Administrator access was not confirmed. Returning to login.',
+            'Active administrator access was not confirmed. Returning to login.',
             true
           );
 
           await client.auth.signOut();
           window.location.replace('/login.html');
+
           return;
         }
 
         $('accountEmail').textContent =
-          'Signed-in administrator: ' + (dashboardUser.email || 'Email unavailable');
+          'Signed-in administrator: ' +
+          (dashboardUser.email || 'Email unavailable');
 
         setNotice(
           'sessionNotice',
-          'Administrator session verified.',
-          false
+          'Active administrator session verified.'
         );
 
-        $('refreshButton').addEventListener('click', refreshDashboard);
-        $('refreshAccountsButton').addEventListener('click', loadAccounts);
-        $('accountSearch').addEventListener('input', renderAccounts);
+        $('refreshButton').addEventListener(
+          'click',
+          refreshDashboard
+        );
 
-        $('signOutButton').addEventListener('click', async () => {
-          $('signOutButton').disabled = true;
+        $('refreshAccountsButton').addEventListener(
+          'click',
+          loadAccounts
+        );
 
-          try {
-            const { error: signOutError } = await client.auth.signOut();
+        $('refreshDepositsButton').addEventListener(
+          'click',
+          loadPendingTestDeposits
+        );
 
-            if (signOutError) throw signOutError;
+        $('accountSearch').addEventListener(
+          'input',
+          renderAccounts
+        );
 
-            window.location.replace('/login.html');
-          } catch (error) {
-            setNotice(
-              'sessionNotice',
-              'Sign-out failed. Please try again.',
-              true
-            );
-            console.error(error);
-            $('signOutButton').disabled = false;
+        $('signOutButton').addEventListener(
+          'click',
+          async () => {
+            $('signOutButton').disabled = true;
+
+            try {
+              const { error: signOutError } =
+                await client.auth.signOut();
+
+              if (signOutError) throw signOutError;
+
+              window.location.replace('/login.html');
+
+            } catch (error) {
+              setNotice(
+                'sessionNotice',
+                'Sign-out failed. Please try again.',
+                true
+              );
+
+              console.error(error);
+              $('signOutButton').disabled = false;
+            }
           }
-        });
+        );
 
         await refreshDashboard();
 
@@ -676,6 +1066,7 @@
           'An error occurred while checking the administrator session.',
           true
         );
+
         console.error(error);
       }
     }
