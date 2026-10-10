@@ -1,0 +1,519 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b50">
+  <title>Deposit & Withdrawal Requests | AlpsCoinChain</title>
+  <style>
+    :root {
+      --navy: #102b50;
+      --blue: #2463eb;
+      --bg: #f3f6fb;
+      --text: #17253b;
+      --muted: #65748b;
+      --border: #e2e8f0;
+      --green: #137547;
+      --orange: #98600a;
+      --red: #b42318;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.6 Arial, Helvetica, sans-serif;
+    }
+
+    header {
+      background: linear-gradient(120deg, #0a1c35, var(--navy));
+      color: white;
+      padding: 22px 18px;
+    }
+
+    header div, main {
+      max-width: 980px;
+      margin: auto;
+    }
+
+    h1 { font-size: 22px; margin: 0; }
+
+    header p {
+      margin: 4px 0 0;
+      color: #c8d6ea;
+      font-size: 13px;
+    }
+
+    main { padding: 24px 16px 44px; }
+
+    .notice {
+      background: #f0f5ff;
+      border: 1px solid #cbdcff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: #29466f;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      box-shadow: 0 8px 28px rgba(16, 43, 80, .05);
+      overflow: hidden;
+    }
+
+    .panel h2 {
+      font-size: 17px;
+      margin: 0;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    form { padding: 20px; display: grid; gap: 14px; }
+
+    label {
+      font-size: 13px;
+      font-weight: 700;
+      display: grid;
+      gap: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #ccd6e3;
+      border-radius: 9px;
+      font: inherit;
+      background: white;
+      color: var(--text);
+    }
+
+    button, .link {
+      border: 0;
+      border-radius: 9px;
+      background: var(--blue);
+      color: white;
+      padding: 11px 15px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    button:disabled { opacity: .65; cursor: wait; }
+
+    .secondary {
+      background: #edf2fa;
+      color: var(--navy);
+      border: 1px solid #dce5f1;
+    }
+
+    .muted { color: var(--muted); font-size: 12px; }
+
+    #message {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 9px;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    #message.show { display: block; }
+    #message.error { background: #fff0ef; color: var(--red); }
+    #message.success { background: #e8f7ee; color: var(--green); }
+
+    .requests { margin-top: 22px; }
+
+    .request {
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .request:last-child { border-bottom: 0; }
+    .request strong { display: block; overflow-wrap: anywhere; }
+
+    .status {
+      display: inline-block;
+      border-radius: 20px;
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: capitalize;
+      background: #fff4dc;
+      color: var(--orange);
+    }
+
+    .status-approved { background: #e8f7ee; color: var(--green); }
+    .status-rejected, .status-cancelled {
+      background: #fff0ef;
+      color: var(--red);
+    }
+
+    .empty { padding: 24px; text-align: center; color: var(--muted); }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 18px 0;
+    }
+
+    @media (max-width: 680px) {
+      .grid { grid-template-columns: 1fr; }
+      .request { flex-direction: column; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div>
+    <h1>AlpsCoinChain Investment</h1>
+    <p>Deposit and withdrawal request tracking · Test environment</p>
+  </div>
+</header>
+
+<main>
+  <div class="notice">
+    <strong>Test environment only.</strong>
+    This page records requests for review. It does not move money,
+    confirm deposits, execute withdrawals, or calculate a balance.
+    Never enter passwords, recovery phrases, or private keys.
+  </div>
+
+  <div class="actions">
+    <a class="link secondary" href="/client-dashboard.html">
+      Back to dashboard
+    </a>
+    <button class="secondary" id="refresh" type="button">
+      Refresh requests
+    </button>
+  </div>
+
+  <div id="message" role="status" aria-live="polite"></div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Submit a deposit request</h2>
+      <form id="deposit-form">
+        <label>
+          Amount
+          <input name="amount" type="number"
+            min="0.00000001" max="999999999999"
+            step="any" required>
+        </label>
+
+        <label>
+          Asset code
+          <input name="asset" type="text"
+            minlength="2" maxlength="20"
+            placeholder="e.g. TEST" required>
+        </label>
+
+        <p class="muted">
+          This creates a pending request only. It does not verify
+          that funds were received.
+        </p>
+
+        <button type="submit">Submit deposit request</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Submit a withdrawal request</h2>
+      <form id="withdrawal-form">
+        <label>
+          Amount
+          <input name="amount" type="number"
+            min="0.00000001" max="999999999999"
+            step="any" required>
+        </label>
+
+        <label>
+          Asset code
+          <input name="asset" type="text"
+            minlength="2" maxlength="20"
+            placeholder="e.g. TEST" required>
+        </label>
+
+        <label>
+          Destination or reference
+          <input name="destination" type="text"
+            maxlength="500" placeholder="Test destination only"
+            required>
+        </label>
+
+        <p class="muted">
+          A request is not a promise or confirmation of payout.
+          Do not use this page for a real transfer.
+        </p>
+
+        <button type="submit">Submit withdrawal request</button>
+      </form>
+    </section>
+  </div>
+
+  <section class="panel requests">
+    <h2>Your requests</h2>
+    <div id="request-list">
+      <div class="empty">Checking your sign-in session…</div>
+    </div>
+  </section>
+
+  <p class="muted" style="text-align:center;margin-top:22px">
+    Request statuses are controlled by authorized review processes.
+    This page does not offer approval or cancellation controls.
+  </p>
+</main>
+
+<script type="module">
+  import { createClient } from
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+  const supabase = createClient(
+    "https://uevofmlzpwrdidjnwxfd.supabase.co",
+    "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB"
+  );
+
+  const $ = id => document.getElementById(id);
+  let currentUser = null;
+
+  function showMessage(text, type = "success") {
+    const el = $("message");
+    el.textContent = text;
+    el.className = "show " + type;
+  }
+
+  function formatDate(value) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? "Date unavailable"
+      : date.toLocaleString();
+  }
+
+  async function getSessionUser() {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) throw error;
+
+    if (!data.session) {
+      window.location.href = "/login";
+      return null;
+    }
+
+    return data.session.user;
+  }
+
+  async function loadRequests() {
+    if (!currentUser) return;
+
+    $("refresh").disabled = true;
+    const list = $("request-list");
+    list.replaceChildren();
+
+    try {
+      const { data, error } = await supabase
+        .from("fund_requests")
+        .select(
+          "id,request_type,amount,asset,destination,status,reference,created_at,review_note,reviewed_at"
+        )
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "You have not submitted any requests yet.";
+        list.appendChild(empty);
+        return;
+      }
+
+      for (const request of data) {
+        const item = document.createElement("article");
+        item.className = "request";
+
+        const left = document.createElement("div");
+        const title = document.createElement("strong");
+
+        title.textContent =
+          (request.request_type === "deposit" ? "Deposit" : "Withdrawal") +
+          " · " + request.amount + " " + request.asset;
+
+        const meta = document.createElement("div");
+        meta.className = "muted";
+        meta.textContent =
+          "Reference: " + request.reference +
+          " · Submitted: " + formatDate(request.created_at);
+
+        left.append(title, meta);
+
+        if (request.request_type === "withdrawal" && request.destination) {
+          const destination = document.createElement("div");
+          destination.className = "muted";
+          destination.textContent = "Destination: " + request.destination;
+          left.appendChild(destination);
+        }
+
+        if (request.review_note) {
+          const note = document.createElement("div");
+          note.className = "muted";
+          note.textContent = "Review note: " + request.review_note;
+          left.appendChild(note);
+        }
+
+        const status = document.createElement("span");
+        status.className = "status";
+
+        if (["approved", "rejected", "cancelled"].includes(request.status)) {
+          status.classList.add("status-" + request.status);
+        }
+
+        status.textContent = request.status;
+
+        const right = document.createElement("div");
+        right.appendChild(status);
+        item.append(left, right);
+        list.appendChild(item);
+      }
+    } catch (error) {
+      console.error("Request lookup failed:", error.message);
+      list.textContent =
+        "Could not load requests. Please refresh and try again.";
+      showMessage(
+        "Your requests could not be loaded. Please try again.",
+        "error"
+      );
+    } finally {
+      $("refresh").disabled = false;
+    }
+  }
+
+  async function submitRequest(event, type) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    const fields = new FormData(form);
+
+    const amount = Number(fields.get("amount"));
+    const asset = String(fields.get("asset") || "")
+      .trim().toUpperCase();
+    const destination = String(fields.get("destination") || "").trim();
+
+    if (!Number.isFinite(amount) ||
+        amount <= 0 ||
+        amount >= 1000000000000) {
+      showMessage("Enter a valid amount greater than zero.", "error");
+      return;
+    }
+
+    if (!/^[A-Z0-9._-]{2,20}$/.test(asset)) {
+      showMessage(
+        "Use an asset code with 2–20 letters, numbers, dots, underscores, or hyphens.",
+        "error"
+      );
+      return;
+    }
+
+    if (type === "withdrawal" && !destination) {
+      showMessage(
+        "Enter a test destination or reference for the request.",
+        "error"
+      );
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Submitting…";
+
+    try {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
+      if (sessionError || !sessionData.session) {
+        throw new Error("Your session expired. Please sign in again.");
+      }
+
+      const row = {
+        user_id: currentUser.id,
+        request_type: type,
+        amount,
+        asset,
+        status: "pending"
+      };
+
+      if (type === "withdrawal") {
+        row.destination = destination;
+      }
+
+      const { error } = await supabase
+        .from("fund_requests")
+        .insert(row);
+
+      if (error) throw error;
+
+      showMessage(
+        "Your " + type +
+        " request was saved as pending. This is tracking only; no money has moved."
+      );
+
+      form.reset();
+      await loadRequests();
+    } catch (error) {
+      console.error("Request submission failed:", error.message);
+
+      showMessage(
+        "The request could not be saved. Please try again or contact support.",
+        "error"
+      );
+    } finally {
+      button.disabled = false;
+      button.textContent = type === "deposit"
+        ? "Submit deposit request"
+        : "Submit withdrawal request";
+    }
+  }
+
+  $("deposit-form").addEventListener("submit", event =>
+    submitRequest(event, "deposit")
+  );
+
+  $("withdrawal-form").addEventListener("submit", event =>
+    submitRequest(event, "withdrawal")
+  );
+
+  $("refresh").addEventListener("click", loadRequests);
+
+  try {
+    currentUser = await getSessionUser();
+
+    if (currentUser) {
+      await loadRequests();
+    }
+  } catch (error) {
+    console.error("Request page initialization failed:", error);
+    $("request-list").textContent =
+      "Could not verify your sign-in session. Please sign in again.";
+  }
+</script>
+</body>
+</html>
