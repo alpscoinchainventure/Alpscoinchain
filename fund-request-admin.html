@@ -13,16 +13,18 @@
       --line: #2b3b55;
       --text: #edf3ff;
       --muted: #a6b4ca;
-      --accent: #65d6b0;
       --danger: #ff9292;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       background: var(--bg);
       color: var(--text);
       font: 16px/1.55 Arial, sans-serif;
     }
+
     header {
       padding: 16px 20px;
       background: #101a2c;
@@ -33,31 +35,37 @@
       gap: 12px;
       flex-wrap: wrap;
     }
+
     main {
       max-width: 1200px;
       margin: auto;
       padding: 22px 14px 40px;
     }
+
     h1 { font-size: 26px; margin: 0 0 5px; }
     h2 { font-size: 19px; margin: 0; }
     .muted, .small { color: var(--muted); }
     .small { font-size: 13px; }
+
     .panel, .notice {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 15px;
       margin-top: 16px;
+      overflow-wrap: anywhere;
     }
-    .notice { overflow-wrap: anywhere; }
+
     .error { color: var(--danger); }
     .warning { border-left: 3px solid #d6ad54; }
+
     .toolbar {
       display: flex;
       gap: 10px;
       align-items: center;
       flex-wrap: wrap;
     }
+
     button, select, textarea {
       font: inherit;
       border-radius: 8px;
@@ -66,10 +74,12 @@
       background: #24334b;
       color: var(--text);
     }
+
     button { cursor: pointer; }
     button:disabled { opacity: .55; cursor: wait; }
     .primary { background: #17694f; border-color: #248566; }
     .danger { background: #4a252c; border-color: #874747; }
+
     textarea {
       display: block;
       width: 100%;
@@ -78,12 +88,15 @@
       margin: 8px 0;
       resize: vertical;
     }
+
     .table-wrap { overflow-x: auto; margin-top: 12px; }
+
     table {
       width: 100%;
       border-collapse: collapse;
       min-width: 850px;
     }
+
     th, td {
       text-align: left;
       padding: 11px 9px;
@@ -91,15 +104,19 @@
       vertical-align: top;
       overflow-wrap: anywhere;
     }
+
     th { color: var(--muted); font-size: 13px; }
     td { font-size: 14px; }
+
     .actions {
       min-width: 205px;
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
     }
+
     .actions button { font-size: 13px; padding: 8px; }
+
     @media (max-width: 600px) {
       main { padding: 16px 10px; }
       header { padding: 14px; }
@@ -107,6 +124,7 @@
     }
   </style>
 </head>
+
 <body>
   <header>
     <strong>AlpsCoinChain Investment · Admin</strong>
@@ -118,13 +136,14 @@
 
   <main>
     <h1>Fund request review</h1>
+
     <p class="muted">
       Review client deposit and withdrawal request records.
     </p>
 
     <div class="notice warning">
       <strong>TEST MODE ONLY.</strong>
-      Approving, rejecting, or reviewing a request changes its record only.
+      Reviewing, approving, or rejecting a request changes its record only.
       It does not transfer funds, validate a wallet, or change any balance.
     </div>
 
@@ -135,7 +154,9 @@
     <section class="panel">
       <div class="toolbar">
         <h2 style="margin-right:auto">Requests</h2>
+
         <label for="statusFilter" class="small">Show:</label>
+
         <select id="statusFilter">
           <option value="open">Pending + under review</option>
           <option value="all">All statuses</option>
@@ -145,12 +166,13 @@
           <option value="rejected">Rejected</option>
           <option value="cancelled">Cancelled</option>
         </select>
+
         <button id="refresh" class="primary" type="button">
           Refresh requests
         </button>
       </div>
 
-      <div id="listNotice" class="notice" role="status">
+      <div id="listNotice" class="notice" role="status" aria-live="polite">
         Requests have not loaded yet.
       </div>
 
@@ -179,6 +201,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
     'use strict';
 
@@ -187,6 +210,12 @@
 
     const SUPABASE_KEY =
       'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+
+    if (!window.supabase) {
+      document.getElementById('sessionNotice').textContent =
+        'Supabase library did not load. Check your internet connection and reload.';
+      throw new Error('Supabase library unavailable');
+    }
 
     const db = window.supabase.createClient(
       SUPABASE_URL,
@@ -206,17 +235,21 @@
 
     function addCell(row, value) {
       const cell = document.createElement('td');
+
       cell.textContent =
         value === null || value === undefined || value === ''
           ? '—'
           : String(value);
+
       row.appendChild(cell);
       return cell;
     }
 
     function formatDate(value) {
       if (!value) return '—';
+
       const date = new Date(value);
+
       return Number.isNaN(date.getTime())
         ? '—'
         : date.toLocaleString();
@@ -227,6 +260,7 @@
 
       $('refresh').disabled = true;
       $('rows').replaceChildren();
+
       notice('listNotice', 'Loading requests…');
 
       try {
@@ -266,17 +300,21 @@
           const row = document.createElement('tr');
 
           addCell(row, formatDate(request.created_at));
+
           addCell(
             row,
             request.request_type + ' · ' +
             request.amount + ' ' + request.asset
           );
+
           addCell(row, request.user_id);
           addCell(row, request.destination);
 
           const referenceCell = addCell(row, '');
           const strong = document.createElement('strong');
+
           strong.textContent = request.reference || '—';
+
           referenceCell.append(
             strong,
             document.createElement('br'),
@@ -300,7 +338,8 @@
           const note = document.createElement('textarea');
           note.rows = 2;
           note.maxLength = 1000;
-          note.placeholder = 'Optional note; rejection requires a reason';
+          note.placeholder =
+            'Optional note; rejection requires a reason';
 
           const actions = document.createElement('div');
           actions.className = 'actions';
@@ -308,6 +347,7 @@
           const reviewing = document.createElement('button');
           reviewing.type = 'button';
           reviewing.textContent = 'Mark reviewing';
+
           reviewing.addEventListener('click', () =>
             reviewRequest(request, 'under_review', note.value)
           );
@@ -316,6 +356,7 @@
           approve.type = 'button';
           approve.className = 'primary';
           approve.textContent = 'Approve';
+
           approve.addEventListener('click', () =>
             reviewRequest(request, 'approved', note.value)
           );
@@ -324,6 +365,7 @@
           reject.type = 'button';
           reject.className = 'danger';
           reject.textContent = 'Reject';
+
           reject.addEventListener('click', () =>
             reviewRequest(request, 'rejected', note.value)
           );
@@ -340,8 +382,14 @@
           ' request(s). Actions update test records only; no money moves.'
         );
       } catch (error) {
-        notice('listNotice', 'Unexpected error loading requests.', true);
-        console.error(error);
+        notice(
+          'listNotice',
+          'Unexpected error loading requests: ' +
+          (error.message || String(error)),
+          true
+        );
+
+        console.error('Load requests error:', error);
       } finally {
         $('refresh').disabled = false;
       }
@@ -364,8 +412,10 @@
       const messages = {
         under_review:
           'Mark this TEST request as under review? No money will move.',
+
         approved:
           'Approve this TEST request record? No funds will transfer and no balance will change.',
+
         rejected:
           'Reject this TEST request record using the note provided? No funds will move.'
       };
@@ -374,7 +424,14 @@
 
       busy = true;
       $('refresh').disabled = true;
-      notice('listNotice', 'Submitting review for ' + request.reference + '…');
+
+      notice(
+        'listNotice',
+        'Submitting review for ' + request.reference + '…'
+      );
+
+      let reviewSucceeded = false;
+      let resultMessage = '';
 
       try {
         const { data, error } = await db.rpc(
@@ -387,11 +444,11 @@
         );
 
         if (error) {
-          notice('listNotice', 'Review failed: ' + error.message, true);
-          return;
-        }
+          resultMessage =
+            'Review failed: ' + error.message;
 
-        if (
+          console.error('Review RPC error:', error);
+        } else if (
           !data ||
           data.success !== true ||
           data.request_id !== request.id ||
@@ -399,37 +456,57 @@
           data.money_moved !== false ||
           data.balance_changed !== false
         ) {
-          notice(
-            'listNotice',
-            'Unexpected review response. Refresh and verify the request status before retrying.',
-            true
-          );
-          console.error('Unexpected review response:', data);
-          return;
-        }
+          resultMessage =
+            'The review returned an unexpected response. ' +
+            'The database status has not been confirmed. ' +
+            'Refresh the requests and verify the status before retrying.';
 
-        notice(
-          'listNotice',
-          'Request ' + request.reference + ' updated to ' +
-          status + '. No funds moved and no balance changed.'
-        );
+          console.error('Unexpected review response:', data);
+        } else {
+          reviewSucceeded = true;
+
+          resultMessage =
+            'Request ' + request.reference +
+            ' updated to ' + status +
+            '. No funds moved and no balance changed.';
+        }
       } catch (error) {
-        notice(
-          'listNotice',
-          'Unexpected review error. Refresh and verify the request before retrying.',
-          true
-        );
-        console.error(error);
+        resultMessage =
+          'Review error: ' +
+          (error.message || String(error)) +
+          '. Refresh and verify the request status before retrying.';
+
+        console.error('Unexpected review exception:', error);
       } finally {
         busy = false;
         $('refresh').disabled = false;
+      }
+
+      // Keep the result visible first. Refresh only after a confirmed success.
+      notice('listNotice', resultMessage, !reviewSucceeded);
+
+      if (reviewSucceeded) {
         await loadRequests();
+
+        // Confirm the refreshed list shows the updated status.
+        // If not, show a clear warning rather than claiming success.
+        const refreshedText = $('rows').textContent;
+
+        if (!refreshedText.includes(request.reference)) {
+          notice(
+            'listNotice',
+            'The review response was successful, but the request is not visible in the current filter. ' +
+            'Choose "All statuses" and refresh to verify it.',
+            true
+          );
+        }
       }
     }
 
     async function init() {
       try {
         const { data, error } = await db.auth.getSession();
+
         if (error) throw error;
 
         if (!data.session || !data.session.user) {
@@ -461,8 +538,14 @@
         }
 
         isAdmin = true;
-        $('adminEmail').textContent = user.email || 'Admin session';
-        notice('sessionNotice', 'Active administrator session verified.');
+
+        $('adminEmail').textContent =
+          user.email || 'Admin session';
+
+        notice(
+          'sessionNotice',
+          'Active administrator session verified.'
+        );
 
         $('refresh').addEventListener('click', loadRequests);
         $('statusFilter').addEventListener('change', loadRequests);
@@ -470,29 +553,44 @@
         $('signOut').addEventListener('click', async () => {
           $('signOut').disabled = true;
 
-          const { error: signOutError } = await db.auth.signOut();
+          try {
+            const { error: signOutError } =
+              await db.auth.signOut();
 
-          if (signOutError) {
+            if (signOutError) {
+              notice(
+                'sessionNotice',
+                'Sign out failed: ' + signOutError.message,
+                true
+              );
+
+              $('signOut').disabled = false;
+              return;
+            }
+
+            window.location.replace('/login.html');
+          } catch (error) {
             notice(
               'sessionNotice',
-              'Sign out failed: ' + signOutError.message,
+              'Sign out failed: ' +
+              (error.message || String(error)),
               true
             );
-            $('signOut').disabled = false;
-            return;
-          }
 
-          window.location.replace('/login.html');
+            $('signOut').disabled = false;
+          }
         });
 
         await loadRequests();
       } catch (error) {
         notice(
           'sessionNotice',
-          'Could not verify administrator access: ' + error.message,
+          'Could not verify administrator access: ' +
+          (error.message || String(error)),
           true
         );
-        console.error(error);
+
+        console.error('Admin initialization error:', error);
       }
     }
 
