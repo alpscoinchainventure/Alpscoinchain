@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Client Dashboard | AlpsCoinChain Investment</title>
+
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --primary: #173f8a;
+      --primary-dark: #102e68;
+      --border: #e2e8f0;
+      --success: #18794e;
+      --warning: #946200;
+      --danger: #b42318;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.6;
+    }
+
+    header {
+      background: var(--primary-dark);
+      color: #fff;
+      padding: 22px 16px;
+    }
+
+    .header-inner,
+    main {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 23px;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      color: #dbe7ff;
+      font-size: 14px;
+    }
+
+    main {
+      padding: 22px 16px 45px;
+    }
+
+    .notice {
+      border: 1px solid #f0d48a;
+      background: #fff8e5;
+      color: #684b00;
+      border-radius: 10px;
+      padding: 13px 15px;
+      margin-bottom: 18px;
+    }
+
+    .welcome {
+      margin-bottom: 20px;
+    }
+
+    .welcome h2 {
+      margin: 0 0 5px;
+      font-size: 25px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 19px;
+      box-shadow: 0 3px 12px rgba(16, 24, 40, 0.04);
+      min-width: 0;
+      margin-bottom: 18px;
+    }
+
+    .grid .card {
+      margin-bottom: 0;
+    }
+
+    .card h3 {
+      margin: 0 0 13px;
+      font-size: 18px;
+    }
+
+    .account-line {
+      margin: 8px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .balance {
+      font-size: 23px;
+      font-weight: 700;
+      margin: 5px 0;
+    }
+
+    .status {
+      display: inline-block;
+      border-radius: 20px;
+      padding: 3px 10px;
+      background: #e8f7ee;
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .button,
+    button {
+      display: inline-block;
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 15px;
+      background: var(--primary);
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .button:hover,
+    button:hover {
+      background: var(--primary-dark);
+    }
+
+    .button.secondary {
+      background: #e9eef8;
+      color: var(--primary-dark);
+    }
+
+    .button.secondary:hover {
+      background: #dbe5f7;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 620px;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 11px 9px;
+      border-bottom: 1px solid var(--border);
+      overflow-wrap: anywhere;
+    }
+
+    th {
+      color: var(--muted);
+      background: #f8fafc;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 15px 0;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 5px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    input,
+    textarea {
+      display: block;
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 11px;
+      font: inherit;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .form-message {
+      margin-top: 12px;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px 15px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 700px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      main {
+        padding: 16px 12px 30px;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .welcome h2 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>AlpsCoinChain Investment</h1>
+      <p>Client account dashboard</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="notice">
+      <strong>Test environment:</strong>
+      This dashboard displays account information and test activity only.
+      No real-money balance or completed transfer is represented here.
+    </div>
+
+    <section class="welcome">
+      <h2>Welcome to your dashboard</h2>
+      <p class="muted">Review your account details and request history.</p>
+      <p id="page-message" role="status" aria-live="polite">
+        Checking your sign-in session…
+      </p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h3>Account information</h3>
+
+        <p class="account-line">
+          <strong>Email:</strong>
+          <span id="account-email">Loading…</span>
+        </p>
+
+        <p class="account-line">
+          <strong>Account ID:</strong>
+          <span id="account-id">Loading…</span>
+        </p>
+
+        <p class="account-line">
+          <strong>Account status:</strong>
+          <span id="account-status">Checking…</span>
+        </p>
+
+        <p class="account-line">
+          <strong>Account role:</strong>
+          <span id="account-role">Checking…</span>
+        </p>
+
+        <div class="button-row">
+          <button type="button" id="sign-out-button">Sign out</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Portfolio overview</h3>
+        <p class="muted">Verified portfolio balance</p>
+        <p class="balance">Not available</p>
+        <p class="muted">
+          A verified balance will only be displayed after a secure financial
+          ledger has been implemented and tested.
+        </p>
+        <div class="button-row">
+          <a class="button" href="/fund-requests.html">
+            Deposits &amp; Withdrawals
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <h3>Recent account activity</h3>
+      <p class="muted">
+        The activity below comes from test database records. It is not a
+        verified financial statement and does not establish an available balance.
+      </p>
+
+      <div class="button-row">
+        <button type="button" id="refresh-activity-button">
+          Refresh activity
+        </button>
+      </div>
+
+      <p id="activity-message" class="form-message" role="status"
+         aria-live="polite">Activity has not been loaded yet.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Asset</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Reference</th>
+            </tr>
+          </thead>
+          <tbody id="activity-rows">
+            <tr>
+              <td colspan="6" class="empty">
+                Sign in to load your account activity.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Deposits and withdrawals</h3>
+      <p>
+        Submit a test deposit or withdrawal request and check its recorded
+        status. Requests are subject to review; submitting a request does not
+        move money or change your balance.
+      </p>
+      <div class="button-row">
+        <a class="button" href="/fund-requests.html">
+          Open request centre
+        </a>
+        <a class="button secondary" href="/fund-request-admin.html"
+           id="admin-requests-link" hidden>
+          Admin request review
+        </a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Identity verification</h3>
+      <p class="muted">
+        Verification status is not connected to this dashboard yet.
+        Do not treat this section as confirmation that your identity has
+        been verified.
+      </p>
+    </section>
+
+    <section class="card">
+      <h3>Contact support</h3>
+      <p class="muted">
+        Send a message to the support team. Do not include passwords,
+        private keys, recovery phrases, or sensitive payment details.
+      </p>
+
+      <form id="support-form">
+        <label for="support-subject">Subject</label>
+        <input id="support-subject" name="subject" maxlength="120"
+               required placeholder="How can we help?">
+
+        <label for="support-message">Message</label>
+        <textarea id="support-message" name="message" maxlength="5000"
+                  required placeholder="Write your message here…"></textarea>
+
+        <div class="button-row">
+          <button type="submit" id="support-submit-button">
+            Send message
+          </button>
+        </div>
+
+        <p id="support-status" class="form-message" role="status"
+           aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    AlpsCoinChain Investment Ventures · Test dashboard
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const SUPABASE_URL =
+        "https://uevofmlzpwrdidjnwxfd.supabase.co";
+
+      const SUPABASE_KEY =
+        "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
+
+      const pageMessage = document.getElementById("page-message");
+      const activityMessage = document.getElementById("activity-message");
+      const activityRows = document.getElementById("activity-rows");
+      const supportStatus = document.getElementById("support-status");
+
+      let supabaseClient = null;
+      let currentUser = null;
+
+      function setText(id, value) {
+        document.getElementById(id).textContent =
+          value === null || value === undefined || value === ""
+            ? "Not available"
+            : String(value);
+      }
+
+      function showPageMessage(message) {
+        pageMessage.textContent = message;
+      }
+
+      function formatDate(value) {
+        if (!value) return "Not available";
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+
+        return date.toLocaleString();
+      }
+
+      function addCell(row, value) {
+        const cell = document.createElement("td");
+        cell.textContent =
+          value === null || value === undefined || value === ""
+            ? "—"
+            : String(value);
+        row.appendChild(cell);
+      }
+
+      function showEmptyActivity(message) {
+        activityRows.replaceChildren();
+
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 6;
+        cell.className = "empty";
+        cell.textContent = message;
+
+        row.appendChild(cell);
+        activityRows.appendChild(row);
+      }
+
+      async function loadProfile() {
+        const result = await supabaseClient
+          .from("profiles")
+          .select("role, account_status")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+
+        if (result.error) {
+          setText("account-status", "Could not load");
+          setText("account-role", "Could not load");
+          return;
+        }
+
+        const profile = result.data;
+
+        if (!profile) {
+          setText("account-status", "Not available");
+          setText("account-role", "Not available");
+          return;
+        }
+
+        setText("account-status", profile.account_status || "Not available");
+        setText("account-role", profile.role || "Not available");
+
+        if (profile.role === "admin" &&
+            profile.account_status === "active") {
+          document.getElementById("admin-requests-link").hidden = false;
+        }
+      }
+
+      async function loadActivity() {
+        if (!currentUser) return;
+
+        activityMessage.textContent = "Loading account activity…";
+        showEmptyActivity("Loading…");
+
+        // These are optional test tables. If your database uses different
+        // table or column names, this section will show a safe error message.
+        const result = await supabaseClient
+          .from("test_transactions")
+          .select("*")
+          .eq("user_id", currentUser.id)
+          .order("created_at", { ascending: false })
+          .limit(20);
+
+        if (result.error) {
+          showEmptyActivity("Activity could not be loaded.");
+          activityMessage.textContent =
+            "The test activity query failed. Check the test_transactions " +
+            "table, its columns, and its Row Level Security policies.";
+          return;
+        }
+
+        const records = result.data || [];
+
+        if (records.length === 0) {
+          showEmptyActivity("No test activity records found.");
+          activityMessage.textContent =
+            "No test activity records were found for this account.";
+          return;
+        }
+
+        activityRows.replaceChildren();
+
+        for (const item of records) {
+          const row = document.createElement("tr");
+
+          addCell(row, item.transaction_type || item.type || "Not specified");
+          addCell(row, item.amount);
+          addCell(row, item.asset || item.asset_code || "—");
+          addCell(row, item.status || "—");
+          addCell(row, formatDate(item.created_at));
+          addCell(row, item.reference || item.reference_id || item.id || "—");
+
+          activityRows.appendChild(row);
+        }
+
+        activityMessage.textContent =
+          records.length + " test record(s) loaded. These records do not " +
+          "represent a verified balance or prove that money moved.";
+      }
+
+      async function signOut() {
+        const button = document.getElementById("sign-out-button");
+        button.disabled = true;
+
+        const result = await supabaseClient.auth.signOut();
+
+        if (result.error) {
+          button.disabled = false;
+          showPageMessage("Could not sign out. Please try again.");
+          return;
+        }
+
+        window.location.replace("/login");
+      }
+
+      async function submitSupport(event) {
+        event.preventDefault();
+
+        const form = document.getElementById("support-form");
+        const button = document.getElementById("support-submit-button");
+        const subject = document.getElementById("support-subject").value.trim();
+        const message = document.getElementById("support-message").value.trim();
+
+        if (!subject || !message) {
+          supportStatus.textContent = "Please complete both fields.";
+          return;
+        }
+
+        button.disabled = true;
+        supportStatus.textContent = "Sending your message…";
+
+        try {
+          const response = await fetch("/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subject,
+              message,
+              email: currentUser.email
+            })
+          });
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(data.error || data.message ||
+              "Support message could not be sent.");
+          }
+
+          supportStatus.textContent =
+            data.message || "Your support message was submitted.";
+          form.reset();
+        } catch (error) {
+          supportStatus.textContent =
+            error.message ||
+            "Could not send the message. Please try again later.";
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      async function startDashboard() {
+        if (!window.supabase || !window.supabase.createClient) {
+          showPageMessage(
+            "The account service did not load. Check your internet connection and refresh."
+          );
+          return;
+        }
+
+        supabaseClient = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_KEY
+        );
+
+        try {
+          const result = await supabaseClient.auth.getSession();
+
+          if (result.error) throw result.error;
+
+          const session = result.data.session;
+
+          if (!session || !session.user) {
+            window.location.replace("/login");
+            return;
+          }
+
+          currentUser = session.user;
+
+          setText("account-email", currentUser.email);
+          setText("account-id", currentUser.id);
+
+          showPageMessage("You are signed in.");
+          await loadProfile();
+          await loadActivity();
+        } catch (error) {
+          console.error("Dashboard initialization failed:", error);
+          showPageMessage(
+            "We could not load your account. Please refresh or sign in again."
+          );
+        }
+      }
+
+      document.getElementById("sign-out-button")
+        .addEventListener("click", signOut);
+
+      document.getElementById("refresh-activity-button")
+        .addEventListener("click", loadActivity);
+
+      document.getElementById("support-form")
+        .addEventListener("submit", submitSupport);
+
+      startDashboard();
+    })();
+  </script>
+</body>
+</html>

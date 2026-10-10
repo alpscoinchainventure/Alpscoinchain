@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin Dashboard | AlpsCoinChain Investment</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1120;
+      --panel: #131d30;
+      --panel2: #18243a;
+      --text: #edf3ff;
+      --muted: #a6b4ca;
+      --line: #2b3b55;
+      --accent: #65d6b0;
+      --danger: #ff9292;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.6;
+    }
+
+    header {
+      padding: 18px 22px;
+      background: #101a2c;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    header strong { font-size: 19px; }
+
+    main {
+      width: min(1150px, 100%);
+      margin: 0 auto;
+      padding: 25px 18px 45px;
+    }
+
+    h1 { margin: 0 0 5px; font-size: 27px; }
+    h2 { margin: 0 0 12px; font-size: 19px; }
+    p { margin: 6px 0 12px; }
+
+    .muted, .small { color: var(--muted); }
+    .small { font-size: 13px; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 19px;
+      margin-top: 20px;
+      min-width: 0;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .stat {
+      padding: 17px;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .stat-label { color: var(--muted); font-size: 14px; }
+    .stat-value { font-size: 29px; font-weight: bold; margin-top: 5px; }
+
+    .notice {
+      padding: 12px 14px;
+      background: #17283a;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .success { color: var(--accent); }
+    .error { color: var(--danger); }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 14px 0;
+    }
+
+    input, button, textarea {
+      font: inherit;
+      border-radius: 8px;
+    }
+
+    input, textarea {
+      padding: 11px 12px;
+      color: var(--text);
+      background: #0d1527;
+      border: 1px solid var(--line);
+      width: 100%;
+    }
+
+    input {
+      flex: 1;
+      min-width: 190px;
+    }
+
+    textarea {
+      min-height: 85px;
+      resize: vertical;
+      margin-top: 8px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      padding: 10px 15px;
+      color: var(--text);
+      background: #24334b;
+      cursor: pointer;
+    }
+
+    button:hover { filter: brightness(1.15); }
+    button:disabled { opacity: 0.55; cursor: wait; }
+
+    .primary {
+      background: #17694f;
+      border-color: #248566;
+    }
+
+    .danger-button {
+      background: #4a252c;
+      border-color: #874747;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      min-width: 175px;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 520px;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      overflow-wrap: anywhere;
+    }
+
+    th { color: var(--muted); font-size: 13px; }
+    td { font-size: 14px; }
+
+    .management-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 13px;
+    }
+
+    .management-item {
+      padding: 14px;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+    }
+
+    .management-item strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    footer {
+      margin-top: 25px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 650px) {
+      .stats { grid-template-columns: 1fr; }
+      .management-grid { grid-template-columns: 1fr; }
+      main { padding: 18px 12px 35px; }
+      header { padding: 15px; }
+      h1 { font-size: 23px; }
+      .panel { padding: 14px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <strong>AlpsCoinChain Investment</strong>
+    <button id="signOutButton" type="button">Sign out</button>
+  </header>
+
+  <main>
+    <section>
+      <h1>Admin Dashboard</h1>
+      <p class="muted">Platform overview and operational tools.</p>
+
+      <div id="sessionNotice" class="notice" role="status">
+        Verifying administrator session…
+      </div>
+
+      <p class="small" id="accountEmail"></p>
+    </section>
+
+    <section class="stats" aria-label="Test record counts">
+      <div class="stat">
+        <div class="stat-label">Test deposits</div>
+        <div class="stat-value" id="depositCount">—</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Test withdrawals</div>
+        <div class="stat-value" id="withdrawalCount">—</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Test transactions</div>
+        <div class="stat-value" id="transactionCount">—</div>
+      </div>
+    </section>
+
+    <div class="notice">
+      <strong>Test mode:</strong>
+      These figures are counts of test records only. They are not client
+      balances, investment performance, or confirmed financial transactions.
+    </div>
+
+    <section class="panel" aria-labelledby="accountsHeading">
+      <h2 id="accountsHeading">Client accounts</h2>
+
+      <p class="muted small">
+        Read-only profile list. Only profiles permitted by Supabase
+        row-level security policies will appear.
+      </p>
+
+      <div class="search-row">
+        <input
+          id="accountSearch"
+          type="search"
+          placeholder="Search account ID or role"
+          aria-label="Search account IDs or roles"
+        >
+
+        <button id="refreshAccountsButton" type="button">
+          Refresh accounts
+        </button>
+      </div>
+
+      <div id="accountsNotice" class="notice" role="status">
+        Client profiles have not been loaded yet.
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Account ID</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody id="accountRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Administrator verification</h2>
+
+      <p class="muted">
+        Your signed-in account must have an active administrator profile.
+        The database function also checks authorization before every review.
+      </p>
+
+      <button id="refreshButton" class="primary" type="button">
+        Refresh dashboard
+      </button>
+
+      <div id="dashboardNotice" class="notice" role="status">
+        Dashboard data has not been loaded yet.
+      </div>
+    </section>
+
+    <!-- TEST DEPOSIT REVIEW -->
+    <section class="panel" aria-labelledby="depositReviewHeading">
+      <h2 id="depositReviewHeading">Pending test deposit requests</h2>
+
+      <div class="notice">
+        <strong>TEST ONLY:</strong>
+        Approving or rejecting a request changes its test-request status only.
+        It does not credit a client balance, change an account balance,
+        or move money.
+      </div>
+
+      <p class="muted small">
+        Only pending requests are shown. Reviews are submitted to the
+        server-side admin_review_test_deposit function and recorded in the
+        administrator audit log.
+      </p>
+
+      <button id="refreshDepositsButton" type="button">
+        Refresh test deposits
+      </button>
+
+      <div id="depositReviewNotice" class="notice" role="status">
+        Test deposit requests have not been loaded yet.
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Request ID</th>
+              <th>Client ID</th>
+              <th>Amount</th>
+              <th>Asset</th>
+              <th>Reference</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="depositReviewRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Management areas</h2>
+
+      <div class="management-grid">
+        <div class="management-item">
+          <strong>Client accounts</strong>
+          <span class="muted small">
+            Search visible profile IDs and roles. Account changes are disabled.
+          </span>
+        </div>
+
+        <div class="management-item">
+          <strong>Deposits</strong>
+          <span class="muted small">
+            Test deposit review is enabled above. No balances are changed.
+          </span>
+        </div>
+
+        <div class="management-item">
+          <strong>Withdrawals</strong>
+          <span class="muted small">
+            Withdrawal processing is not enabled in this version.
+          </span>
+        </div>
+
+        <div class="management-item">
+          <strong>Transactions</strong>
+          <span class="muted small">
+            Review the test transaction records below.
+          </span>
+        </div>
+
+        <div class="management-item">
+          <strong>Support</strong>
+          <span class="muted small">
+            Support requests use the configured support channel.
+          </span>
+        </div>
+
+        <div class="management-item">
+          <strong>Security</strong>
+          <span class="muted small">
+            Database policies must enforce permissions independently of this page.
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Recent test transactions</h2>
+
+      <p class="muted small">
+        Up to 10 test transaction records visible to this account.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>User ID</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Asset</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="transactionRows"></tbody>
+        </table>
+      </div>
+
+      <div id="transactionsNotice" class="notice" role="status">
+        Transactions have not been loaded yet.
+      </div>
+
+      <p class="muted small">
+        These test transactions do not establish real deposits, withdrawals,
+        investment returns, or available client funds.
+      </p>
+    </section>
+
+    <footer>
+      AlpsCoinChain Investment Ventures · Administrative test dashboard
+    </footer>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    'use strict';
+
+    const SUPABASE_URL =
+      'https://uevofmlzpwrdidjnwxfd.supabase.co';
+
+    const SUPABASE_ANON_KEY =
+      'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+
+    const client = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    const $ = (id) => document.getElementById(id);
+
+    let visibleProfiles = [];
+    let dashboardUser = null;
+    let reviewInProgress = false;
+
+    function setNotice(id, message, isError = false) {
+      const element = $(id);
+      element.textContent = message;
+      element.className = isError ? 'notice error' : 'notice';
+    }
+
+    function addCell(row, value) {
+      const cell = document.createElement('td');
+
+      cell.textContent =
+        value === null || value === undefined || value === ''
+          ? '—'
+          : String(value);
+
+      row.appendChild(cell);
+    }
+
+    function formatDate(value) {
+      if (!value) return '—';
+
+      const date = new Date(value);
+
+      return Number.isNaN(date.getTime())
+        ? '—'
+        : date.toLocaleString();
+    }
+
+    function renderAccounts() {
+      const query = $('accountSearch').value.trim().toLowerCase();
+      const body = $('accountRows');
+
+      body.replaceChildren();
+
+      const filtered = visibleProfiles.filter((profile) =>
+        String(profile.id || '').toLowerCase().includes(query) ||
+        String(profile.role || '').toLowerCase().includes(query)
+      );
+
+      if (!filtered.length) {
+        setNotice(
+          'accountsNotice',
+          visibleProfiles.length
+            ? 'No visible accounts match your search.'
+            : 'No profiles are visible under the current database policies.'
+        );
+        return;
+      }
+
+      setNotice(
+        'accountsNotice',
+        'Showing ' + filtered.length + ' of ' + visibleProfiles.length +
+        ' visible profiles. This may not include every registered user.'
+      );
+
+      for (const profile of filtered) {
+        const row = document.createElement('tr');
+
+        addCell(row, profile.id);
+        addCell(row, profile.role || 'Unspecified');
+
+        body.appendChild(row);
+      }
+    }
+
+    async function loadAccounts() {
+      const button = $('refreshAccountsButton');
+      button.disabled = true;
+
+      setNotice('accountsNotice', 'Loading visible profiles…');
+
+      try {
+        const { data, error } =
+          await client.rpc('admin_list_profiles');
+
+        if (error) {
+          visibleProfiles = [];
+          $('accountRows').replaceChildren();
+
+          setNotice(
+            'accountsNotice',
+            'Profiles could not be loaded. Check the admin_list_profiles function and its permissions.',
+            true
+          );
+
+          console.error('Profile query failed:', error.message);
+          return;
+        }
+
+        visibleProfiles = Array.isArray(data) ? data : [];
+        renderAccounts();
+
+      } catch (error) {
+        setNotice(
+          'accountsNotice',
+          'An unexpected error occurred while loading profiles.',
+          true
+        );
+
+        console.error(error);
+
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function loadCounts() {
+      const definitions = [
+        { table: 'test_deposits', target: 'depositCount' },
+        { table: 'test_withdrawals', target: 'withdrawalCount' },
+        { table: 'test_transactions', target: 'transactionCount' }
+      ];
+
+      const results = await Promise.all(
+        definitions.map(async ({ table, target }) => {
+          const { count, error } = await client
+            .from(table)
+            .select('*', { count: 'exact', head: true });
+
+          if (error) {
+            $(target).textContent = '—';
+
+            console.error(
+              'Count query failed for ' + table + ':',
+              error.message
+            );
+
+            return table + ': unavailable';
+          }
+
+          $(target).textContent = String(count ?? 0);
+          return null;
+        })
+      );
+
+      const errors = results.filter(Boolean);
+
+      if (errors.length) {
+        setNotice(
+          'dashboardNotice',
+          'Some test counts could not be loaded: ' +
+          errors.join('; ') +
+          '. Check table names and database policies.',
+          true
+        );
+      } else {
+        setNotice(
+          'dashboardNotice',
+          'Test-record counts refreshed successfully. These are not financial balances.'
+        );
+      }
+    }
+
+    async function loadTransactions() {
+      const body = $('transactionRows');
+
+      body.replaceChildren();
+
+      setNotice(
+        'transactionsNotice',
+        'Loading test transactions…'
+      );
+
+      try {
+        const { data, error } = await client
+          .from('test_transactions')
+          .select('created_at, user_id, type, amount, asset, status')
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (error) {
+          setNotice(
+            'transactionsNotice',
+            'Transactions could not be loaded. Check the table columns and database policies.',
+            true
+          );
+
+          console.error(
+            'Transaction query failed:',
+            error.message
+          );
+
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          setNotice(
+            'transactionsNotice',
+            'No test transaction records are visible to this account.'
+          );
+
+          return;
+        }
+
+        for (const transaction of data) {
+          const row = document.createElement('tr');
+
+          addCell(row, formatDate(transaction.created_at));
+          addCell(row, transaction.user_id);
+          addCell(row, transaction.type);
+          addCell(row, transaction.amount);
+          addCell(row, transaction.asset);
+          addCell(row, transaction.status);
+
+          body.appendChild(row);
+        }
+
+        setNotice(
+          'transactionsNotice',
+          'Showing ' + data.length +
+          ' visible test transaction record(s).'
+        );
+
+      } catch (error) {
+        setNotice(
+          'transactionsNotice',
+          'An unexpected error occurred while loading test transactions.',
+          true
+        );
+
+        console.error(error);
+      }
+    }
+
+    async function loadPendingTestDeposits() {
+      const button = $('refreshDepositsButton');
+      const body = $('depositReviewRows');
+
+      button.disabled = true;
+      body.replaceChildren();
+
+      setNotice(
+        'depositReviewNotice',
+        'Loading pending test deposit requests…'
+      );
+
+      try {
+        const { data, error } = await client
+          .from('test_deposits')
+          .select(
+            'id, user_id, amount, asset, status, reference, created_at'
+          )
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) {
+          setNotice(
+            'depositReviewNotice',
+            'Pending test deposits could not be loaded. Check test_deposits SELECT permissions and row-level security policies.',
+            true
+          );
+
+          console.error(
+            'Pending test deposit query failed:',
+            error.message
+          );
+
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          setNotice(
+            'depositReviewNotice',
+            'No pending test deposit requests are visible.'
+          );
+
+          return;
+        }
+
+        for (const deposit of data) {
+          const row = document.createElement('tr');
+
+          addCell(row, formatDate(deposit.created_at));
+          addCell(row, deposit.id);
+          addCell(row, deposit.user_id);
+          addCell(row, deposit.amount);
+          addCell(row, deposit.asset);
+          addCell(row, deposit.reference);
+
+          const actionCell = document.createElement('td');
+          const actions = document.createElement('div');
+
+          actions.className = 'action-buttons';
+
+          const approveButton = document.createElement('button');
+
+          approveButton.type = 'button';
+          approveButton.className = 'primary';
+          approveButton.textContent = 'Approve TEST';
+
+          approveButton.addEventListener('click', () => {
+            reviewTestDeposit(deposit.id, 'approved');
+          });
+
+          const rejectButton = document.createElement('button');
+
+          rejectButton.type = 'button';
+          rejectButton.className = 'danger-button';
+          rejectButton.textContent = 'Reject TEST';
+
+          rejectButton.addEventListener('click', () => {
+            reviewTestDeposit(deposit.id, 'rejected');
+          });
+
+          actions.append(approveButton, rejectButton);
+          actionCell.appendChild(actions);
+          row.appendChild(actionCell);
+          body.appendChild(row);
+        }
+
+        setNotice(
+          'depositReviewNotice',
+          'Showing ' + data.length +
+          ' pending TEST request(s). Reviews change request status only; no balance is changed.'
+        );
+
+      } catch (error) {
+        setNotice(
+          'depositReviewNotice',
+          'An unexpected error occurred while loading test deposits.',
+          true
+        );
+
+        console.error(error);
+
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function reviewTestDeposit(depositId, decision) {
+      if (reviewInProgress) return;
+
+      if (decision !== 'approved' && decision !== 'rejected') {
+        setNotice(
+          'depositReviewNotice',
+          'Invalid review decision.',
+          true
+        );
+
+        return;
+      }
+
+      let reason = null;
+
+      if (decision === 'rejected') {
+        reason = window.prompt(
+          'Enter a reason for rejecting this TEST deposit request:'
+        );
+
+        if (reason === null) return;
+
+        reason = reason.trim();
+
+        if (!reason) {
+          setNotice(
+            'depositReviewNotice',
+            'A reason is required to reject a request.',
+            true
+          );
+
+          return;
+        }
+      } else {
+        const confirmed = window.confirm(
+          'Approve this TEST deposit request? This updates its test status only. It will NOT credit a client balance or move money.'
+        );
+
+        if (!confirmed) return;
+      }
+
+      reviewInProgress = true;
+
+      $('refreshDepositsButton').disabled = true;
+      $('refreshButton').disabled = true;
+
+      $('depositReviewRows')
+        .querySelectorAll('button')
+        .forEach((button) => {
+          button.disabled = true;
+        });
+
+      setNotice(
+        'depositReviewNotice',
+        'Submitting review to Supabase…'
+      );
+
+      try {
+        const { data, error } = await client.rpc(
+          'admin_review_test_deposit',
+          {
+            p_deposit_id: depositId,
+            p_decision: decision,
+            p_reason: reason
+          }
+        );
+
+        if (error) {
+          setNotice(
+            'depositReviewNotice',
+            'Review failed: ' + error.message +
+            '. Refresh the request list before trying again.',
+            true
+          );
+
+          console.error(
+            'Test deposit review failed:',
+            error
+          );
+
+          return;
+        }
+
+        if (
+          !data ||
+          data.success !== true ||
+          data.balance_credited !== false ||
+          data.request_id !== depositId ||
+          data.status !== decision
+        ) {
+          setNotice(
+            'depositReviewNotice',
+            'The review response could not be verified. Refresh the list and check the request status before retrying.',
+            true
+          );
+
+          console.error(
+            'Unexpected test deposit review response:',
+            data
+          );
+
+          return;
+        }
+
+        setNotice(
+          'depositReviewNotice',
+          'Test request ' + data.status +
+          ' successfully. No client balance was changed.'
+        );
+
+        await Promise.all([
+          loadPendingTestDeposits(),
+          loadCounts()
+        ]);
+
+      } catch (error) {
+        setNotice(
+          'depositReviewNotice',
+          'An unexpected error occurred during review. Refresh the list and check the request status before retrying.',
+          true
+        );
+
+        console.error(error);
+
+      } finally {
+        reviewInProgress = false;
+        $('refreshDepositsButton').disabled = false;
+        $('refreshButton').disabled = false;
+      }
+    }
+
+    async function refreshDashboard() {
+      $('refreshButton').disabled = true;
+
+      try {
+        await Promise.all([
+          loadCounts(),
+          loadAccounts(),
+          loadTransactions(),
+          loadPendingTestDeposits()
+        ]);
+
+      } catch (error) {
+        setNotice(
+          'dashboardNotice',
+          'The dashboard could not refresh all data.',
+          true
+        );
+
+        console.error(error);
+
+      } finally {
+        $('refreshButton').disabled = false;
+      }
+    }
+
+    async function init() {
+      setNotice(
+        'sessionNotice',
+        'Verifying administrator session…'
+      );
+
+      try {
+        const { data, error } =
+          await client.auth.getSession();
+
+        if (error) throw error;
+
+        const session = data.session;
+
+        if (!session || !session.user) {
+          window.location.replace('/login.html');
+          return;
+        }
+
+        dashboardUser = session.user;
+
+        const { data: profile, error: profileError } =
+          await client
+            .from('profiles')
+            .select('role, account_status')
+            .eq('id', dashboardUser.id)
+            .maybeSingle();
+
+        if (profileError) {
+          setNotice(
+            'sessionNotice',
+            'Could not verify your administrator role and account status. Check the profiles table and database policies.',
+            true
+          );
+
+          console.error(
+            'Role check failed:',
+            profileError.message
+          );
+
+          return;
+        }
+
+        if (
+          !profile ||
+          profile.role !== 'admin' ||
+          profile.account_status !== 'active'
+        ) {
+          setNotice(
+            'sessionNotice',
+            'Active administrator access was not confirmed. Returning to login.',
+            true
+          );
+
+          await client.auth.signOut();
+          window.location.replace('/login.html');
+
+          return;
+        }
+
+        $('accountEmail').textContent =
+          'Signed-in administrator: ' +
+          (dashboardUser.email || 'Email unavailable');
+
+        setNotice(
+          'sessionNotice',
+          'Active administrator session verified.'
+        );
+
+        $('refreshButton').addEventListener(
+          'click',
+          refreshDashboard
+        );
+
+        $('refreshAccountsButton').addEventListener(
+          'click',
+          loadAccounts
+        );
+
+        $('refreshDepositsButton').addEventListener(
+          'click',
+          loadPendingTestDeposits
+        );
+
+        $('accountSearch').addEventListener(
+          'input',
+          renderAccounts
+        );
+
+        $('signOutButton').addEventListener(
+          'click',
+          async () => {
+            $('signOutButton').disabled = true;
+
+            try {
+              const { error: signOutError } =
+                await client.auth.signOut();
+
+              if (signOutError) throw signOutError;
+
+              window.location.replace('/login.html');
+
+            } catch (error) {
+              setNotice(
+                'sessionNotice',
+                'Sign-out failed. Please try again.',
+                true
+              );
+
+              console.error(error);
+              $('signOutButton').disabled = false;
+            }
+          }
+        );
+
+        await refreshDashboard();
+
+      } catch (error) {
+        setNotice(
+          'sessionNotice',
+          'An error occurred while checking the administrator session.',
+          true
+        );
+
+        console.error(error);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

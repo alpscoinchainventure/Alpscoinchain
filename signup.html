@@ -1,0 +1,244 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account | AlpsCoinChain</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      background: #0a0e27;
+      color: #f8fafc;
+      padding: 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 460px;
+      background: #0f172a;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      border-radius: 16px;
+      padding: 30px;
+    }
+
+    h1 { text-align: center; margin-bottom: 8px; }
+
+    .subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #111827;
+      color: white;
+      outline: none;
+    }
+
+    input:focus { border-color: #6366f1; }
+
+    button {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 8px;
+      background: #6366f1;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover { background: #4f46e5; }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .secondary {
+      margin-top: 10px;
+      background: #1e293b;
+    }
+
+    .secondary:hover { background: #334155; }
+
+    .message {
+      min-height: 22px;
+      margin: 12px 0;
+      text-align: center;
+      color: #fbbf24;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .links {
+      margin-top: 18px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    a { color: #a5b4fc; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <h1>AlpsCoinChain</h1>
+    <p class="subtitle">Create your client account</p>
+
+    <form id="signupForm">
+      <label for="fullName">Full name</label>
+      <input id="fullName" type="text"
+        placeholder="Enter your full name"
+        autocomplete="name" required>
+
+      <label for="email">Email address</label>
+      <input id="email" type="email"
+        placeholder="Enter your email"
+        autocomplete="email" required>
+
+      <label for="password">Password</label>
+      <input id="password" type="password"
+        placeholder="Create a password (at least 8 characters)"
+        autocomplete="new-password" minlength="8" required>
+
+      <label for="confirmPassword">Confirm password</label>
+      <input id="confirmPassword" type="password"
+        placeholder="Enter your password again"
+        autocomplete="new-password" minlength="8" required>
+
+      <div id="message" class="message"
+        role="status" aria-live="polite"></div>
+
+      <button id="signupButton" type="submit">
+        Create Account
+      </button>
+    </form>
+
+    <button class="secondary" type="button" id="backButton">
+      Back to Sign In
+    </button>
+
+    <p class="links">
+      Already have an account?
+      <a href="login.html">Sign in</a>
+    </p>
+  </main>
+
+  <script>
+    const SUPABASE_URL =
+      "https://uevofmlzpwrdidjnwxfd.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY =
+      "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
+
+    const supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+    const form = document.getElementById("signupForm");
+    const button = document.getElementById("signupButton");
+    const message = document.getElementById("message");
+
+    document.getElementById("backButton").addEventListener(
+      "click", function () {
+        window.location.href = "login.html";
+      }
+    );
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      message.textContent = "";
+
+      const fullName =
+        document.getElementById("fullName").value.trim();
+      const email =
+        document.getElementById("email").value.trim();
+      const password =
+        document.getElementById("password").value;
+      const confirmPassword =
+        document.getElementById("confirmPassword").value;
+
+      if (!fullName) {
+        message.textContent = "Please enter your full name.";
+        return;
+      }
+
+      if (password.length < 8) {
+        message.textContent =
+          "Your password must contain at least 8 characters.";
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        message.textContent =
+          "The passwords do not match. Please try again.";
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Creating account...";
+
+      try {
+        const { data, error } =
+          await supabaseClient.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { full_name: fullName },
+              emailRedirectTo:
+                window.location.origin + "/auth-callback.html"
+            }
+          });
+
+        if (error) {
+          message.textContent = error.message;
+          return;
+        }
+
+        if (data.session) {
+          message.textContent =
+            "Account created. Opening your dashboard...";
+          window.location.href = "client-dashboard.html";
+          return;
+        }
+
+        message.textContent =
+          "Registration submitted. Check your email and confirm " +
+          "your account before signing in.";
+      } catch (error) {
+        message.textContent =
+          error.message ||
+          "Unable to create your account right now. Please try again.";
+      } finally {
+        button.disabled = false;
+        button.textContent = "Create Account";
+      }
+    });
+  </script>
+</body>
+</html>
