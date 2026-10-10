@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Fund Request Review | AlpsCoinChain</title>
+
   <style>
     :root {
       color-scheme: dark;
@@ -338,6 +339,10 @@
           const note = document.createElement('textarea');
           note.rows = 2;
           note.maxLength = 1000;
+
+          // Show the saved note instead of an empty box.
+          note.value = request.review_note || '';
+
           note.placeholder =
             'Optional note; rejection requires a reason';
 
@@ -398,9 +403,13 @@
     async function reviewRequest(request, status, noteValue) {
       if (busy || !isAdmin) return;
 
-      const note = (noteValue || '').trim();
+      const enteredNote = (noteValue || '').trim();
 
-      if (status === 'rejected' && !note) {
+      // Preserve the existing note if the note box is left empty.
+      const effectiveNote =
+        enteredNote || request.review_note || null;
+
+      if (status === 'rejected' && !effectiveNote) {
         notice(
           'listNotice',
           'Enter a reason before rejecting a request.',
@@ -439,14 +448,12 @@
           {
             p_request_id: request.id,
             p_status: status,
-            p_review_note: note || null
+            p_review_note: effectiveNote
           }
         );
 
         if (error) {
-          resultMessage =
-            'Review failed: ' + error.message;
-
+          resultMessage = 'Review failed: ' + error.message;
           console.error('Review RPC error:', error);
         } else if (
           !data ||
@@ -482,24 +489,25 @@
         $('refresh').disabled = false;
       }
 
-      // Keep the result visible first. Refresh only after a confirmed success.
-      notice('listNotice', resultMessage, !reviewSucceeded);
+      if (!reviewSucceeded) {
+        notice('listNotice', resultMessage, true);
+        return;
+      }
 
-      if (reviewSucceeded) {
-        await loadRequests();
+      // Refresh the list, then show the result after the refresh finishes.
+      await loadRequests();
 
-        // Confirm the refreshed list shows the updated status.
-        // If not, show a clear warning rather than claiming success.
-        const refreshedText = $('rows').textContent;
+      const refreshedText = $('rows').textContent;
 
-        if (!refreshedText.includes(request.reference)) {
-          notice(
-            'listNotice',
-            'The review response was successful, but the request is not visible in the current filter. ' +
-            'Choose "All statuses" and refresh to verify it.',
-            true
-          );
-        }
+      if (!refreshedText.includes(request.reference)) {
+        notice(
+          'listNotice',
+          resultMessage +
+          ' The request is not visible in the current filter; choose All statuses and refresh to verify it.',
+          true
+        );
+      } else {
+        notice('listNotice', resultMessage);
       }
     }
 
