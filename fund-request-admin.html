@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -339,10 +340,7 @@
           const note = document.createElement('textarea');
           note.rows = 2;
           note.maxLength = 1000;
-
-          // Show the saved note instead of an empty box.
           note.value = request.review_note || '';
-
           note.placeholder =
             'Optional note; rejection requires a reason';
 
@@ -352,7 +350,6 @@
           const reviewing = document.createElement('button');
           reviewing.type = 'button';
           reviewing.textContent = 'Mark reviewing';
-
           reviewing.addEventListener('click', () =>
             reviewRequest(request, 'under_review', note.value)
           );
@@ -361,7 +358,6 @@
           approve.type = 'button';
           approve.className = 'primary';
           approve.textContent = 'Approve';
-
           approve.addEventListener('click', () =>
             reviewRequest(request, 'approved', note.value)
           );
@@ -370,7 +366,6 @@
           reject.type = 'button';
           reject.className = 'danger';
           reject.textContent = 'Reject';
-
           reject.addEventListener('click', () =>
             reviewRequest(request, 'rejected', note.value)
           );
@@ -393,7 +388,6 @@
           (error.message || String(error)),
           true
         );
-
         console.error('Load requests error:', error);
       } finally {
         $('refresh').disabled = false;
@@ -404,8 +398,6 @@
       if (busy || !isAdmin) return;
 
       const enteredNote = (noteValue || '').trim();
-
-      // Preserve the existing note if the note box is left empty.
       const effectiveNote =
         enteredNote || request.review_note || null;
 
@@ -421,10 +413,8 @@
       const messages = {
         under_review:
           'Mark this TEST request as under review? No money will move.',
-
         approved:
           'Approve this TEST request record? No funds will transfer and no balance will change.',
-
         rejected:
           'Reject this TEST request record using the note provided? No funds will move.'
       };
@@ -471,7 +461,6 @@
           console.error('Unexpected review response:', data);
         } else {
           reviewSucceeded = true;
-
           resultMessage =
             'Request ' + request.reference +
             ' updated to ' + status +
@@ -494,7 +483,6 @@
         return;
       }
 
-      // Refresh the list, then show the result after the refresh finishes.
       await loadRequests();
 
       const refreshedText = $('rows').textContent;
@@ -518,7 +506,11 @@
         if (error) throw error;
 
         if (!data.session || !data.session.user) {
-          window.location.replace('/login.html');
+          notice(
+            'sessionNotice',
+            'No signed-in session was found. Please sign in again.',
+            true
+          );
           return;
         }
 
@@ -530,7 +522,26 @@
           .eq('id', user.id)
           .maybeSingle();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          notice(
+            'sessionNotice',
+            'Could not read the profile: ' + profileError.message,
+            true
+          );
+          console.error('Profile query error:', profileError);
+          return;
+        }
+
+        const observedRole = profile?.role ?? 'profile not visible';
+        const observedStatus =
+          profile?.account_status ?? 'status unavailable';
+
+        console.info('Fund review access diagnostic:', {
+          userId: user.id,
+          email: user.email || 'Email unavailable',
+          role: observedRole,
+          account_status: observedStatus
+        });
 
         if (
           !profile ||
@@ -539,7 +550,11 @@
         ) {
           notice(
             'sessionNotice',
-            'Active administrator access was not confirmed.',
+            'Administrator check failed. Detected role: ' +
+              String(observedRole) +
+              '; account status: ' +
+              String(observedStatus) +
+              '. No request actions are enabled.',
             true
           );
           return;
@@ -571,7 +586,6 @@
                 'Sign out failed: ' + signOutError.message,
                 true
               );
-
               $('signOut').disabled = false;
               return;
             }
@@ -584,7 +598,6 @@
               (error.message || String(error)),
               true
             );
-
             $('signOut').disabled = false;
           }
         });
