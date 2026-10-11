@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -161,6 +162,11 @@
 
     .button.secondary:hover {
       background: #dbe5f7;
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
     }
 
     .table-wrap {
@@ -392,12 +398,22 @@
 
       <form id="support-form">
         <label for="support-subject">Subject</label>
-        <input id="support-subject" name="subject" maxlength="120"
-               required placeholder="How can we help?">
+        <input
+          id="support-subject"
+          name="subject"
+          maxlength="120"
+          required
+          placeholder="How can we help?"
+        >
 
         <label for="support-message">Message</label>
-        <textarea id="support-message" name="message" maxlength="5000"
-                  required placeholder="Write your message here…"></textarea>
+        <textarea
+          id="support-message"
+          name="message"
+          maxlength="3000"
+          required
+          placeholder="Write your message here…"
+        ></textarea>
 
         <div class="button-row">
           <button type="submit" id="support-submit-button">
@@ -405,8 +421,12 @@
           </button>
         </div>
 
-        <p id="support-status" class="form-message" role="status"
-           aria-live="polite"></p>
+        <p
+          id="support-status"
+          class="form-message"
+          role="status"
+          aria-live="polite"
+        ></p>
       </form>
     </section>
   </main>
@@ -499,11 +519,16 @@
           return;
         }
 
-        setText("account-status", profile.account_status || "Not available");
+        setText(
+          "account-status",
+          profile.account_status || "Not available"
+        );
         setText("account-role", profile.role || "Not available");
 
-        if (profile.role === "admin" &&
-            profile.account_status === "active") {
+        if (
+          profile.role === "admin" &&
+          profile.account_status === "active"
+        ) {
           document.getElementById("admin-requests-link").hidden = false;
         }
       }
@@ -514,8 +539,6 @@
         activityMessage.textContent = "Loading account activity…";
         showEmptyActivity("Loading…");
 
-        // These are optional test tables. If your database uses different
-        // table or column names, this section will show a safe error message.
         const result = await supabaseClient
           .from("test_transactions")
           .select("*")
@@ -545,18 +568,25 @@
         for (const item of records) {
           const row = document.createElement("tr");
 
-          addCell(row, item.transaction_type || item.type || "Not specified");
+          addCell(
+            row,
+            item.transaction_type || item.type || "Not specified"
+          );
           addCell(row, item.amount);
           addCell(row, item.asset || item.asset_code || "—");
           addCell(row, item.status || "—");
           addCell(row, formatDate(item.created_at));
-          addCell(row, item.reference || item.reference_id || item.id || "—");
+          addCell(
+            row,
+            item.reference || item.reference_id || item.id || "—"
+          );
 
           activityRows.appendChild(row);
         }
 
         activityMessage.textContent =
-          records.length + " test record(s) loaded. These records do not " +
+          records.length +
+          " test record(s) loaded. These records do not " +
           "represent a verified balance or prove that money moved.";
       }
 
@@ -580,13 +610,37 @@
 
         const form = document.getElementById("support-form");
         const button = document.getElementById("support-submit-button");
-        const subject = document.getElementById("support-subject").value.trim();
-        const message = document.getElementById("support-message").value.trim();
 
-        if (!subject || !message) {
-          supportStatus.textContent = "Please complete both fields.";
+        if (!currentUser || !currentUser.email) {
+          supportStatus.textContent =
+            "Your sign-in session is unavailable. Please sign in again.";
           return;
         }
+
+        const subject = document
+          .getElementById("support-subject")
+          .value.trim();
+
+        const message = document
+          .getElementById("support-message")
+          .value.trim();
+
+        if (!subject || !message) {
+          supportStatus.textContent =
+            "Please complete both fields.";
+          return;
+        }
+
+        if (message.length > 3000) {
+          supportStatus.textContent =
+            "Your message must be 3,000 characters or fewer.";
+          return;
+        }
+
+        const name =
+          currentUser.user_metadata?.full_name ||
+          currentUser.user_metadata?.name ||
+          currentUser.email;
 
         button.disabled = true;
         supportStatus.textContent = "Sending your message…";
@@ -594,23 +648,30 @@
         try {
           const response = await fetch("/api/contact", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json"
+            },
             body: JSON.stringify({
+              name,
+              email: currentUser.email,
               subject,
-              message,
-              email: currentUser.email
+              message
             })
           });
 
           const data = await response.json().catch(() => ({}));
 
           if (!response.ok) {
-            throw new Error(data.error || data.message ||
-              "Support message could not be sent.");
+            throw new Error(
+              data.error ||
+              data.message ||
+              "Support message could not be sent."
+            );
           }
 
           supportStatus.textContent =
             data.message || "Your support message was submitted.";
+
           form.reset();
         } catch (error) {
           supportStatus.textContent =
@@ -652,6 +713,7 @@
           setText("account-id", currentUser.id);
 
           showPageMessage("You are signed in.");
+
           await loadProfile();
           await loadActivity();
         } catch (error) {
@@ -662,13 +724,16 @@
         }
       }
 
-      document.getElementById("sign-out-button")
+      document
+        .getElementById("sign-out-button")
         .addEventListener("click", signOut);
 
-      document.getElementById("refresh-activity-button")
+      document
+        .getElementById("refresh-activity-button")
         .addEventListener("click", loadActivity);
 
-      document.getElementById("support-form")
+      document
+        .getElementById("support-form")
         .addEventListener("submit", submitSupport);
 
       startDashboard();
