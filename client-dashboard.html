@@ -21,9 +21,7 @@
       --danger: #b42318;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -39,8 +37,7 @@
       padding: 22px 16px;
     }
 
-    .header-inner,
-    main {
+    .header-inner, main {
       width: min(1100px, 100%);
       margin: 0 auto;
     }
@@ -56,9 +53,7 @@
       font-size: 14px;
     }
 
-    main {
-      padding: 22px 16px 45px;
-    }
+    main { padding: 22px 16px 45px; }
 
     .notice {
       border: 1px solid #f0d48a;
@@ -69,18 +64,14 @@
       margin-bottom: 18px;
     }
 
-    .welcome {
-      margin-bottom: 20px;
-    }
+    .welcome { margin-bottom: 20px; }
 
     .welcome h2 {
       margin: 0 0 5px;
       font-size: 25px;
     }
 
-    .muted {
-      color: var(--muted);
-    }
+    .muted { color: var(--muted); }
 
     .grid {
       display: grid;
@@ -99,9 +90,7 @@
       margin-bottom: 18px;
     }
 
-    .grid .card {
-      margin-bottom: 0;
-    }
+    .grid .card { margin-bottom: 0; }
 
     .card h3 {
       margin: 0 0 13px;
@@ -136,8 +125,7 @@
       margin-top: 14px;
     }
 
-    .button,
-    button {
+    .button, button {
       display: inline-block;
       border: 0;
       border-radius: 8px;
@@ -150,8 +138,7 @@
       cursor: pointer;
     }
 
-    .button:hover,
-    button:hover {
+    .button:hover, button:hover {
       background: var(--primary-dark);
     }
 
@@ -160,9 +147,7 @@
       color: var(--primary-dark);
     }
 
-    .button.secondary:hover {
-      background: #dbe5f7;
-    }
+    .button.secondary:hover { background: #dbe5f7; }
 
     button:disabled {
       opacity: 0.65;
@@ -181,8 +166,7 @@
       font-size: 13px;
     }
 
-    th,
-    td {
+    th, td {
       text-align: left;
       padding: 11px 9px;
       border-bottom: 1px solid var(--border);
@@ -206,8 +190,7 @@
       font-weight: 700;
     }
 
-    input,
-    textarea {
+    input, textarea {
       display: block;
       width: 100%;
       border: 1px solid #cbd5e1;
@@ -236,21 +219,10 @@
     }
 
     @media (max-width: 700px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      main {
-        padding: 16px 12px 30px;
-      }
-
-      .card {
-        padding: 15px;
-      }
-
-      .welcome h2 {
-        font-size: 22px;
-      }
+      .grid { grid-template-columns: 1fr; }
+      main { padding: 16px 12px 30px; }
+      .card { padding: 15px; }
+      .welcome h2 { font-size: 22px; }
     }
   </style>
 </head>
@@ -536,58 +508,85 @@
       async function loadActivity() {
         if (!currentUser) return;
 
+        const refreshButton =
+          document.getElementById("refresh-activity-button");
+
+        refreshButton.disabled = true;
         activityMessage.textContent = "Loading account activity…";
         showEmptyActivity("Loading…");
 
-        const result = await supabaseClient
-          .from("test_transactions")
-          .select("*")
-          .eq("user_id", currentUser.id)
-          .order("created_at", { ascending: false })
-          .limit(20);
+        let timeoutId;
 
-        if (result.error) {
+        try {
+          const query = supabaseClient
+            .from("test_transactions")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .order("created_at", { ascending: false })
+            .limit(20);
+
+          const timeout = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => {
+              reject(new Error(
+                "The activity request timed out after 15 seconds. Please refresh and try again."
+              ));
+            }, 15000);
+          });
+
+          const result = await Promise.race([query, timeout]);
+
+          if (result.error) {
+            showEmptyActivity("Activity could not be loaded.");
+            activityMessage.textContent =
+              "The test activity query failed. Check the test_transactions " +
+              "table, its columns, and its Row Level Security policies.";
+            return;
+          }
+
+          const records = result.data || [];
+
+          if (records.length === 0) {
+            showEmptyActivity("No test activity records found.");
+            activityMessage.textContent =
+              "No test activity records were found for this account.";
+            return;
+          }
+
+          activityRows.replaceChildren();
+
+          for (const item of records) {
+            const row = document.createElement("tr");
+
+            addCell(
+              row,
+              item.transaction_type || item.type || "Not specified"
+            );
+            addCell(row, item.amount);
+            addCell(row, item.asset || item.asset_code || "—");
+            addCell(row, item.status || "—");
+            addCell(row, formatDate(item.created_at));
+            addCell(
+              row,
+              item.reference || item.reference_id || item.id || "—"
+            );
+
+            activityRows.appendChild(row);
+          }
+
+          activityMessage.textContent =
+            records.length +
+            " test record(s) loaded. These records do not " +
+            "represent a verified balance or prove that money moved.";
+        } catch (error) {
+          console.error("Could not load test activity:", error);
           showEmptyActivity("Activity could not be loaded.");
           activityMessage.textContent =
-            "The test activity query failed. Check the test_transactions " +
-            "table, its columns, and its Row Level Security policies.";
-          return;
+            error.message ||
+            "The activity request failed. Please refresh and try again.";
+        } finally {
+          if (timeoutId) clearTimeout(timeoutId);
+          refreshButton.disabled = false;
         }
-
-        const records = result.data || [];
-
-        if (records.length === 0) {
-          showEmptyActivity("No test activity records found.");
-          activityMessage.textContent =
-            "No test activity records were found for this account.";
-          return;
-        }
-
-        activityRows.replaceChildren();
-
-        for (const item of records) {
-          const row = document.createElement("tr");
-
-          addCell(
-            row,
-            item.transaction_type || item.type || "Not specified"
-          );
-          addCell(row, item.amount);
-          addCell(row, item.asset || item.asset_code || "—");
-          addCell(row, item.status || "—");
-          addCell(row, formatDate(item.created_at));
-          addCell(
-            row,
-            item.reference || item.reference_id || item.id || "—"
-          );
-
-          activityRows.appendChild(row);
-        }
-
-        activityMessage.textContent =
-          records.length +
-          " test record(s) loaded. These records do not " +
-          "represent a verified balance or prove that money moved.";
       }
 
       async function signOut() {
