@@ -1,15 +1,32 @@
 
 const VERCEL_ORIGIN =
-  "https://alpscoinchain-fzvb1lpcm-alpscoinchaininvestmentventures.vercel.app";
+  "https://alpscoinchain-alpscoinchaininvestmentventures.vercel.app";
 
 export default {
   async fetch(request) {
-    const url = new URL(request.url);
+    const incomingUrl = new URL(request.url);
+    const upstreamUrl = new URL(incomingUrl);
 
-    url.hostname = new URL(VERCEL_ORIGIN).hostname;
-    url.protocol = "https:";
-    url.port = "";
+    upstreamUrl.hostname = new URL(VERCEL_ORIGIN).hostname;
+    upstreamUrl.protocol = "https:";
+    upstreamUrl.port = "";
 
-    return fetch(new Request(url, request));
+    const headers = new Headers(request.headers);
+    headers.set("X-Forwarded-Host", incomingUrl.hostname);
+    headers.set(
+      "X-Forwarded-Proto",
+      incomingUrl.protocol.slice(0, -1)
+    );
+
+    return fetch(
+      new Request(upstreamUrl, {
+        method: request.method,
+        headers,
+        body: ["GET", "HEAD"].includes(request.method)
+          ? undefined
+          : request.body,
+        redirect: "manual"
+      })
+    );
   }
 };
