@@ -295,11 +295,12 @@
       </section>
     </div>
 
+    <!-- Existing test transaction activity -->
     <section class="card">
-      <h3>Recent account activity</h3>
+      <h3>Recent test transaction activity</h3>
       <p class="muted">
-        The activity below comes from test database records. It is not a
-        verified financial statement and does not establish an available balance.
+        These records come from the test_transactions table. They are not
+        verified financial statements and do not establish an available balance.
       </p>
 
       <div class="button-row">
@@ -326,7 +327,49 @@
           <tbody id="activity-rows">
             <tr>
               <td colspan="6" class="empty">
-                Sign in to load your account activity.
+                Sign in to load your test activity.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- New request history from fund_requests -->
+    <section class="card">
+      <h3>Deposit &amp; Withdrawal Request History</h3>
+      <p class="muted">
+        These are recorded requests, not proof of payment or completed transfers.
+        Reviewing a request does not move funds or change your balance.
+      </p>
+
+      <div class="button-row">
+        <button type="button" id="refresh-requests-button">
+          Refresh request history
+        </button>
+      </div>
+
+      <p id="request-history-message" class="form-message"
+         role="status" aria-live="polite">
+        Request history has not been loaded yet.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Asset</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Reference</th>
+            </tr>
+          </thead>
+          <tbody id="request-history-rows">
+            <tr>
+              <td colspan="6" class="empty">
+                Sign in to load your request history.
               </td>
             </tr>
           </tbody>
@@ -393,12 +436,8 @@
           </button>
         </div>
 
-        <p
-          id="support-status"
-          class="form-message"
-          role="status"
-          aria-live="polite"
-        ></p>
+        <p id="support-status" class="form-message"
+           role="status" aria-live="polite"></p>
       </form>
     </section>
   </main>
@@ -422,6 +461,10 @@
       const pageMessage = document.getElementById("page-message");
       const activityMessage = document.getElementById("activity-message");
       const activityRows = document.getElementById("activity-rows");
+      const requestHistoryMessage =
+        document.getElementById("request-history-message");
+      const requestHistoryRows =
+        document.getElementById("request-history-rows");
       const supportStatus = document.getElementById("support-status");
 
       let supabaseClient = null;
@@ -456,8 +499,8 @@
         row.appendChild(cell);
       }
 
-      function showEmptyActivity(message) {
-        activityRows.replaceChildren();
+      function showEmptyRows(tbody, message) {
+        tbody.replaceChildren();
 
         const row = document.createElement("tr");
         const cell = document.createElement("td");
@@ -467,7 +510,7 @@
         cell.textContent = message;
 
         row.appendChild(cell);
-        activityRows.appendChild(row);
+        tbody.appendChild(row);
       }
 
       async function loadProfile() {
@@ -512,8 +555,8 @@
           document.getElementById("refresh-activity-button");
 
         refreshButton.disabled = true;
-        activityMessage.textContent = "Loading account activity…";
-        showEmptyActivity("Loading…");
+        activityMessage.textContent = "Loading test activity…";
+        showEmptyRows(activityRows, "Loading…");
 
         let timeoutId;
 
@@ -536,7 +579,7 @@
           const result = await Promise.race([query, timeout]);
 
           if (result.error) {
-            showEmptyActivity("Activity could not be loaded.");
+            showEmptyRows(activityRows, "Test activity could not be loaded.");
             activityMessage.textContent =
               "The test activity query failed. Check the test_transactions " +
               "table, its columns, and its Row Level Security policies.";
@@ -546,7 +589,7 @@
           const records = result.data || [];
 
           if (records.length === 0) {
-            showEmptyActivity("No test activity records found.");
+            showEmptyRows(activityRows, "No test activity records found.");
             activityMessage.textContent =
               "No test activity records were found for this account.";
             return;
@@ -575,14 +618,104 @@
 
           activityMessage.textContent =
             records.length +
-            " test record(s) loaded. These records do not " +
+            " test transaction record(s) loaded. These records do not " +
             "represent a verified balance or prove that money moved.";
         } catch (error) {
           console.error("Could not load test activity:", error);
-          showEmptyActivity("Activity could not be loaded.");
+          showEmptyRows(activityRows, "Test activity could not be loaded.");
           activityMessage.textContent =
             error.message ||
             "The activity request failed. Please refresh and try again.";
+        } finally {
+          if (timeoutId) clearTimeout(timeoutId);
+          refreshButton.disabled = false;
+        }
+      }
+
+      async function loadRequestHistory() {
+        if (!currentUser) return;
+
+        const refreshButton =
+          document.getElementById("refresh-requests-button");
+
+        refreshButton.disabled = true;
+        requestHistoryMessage.textContent = "Loading request history…";
+        showEmptyRows(requestHistoryRows, "Loading…");
+
+        let timeoutId;
+
+        try {
+          const query = supabaseClient
+            .from("fund_requests")
+            .select(
+              "request_type, amount, asset, status, reference, created_at"
+            )
+            .eq("user_id", currentUser.id)
+            .order("created_at", { ascending: false })
+            .limit(20);
+
+          const timeout = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => {
+              reject(new Error(
+                "Request history timed out after 15 seconds. Please refresh and try again."
+              ));
+            }, 15000);
+          });
+
+          const result = await Promise.race([query, timeout]);
+
+          if (result.error) {
+            console.error("Request history query failed:", result.error);
+            showEmptyRows(
+              requestHistoryRows,
+              "Request history could not be loaded."
+            );
+            requestHistoryMessage.textContent =
+              "Unable to load request history. Please check the fund_requests " +
+              "table and its existing Row Level Security policies.";
+            return;
+          }
+
+          const records = result.data || [];
+
+          if (records.length === 0) {
+            showEmptyRows(
+              requestHistoryRows,
+              "No deposit or withdrawal requests found."
+            );
+            requestHistoryMessage.textContent =
+              "No request records were found for this account.";
+            return;
+          }
+
+          requestHistoryRows.replaceChildren();
+
+          for (const item of records) {
+            const row = document.createElement("tr");
+
+            addCell(row, item.request_type);
+            addCell(row, item.amount);
+            addCell(row, item.asset);
+            addCell(row, item.status);
+            addCell(row, formatDate(item.created_at));
+            addCell(row, item.reference);
+
+            requestHistoryRows.appendChild(row);
+          }
+
+          requestHistoryMessage.textContent =
+            records.length +
+            " request record(s) loaded. These are request statuses only; " +
+            "they do not prove payment, transfer, or a change in balance.";
+        } catch (error) {
+          console.error("Could not load request history:", error);
+          showEmptyRows(
+            requestHistoryRows,
+            "Request history could not be loaded."
+          );
+          requestHistoryMessage.textContent =
+            error.message ||
+            "The request history query failed. Please refresh and try again.";
         } finally {
           if (timeoutId) clearTimeout(timeoutId);
           refreshButton.disabled = false;
@@ -714,7 +847,11 @@
           showPageMessage("You are signed in.");
 
           await loadProfile();
-          await loadActivity();
+
+          await Promise.all([
+            loadActivity(),
+            loadRequestHistory()
+          ]);
         } catch (error) {
           console.error("Dashboard initialization failed:", error);
           showPageMessage(
@@ -730,6 +867,10 @@
       document
         .getElementById("refresh-activity-button")
         .addEventListener("click", loadActivity);
+
+      document
+        .getElementById("refresh-requests-button")
+        .addEventListener("click", loadRequestHistory);
 
       document
         .getElementById("support-form")
