@@ -5,6 +5,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
+
+  <script>
+    if (
+      window.location.hostname ===
+      'www.alpscoinchaininvestment.uk'
+    ) {
+      window.location.replace(
+        'https://alpscoinchaininvestment.uk' +
+        window.location.pathname +
+        window.location.search +
+        window.location.hash
+      );
+    }
+  </script>
+
   <title>Fund Request Review | AlpsCoinChain</title>
 
   <style>
@@ -213,21 +228,31 @@
     const SUPABASE_KEY =
       'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
 
-    if (!window.supabase) {
-      document.getElementById('sessionNotice').textContent =
+    const $ = id => document.getElementById(id);
+
+    if (!window.supabase || !window.supabase.createClient) {
+      $('sessionNotice').textContent =
         'Supabase library did not load. Check your internet connection and reload.';
       throw new Error('Supabase library unavailable');
     }
 
+    // Use the same Supabase project and default browser session storage.
     const db = window.supabase.createClient(
       SUPABASE_URL,
-      SUPABASE_KEY
+      SUPABASE_KEY,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      }
     );
-
-    const $ = id => document.getElementById(id);
 
     let isAdmin = false;
     let busy = false;
+    let initialized = false;
+    let authSubscription = null;
 
     function notice(id, message, error = false) {
       const element = $(id);
@@ -257,12 +282,49 @@
         : date.toLocaleString();
     }
 
+    async function getCurrentSession() {
+      // First allow Supabase to resolve any session stored in the browser.
+      const { data, error } = await db.auth.getSession();
+
+      if (error) throw error;
+
+      if (data.session && data.session.user) {
+        return data.session;
+      }
+
+      // Check the authenticated user as a second diagnostic.
+      const { data: userData, error: userError } =
+        await db.auth.getUser();
+
+      if (userError) {
+        // A missing session is not an administrator authorization result.
+        if (
+          userError.name === 'AuthSessionMissingError' ||
+          /session missing|auth session missing/i.test(userError.message || '')
+        ) {
+          return null;
+        }
+
+        throw userError;
+      }
+
+      if (!userData.user) return null;
+
+      // getUser() alone does not provide the complete session object.
+      // Re-read the session rather than fabricating one.
+      const { data: refreshedData, error: refreshedError } =
+        await db.auth.getSession();
+
+      if (refreshedError) throw refreshedError;
+
+      return refreshedData.session || null;
+    }
+
     async function loadRequests() {
       if (!isAdmin || busy) return;
 
       $('refresh').disabled = true;
       $('rows').replaceChildren();
-
       notice('listNotice', 'Loading requests…');
 
       try {
@@ -483,6 +545,7 @@
         return;
       }
 
+      // Verify the persisted result by reloading the selected list.
       await loadRequests();
 
       const refreshedText = $('rows').textContent;
@@ -491,30 +554,33 @@
         notice(
           'listNotice',
           resultMessage +
-          ' The request is not visible in the current filter; choose All statuses and refresh to verify it.',
-          true
+          ' The request is not visible in the current filter; choose All statuses and refresh to verify it.'
         );
       } else {
         notice('listNotice', resultMessage);
       }
     }
 
-    async function init() {
+    async function verifyAdministrator() {
+      isAdmin = false;
+      $('adminEmail').textContent = '';
+      $('rows').replaceChildren();
+
+      notice('sessionNotice', 'Checking administrator session…');
+
       try {
-        const { data, error } = await db.auth.getSession();
+        const session = await getCurrentSession();
 
-        if (error) throw error;
-
-        if (!data.session || !data.session.user) {
+        if (!session || !session.user) {
           notice(
             'sessionNotice',
-            'No signed-in session was found. Please sign in again.',
+            'No signed-in session was found on this domain. Sign in at the non-www login page, then return here.',
             true
           );
           return;
         }
 
-        const user = data.session.user;
+        const user = session.user;
 
         const { data: profile, error: profileError } = await db
           .from('profiles')
@@ -561,46 +627,12 @@
         }
 
         isAdmin = true;
-
-        $('adminEmail').textContent =
-          user.email || 'Admin session';
+        $('adminEmail').textContent = user.email || 'Admin session';
 
         notice(
           'sessionNotice',
           'Active administrator session verified.'
         );
-
-        $('refresh').addEventListener('click', loadRequests);
-        $('statusFilter').addEventListener('change', loadRequests);
-
-        $('signOut').addEventListener('click', async () => {
-          $('signOut').disabled = true;
-
-          try {
-            const { error: signOutError } =
-              await db.auth.signOut();
-
-            if (signOutError) {
-              notice(
-                'sessionNotice',
-                'Sign out failed: ' + signOutError.message,
-                true
-              );
-              $('signOut').disabled = false;
-              return;
-            }
-
-            window.location.replace('/login.html');
-          } catch (error) {
-            notice(
-              'sessionNotice',
-              'Sign out failed: ' +
-              (error.message || String(error)),
-              true
-            );
-            $('signOut').disabled = false;
-          }
-        });
 
         await loadRequests();
       } catch (error) {
@@ -614,6 +646,80 @@
         console.error('Admin initialization error:', error);
       }
     }
+
+    async function init() {
+      if (initialized) return;
+      initialized = true;
+
+      $('refresh').addEventListener('click', loadRequests);
+      $('statusFilter').addEventListener('change', loadRequests);
+
+      $('signOut').addEventListener('click', async () => {
+        $('signOut').disabled = true;
+
+        try {
+          const { error } = await db.auth.signOut();
+
+          if (error) {
+            notice(
+              'sessionNotice',
+              'Sign out failed: ' + error.message,
+              true
+            );
+            $('signOut').disabled = false;
+            return;
+          }
+
+          isAdmin = false;
+          window.location.replace('/login');
+        } catch (error) {
+          notice(
+            'sessionNotice',
+            'Sign out failed: ' +
+            (error.message || String(error)),
+            true
+          );
+          $('signOut').disabled = false;
+        }
+      });
+
+      // Register the listener before the first session check.
+      const { data } = db.auth.onAuthStateChange(
+        (event, session) => {
+          if (event === 'SIGNED_OUT') {
+            isAdmin = false;
+            $('adminEmail').textContent = '';
+            $('rows').replaceChildren();
+            notice(
+              'sessionNotice',
+              'You are signed out. Please sign in again.',
+              true
+            );
+          } else if (
+            event === 'SIGNED_IN' ||
+            event === 'TOKEN_REFRESHED' ||
+            event === 'USER_UPDATED'
+          ) {
+            // Avoid doing Supabase queries directly inside the auth callback.
+            setTimeout(() => {
+              if (session && session.user) {
+                verifyAdministrator();
+              }
+            }, 0);
+          }
+        }
+      );
+
+      authSubscription = data.subscription;
+
+      await verifyAdministrator();
+    }
+
+    window.addEventListener('pagehide', () => {
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
+    });
 
     init();
   </script>
