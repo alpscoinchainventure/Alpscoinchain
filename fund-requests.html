@@ -415,6 +415,24 @@
       reference: "ACC-" + type.toUpperCase() + "-" + crypto.randomUUID()
     };
 
+    if (type === "deposit") {
+      // Tie the request to the exact active receiving address shown to the client.
+      // The existing destination column is already part of fund_requests.
+      const wallet = depositWallets.find(item =>
+        item.asset_code === asset &&
+        item.network === network &&
+        item.is_active &&
+        String(item.wallet_address || "").trim()
+      );
+
+      if (!network || !wallet) {
+        showMessage("Select an active network with an official receiving address before submitting.", "error");
+        return;
+      }
+
+      row.destination = wallet.wallet_address;
+    }
+
     if (type === "withdrawal") {
       const beneficiaryId = String(fields.get("beneficiary_id") || "");
       const beneficiary = beneficiaries.find(item => item.id === beneficiaryId);
@@ -460,10 +478,14 @@
     } catch (error) {
       console.error("Request submission failed:", error);
 
-      showMessage(
-        "The request could not be saved. Check that the asset matches the beneficiary and try again.",
-        "error"
-      );
+      const detail = String(error?.message || "").trim();
+      if (/row-level security|permission denied|not allowed/i.test(detail)) {
+        showMessage("The request was blocked by database permissions. No request was saved. Please contact support with this message: " + detail, "error");
+      } else if (/duplicate key|unique constraint/i.test(detail)) {
+        showMessage("This request reference conflicted with an existing record. Please submit again; no duplicate request was created.", "error");
+      } else {
+        showMessage("The request was not saved: " + (detail || "The database returned no error details. Please try again or contact support."), "error");
+      }
     } finally {
       button.disabled = false;
       button.textContent = type === "deposit"
