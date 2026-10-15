@@ -116,8 +116,17 @@
             max="999999999999" step="any" required>
         </label>
         <label>Asset code
-          <input name="asset" type="text" minlength="2" maxlength="20"
-            placeholder="e.g. USDT" required>
+          <select name="asset" id="withdrawal-asset" required>
+            <option value="">Select asset</option>
+            <option value="BTC">BTC</option>
+            <option value="ETH">ETH</option>
+            <option value="USDT">USDT</option>
+            <option value="USDC">USDC</option>
+            <option value="BNB">BNB</option>
+            <option value="SOL">SOL</option>
+            <option value="XRP">XRP</option>
+            <option value="LTC">LTC</option>
+          </select>
         </label>
         <label>Saved beneficiary
           <select name="beneficiary_id" id="beneficiary-select" required>
