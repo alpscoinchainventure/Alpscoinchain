@@ -419,7 +419,12 @@
           return;
         }
 
-        if (!data || data.length === 0) {
+        const visibleRequests = (data || []).filter(request =>
+          !["TEST", "TES"].includes(String(request.asset || "").trim().toUpperCase()) &&
+          !String(request.reference || "").toUpperCase().includes("TEST")
+        );
+
+        if (visibleRequests.length === 0) {
           notice(
             'listNotice',
             'No requests found for this filter.'
@@ -428,7 +433,7 @@
           return;
         }
 
-        for (const request of data) {
+        for (const request of visibleRequests) {
           const row = document.createElement('tr');
 
           addCell(row, formatDate(request.created_at));
