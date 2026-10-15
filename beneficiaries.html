@@ -42,7 +42,25 @@ button,.link{display:inline-flex;align-items:center;justify-content:center;borde
 'use strict';
 const SUPABASE_URL='https://uevofmlzpwrdidjnwxfd.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
-const supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let supabase=null;
+async function ensureSupabaseClient(){
+  if(window.supabase&&typeof window.supabase.createClient==='function'){
+    supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+    return true;
+  }
+  return await new Promise(resolve=>{
+    const fallback=document.createElement('script');
+    fallback.src='https://unpkg.com/@supabase/supabase-js@2';
+    fallback.onload=()=>{
+      if(window.supabase&&typeof window.supabase.createClient==='function'){
+        supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+        resolve(true);
+      }else resolve(false);
+    };
+    fallback.onerror=()=>resolve(false);
+    document.head.appendChild(fallback);
+  });
+}
 const $=id=>document.getElementById(id);
 let currentUser=null,editingId=null;
 function showMessage(id,text,type='ok'){const el=$(id);el.textContent=text;el.className='message show '+(type==='err'?'err':'ok')}
@@ -50,11 +68,20 @@ function clearMessage(id){const el=$(id);el.textContent='';el.className='message
 function safeText(tag,text,className){const el=document.createElement(tag);el.textContent=text;if(className)el.className=className;return el}
 function resetForm(){editingId=null;$('beneficiary-form').reset();$('form-title').textContent='Add a beneficiary';$('save-button').textContent='Save beneficiary';$('cancel-edit').hidden=true;clearMessage('form-message')}
 async function checkSession(){try{const {data,error}=await supabase.auth.getSession();if(error)throw error;if(!data.session){window.location.replace('/login.html?next=beneficiaries');return false}currentUser=data.session.user;const {data:profile,error:profileError}=await supabase.from('profiles').select('role,account_status').eq('id',currentUser.id).maybeSingle();if(profileError)throw profileError;if(!profile||profile.account_status!=='active'||profile.role!=='client'){showMessage('page-message','This page is available to active client accounts only. If you believe this is an error, contact support.','err');$('beneficiary-form').querySelectorAll('input,button').forEach(el=>el.disabled=true);return false}showMessage('page-message','Signed in as '+currentUser.email+'. Your saved beneficiary records are shown below.');return true}catch(error){console.error('Beneficiary session check failed:',error);showMessage('page-message','Unable to verify your account. Please refresh or sign in again.','err');return false}}
-async function loadBeneficiaries(){if(!currentUser)return;$('refresh').disabled=true;$('beneficiary-list').replaceChildren(safeText('div','Loading saved beneficiaries…','empty'));try{const {data,error}=await supabase.from('beneficiaries').select('id,beneficiary_name,destination,asset,created_at,updated_at').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(100);if(error)throw error;const list=$('beneficiary-list');list.replaceChildren();if(!data||!data.length){list.appendChild(safeText('div','No beneficiaries saved yet. Add one using the form.','empty'));return}for(const item of data){const article=safeText('article','','beneficiary');const details=document.createElement('div');details.appendChild(safeText('strong',item.beneficiary_name));details.appendChild(safeText('small','Asset: '+item.asset));details.appendChild(safeText('small','Destination/reference: '+item.destination));const actions=safeText('div','','item-actions');const edit=safeText('button','Edit');edit.type='button';edit.className='secondary';edit.addEventListener('click',()=>{editingId=item.id;$('beneficiary-name').value=item.beneficiary_name||'';$('destination').value=item.destination||'';$('asset').value=item.asset||'';$('form-title').textContent='Edit beneficiary';$('save-button').textContent='Update beneficiary';$('cancel-edit').hidden=false;clearMessage('form-message');window.scrollTo({top:0,behavior:'smooth'})});const remove=safeText('button','Delete');remove.type='button';remove.className='danger';remove.addEventListener('click',()=>deleteBeneficiary(item.id,item.beneficiary_name));actions.append(edit,remove);article.append(details,actions);list.appendChild(article)}}catch(error){console.error('Beneficiary list load failed:',error);$('beneficiary-list').replaceChildren(safeText('div','Could not load beneficiaries. Confirm the beneficiaries table and its owner-only RLS policies exist, then try again.','empty'))}finally{$('refresh').disabled=false}}
+async function loadBeneficiaries(){if(!currentUser)return;$('refresh').disabled=true;$('beneficiary-list').replaceChildren(safeText('div','Loading saved beneficiaries…','empty'));try{const {data,error}=await supabase.from('beneficiaries').select('id,beneficiary_name,destination,asset,created_at,updated_at').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(100);if(error)throw error;const list=$('beneficiary-list');list.replaceChildren();if(!data||!data.length){list.appendChild(safeText('div','No beneficiaries saved yet. Add one using the form.','empty'));return}for(const item of data){const article=safeText('article','','beneficiary');const details=document.createElement('div');details.appendChild(safeText('strong',item.beneficiary_name));details.appendChild(safeText('small','Asset: '+item.asset));details.appendChild(safeText('small','Destination/reference: '+item.destination));const actions=safeText('div','','item-actions');const edit=safeText('button','Edit');edit.type='button';edit.className='secondary';edit.addEventListener('click',()=>{editingId=item.id;$('beneficiary-name').value=item.beneficiary_name||'';$('destination').value=item.destination||'';$('asset').value=item.asset||'';$('form-title').textContent='Edit beneficiary';$('save-button').textContent='Update beneficiary';$('cancel-edit').hidden=false;clearMessage('form-message');window.scrollTo({top:0,behavior:'smooth'})});const remove=safeText('button','Delete');remove.type='button';remove.className='danger';remove.addEventListener('click',()=>deleteBeneficiary(item.id,item.beneficiary_name));actions.append(edit,remove);article.append(details,actions);list.appendChild(article)}}catch(error){console.error('Beneficiary list load failed:',error);$('beneficiary-list').replaceChildren(safeText('div','Could not load beneficiaries: '+(error&&error.message?error.message:'unknown error')+'. Check the beneficiaries table and its SELECT policy for your own user_id.','empty'))}finally{$('refresh').disabled=false}}
 $('beneficiary-form').addEventListener('submit',async event=>{event.preventDefault();if(!currentUser)return;const beneficiary_name=$('beneficiary-name').value.trim();const destination=$('destination').value.trim();const asset=$('asset').value.trim().toUpperCase();if(!beneficiary_name||!destination||!asset){showMessage('form-message','Complete all three fields.','err');return}if(beneficiary_name.length>120||destination.length>500||asset.length>20){showMessage('form-message','One or more fields exceed the allowed length.','err');return}const wasEditing=Boolean(editingId);const button=$('save-button');button.disabled=true;button.textContent=wasEditing?'Updating…':'Saving…';try{let result;if(editingId){result=await supabase.from('beneficiaries').update({beneficiary_name,destination,asset,updated_at:new Date().toISOString()}).eq('id',editingId).eq('user_id',currentUser.id).select('id').maybeSingle()}else{result=await supabase.from('beneficiaries').insert({user_id:currentUser.id,beneficiary_name,destination,asset}).select('id').single()}if(result.error)throw result.error;if(!result.data)throw new Error('No record was changed. Refresh and try again.');resetForm();showMessage('page-message',wasEditing?'Beneficiary updated.':'Beneficiary saved.','ok');await loadBeneficiaries()}catch(error){console.error('Beneficiary save failed:',error);showMessage('form-message',error.message||'Could not save the beneficiary. Please try again.','err')}finally{button.disabled=false;button.textContent=editingId?'Update beneficiary':'Save beneficiary'}});
 async function deleteBeneficiary(id,name){if(!currentUser||!window.confirm('Delete saved beneficiary “'+name+'”? This will not cancel or change any existing request.'))return;try{const {data,error}=await supabase.from('beneficiaries').delete().eq('id',id).eq('user_id',currentUser.id).select('id').maybeSingle();if(error)throw error;if(!data)throw new Error('No record was deleted. Refresh and try again.');if(editingId===id)resetForm();showMessage('page-message','Beneficiary deleted. Existing requests are not changed.');await loadBeneficiaries()}catch(error){console.error('Beneficiary delete failed:',error);showMessage('page-message',error.message||'Could not delete this beneficiary.','err')}}
 $('cancel-edit').addEventListener('click',resetForm);$('refresh').addEventListener('click',loadBeneficiaries);
-(async()=>{if(await checkSession())await loadBeneficiaries()})();
+(async()=>{
+  const ready=await ensureSupabaseClient();
+  if(!ready){
+    showMessage('page-message','The secure database library could not load. Check your internet connection, then refresh this page. The form has been disabled so it will not simply reload without saving.','err');
+    $('beneficiary-form').querySelectorAll('input,button').forEach(el=>el.disabled=true);
+    $('refresh').disabled=true;
+    return;
+  }
+  if(await checkSession())await loadBeneficiaries();
+})();
 </script>
 </body>
 </html>
