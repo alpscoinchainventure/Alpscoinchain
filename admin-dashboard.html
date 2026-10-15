@@ -6,1504 +6,177 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#0b1120">
   <title>Admin Dashboard | AlpsCoinChain Investment</title>
-
   <style>
-    :root {
-      color-scheme: dark;
-      --bg: #0b1120;
-      --panel: #131d30;
-      --panel2: #18243a;
-      --text: #edf3ff;
-      --muted: #a6b4ca;
-      --line: #2b3b55;
-      --accent: #65d6b0;
-      --danger: #ff9292;
-      --warning: #ffd479;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, Helvetica, sans-serif;
-      line-height: 1.6;
-    }
-
-    header {
-      padding: 18px 22px;
-      background: #101a2c;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    header strong {
-      font-size: 19px;
-    }
-
-    main {
-      width: min(1150px, 100%);
-      margin: 0 auto;
-      padding: 25px 18px 45px;
-    }
-
-    h1 {
-      margin: 0 0 5px;
-      font-size: 27px;
-    }
-
-    h2 {
-      margin: 0 0 12px;
-      font-size: 19px;
-    }
-
-    h3 {
-      margin: 0 0 10px;
-      font-size: 16px;
-    }
-
-    p {
-      margin: 6px 0 12px;
-    }
-
-    .muted,
-    .small {
-      color: var(--muted);
-    }
-
-    .small {
-      font-size: 13px;
-    }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      padding: 19px;
-      margin-top: 20px;
-      min-width: 0;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 20px;
-    }
-
-    .stat {
-      padding: 17px;
-      background: var(--panel2);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      min-width: 0;
-    }
-
-    .stat-label {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .stat-value {
-      font-size: 29px;
-      font-weight: bold;
-      margin-top: 5px;
-      overflow-wrap: anywhere;
-    }
-
-    .notice {
-      padding: 12px 14px;
-      background: #17283a;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      margin-top: 12px;
-      overflow-wrap: anywhere;
-    }
-
-    .success {
-      color: var(--accent);
-    }
-
-    .error {
-      color: var(--danger);
-    }
-
-    .warning {
-      color: var(--warning);
-    }
-
-    .search-row,
-    .button-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 14px 0;
-    }
-
-    input,
-    select,
-    button,
-    textarea {
-      font: inherit;
-      border-radius: 8px;
-    }
-
-    input,
-    select,
-    textarea {
-      padding: 11px 12px;
-      color: var(--text);
-      background: #0d1527;
-      border: 1px solid var(--line);
-      width: 100%;
-    }
-
-    input,
-    select {
-      min-height: 44px;
-    }
-
-    textarea {
-      min-height: 85px;
-      resize: vertical;
-    }
-
-    label {
-      display: block;
-      margin: 12px 0 5px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    button {
-      border: 1px solid var(--line);
-      padding: 10px 15px;
-      color: var(--text);
-      background: #24334b;
-      cursor: pointer;
-      min-height: 42px;
-    }
-
-    button:hover {
-      filter: brightness(1.15);
-    }
-
-    button:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    .primary {
-      background: #17694f;
-      border-color: #248566;
-    }
-
-    .danger-button {
-      background: #4a252c;
-      border-color: #874747;
-    }
-
-    .action-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-      min-width: 175px;
-    }
-
-    .table-wrap {
-      width: 100%;
-      overflow-x: auto;
-      margin-top: 12px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 520px;
-    }
-
-    th,
-    td {
-      padding: 12px 10px;
-      text-align: left;
-      border-bottom: 1px solid var(--line);
-      overflow-wrap: anywhere;
-      vertical-align: top;
-    }
-
-    th {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    td {
-      font-size: 14px;
-    }
-
-    .management-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 13px;
-    }
-
-    .management-item {
-      padding: 14px;
-      background: var(--panel2);
-      border: 1px solid var(--line);
-      border-radius: 9px;
-      min-width: 0;
-    }
-
-    .management-item strong {
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0 14px;
-    }
-
-    .form-grid > div {
-      min-width: 0;
-    }
-
-    footer {
-      margin-top: 25px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    [hidden] {
-      display: none !important;
-    }
-
-    @media (max-width: 650px) {
-      .stats,
-      .management-grid,
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      main {
-        padding: 18px 12px 35px;
-      }
-
-      header {
-        padding: 15px;
-      }
-
-      h1 {
-        font-size: 23px;
-      }
-
-      .panel {
-        padding: 14px;
-      }
-
-      .search-row input {
-        flex: 1 1 100%;
-      }
-    }
+    :root{color-scheme:dark;--bg:#0b1120;--panel:#131d30;--panel2:#18243a;--text:#edf3ff;--muted:#a6b4ca;--line:#2b3b55;--accent:#65d6b0;--danger:#ff9292;--warning:#ffd479}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;line-height:1.6}
+    header{padding:18px 22px;background:#101a2c;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}header strong{font-size:19px}main{width:min(1150px,100%);margin:0 auto;padding:25px 18px 45px}h1{margin:0 0 5px;font-size:27px}h2{margin:0 0 12px;font-size:19px}p{margin:6px 0 12px}.muted,.small{color:var(--muted)}.small{font-size:13px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:19px;margin-top:20px;min-width:0}.notice{padding:12px 14px;background:#17283a;border:1px solid var(--line);border-radius:8px;margin-top:12px;overflow-wrap:anywhere}.success{color:var(--accent)}.error{color:var(--danger)}.warning{color:var(--warning)}
+    .search-row,.button-row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}input,select,button,textarea{font:inherit;border-radius:8px}input,select,textarea{padding:11px 12px;color:var(--text);background:#0d1527;border:1px solid var(--line);width:100%}input,select{min-height:44px}textarea{min-height:85px;resize:vertical}label{display:block;margin:12px 0 5px;font-size:14px;font-weight:bold}button{border:1px solid var(--line);padding:10px 15px;color:var(--text);background:#24334b;cursor:pointer;min-height:42px}button:hover{filter:brightness(1.15)}button:disabled{opacity:.55;cursor:not-allowed}.primary{background:#17694f;border-color:#248566}.danger-button{background:#4a252c;border-color:#874747}
+    .table-wrap{width:100%;overflow-x:auto;margin-top:12px}table{width:100%;border-collapse:collapse;min-width:560px}th,td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--line);overflow-wrap:anywhere;vertical-align:top}th{color:var(--muted);font-size:13px}td{font-size:14px}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}.form-grid>div{min-width:0}.management-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.management-item{padding:14px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;min-width:0}.management-item strong{display:block;margin-bottom:5px}footer{margin-top:25px;text-align:center;color:var(--muted);font-size:12px}[hidden]{display:none!important}
+    @media(max-width:650px){.form-grid,.management-grid{grid-template-columns:1fr}main{padding:18px 12px 35px}header{padding:15px}h1{font-size:23px}.panel{padding:14px}.search-row input{flex:1 1 100%}}
   </style>
 </head>
-
 <body>
-  <header>
-    <strong>AlpsCoinChain Investment</strong>
-    <button id="signOutButton" type="button">Sign out</button>
-  </header>
+<header><strong>AlpsCoinChain Investment</strong><button id="signOutButton" type="button">Sign out</button></header>
+<main>
+  <section>
+    <h1>Admin Dashboard</h1>
+    <p class="muted">Secure administration for client accounts, recorded ledger balances, and financial request review.</p>
+    <div id="sessionNotice" class="notice" role="status" aria-live="polite">Verifying administrator session…</div>
+    <p class="small" id="accountEmail"></p>
+  </section>
 
-  <main>
-    <section>
-      <h1>Admin Dashboard</h1>
-
-      <p class="muted">
-        Platform overview, client records, ledger operations, and test-request management.
-      </p>
-
-      <div id="sessionNotice" class="notice" role="status" aria-live="polite">
-        Verifying administrator session…
-      </div>
-
-      <p class="small" id="accountEmail"></p>
-    </section>
-
-    <section class="stats" aria-label="Test record counts">
-      <div class="stat">
-        <div class="stat-label">Test deposits</div>
-        <div class="stat-value" id="depositCount">—</div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-label">Test withdrawals</div>
-        <div class="stat-value" id="withdrawalCount">—</div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-label">Test transactions</div>
-        <div class="stat-value" id="transactionCount">—</div>
-      </div>
-    </section>
-
-    <div class="notice">
-      <strong>Financial operations notice:</strong>
-      These counts and request statuses are not proof of payment.
-      Ledger entries update recorded accounting balances only. They do not
-      independently verify external payments or transfer money.
+  <section class="panel" aria-labelledby="accountsHeading">
+    <h2 id="accountsHeading">Client accounts</h2>
+    <p class="muted small">Client profiles are loaded through the administrator database function. Database policies remain responsible for authorization.</p>
+    <div class="search-row">
+      <input id="accountSearch" type="search" placeholder="Search account ID, role, or status" aria-label="Search accounts">
+      <button id="refreshAccountsButton" type="button">Refresh accounts</button>
     </div>
+    <div id="accountsNotice" class="notice" role="status" aria-live="polite">Client accounts have not been loaded yet.</div>
+    <div class="table-wrap"><table><thead><tr><th>Account ID</th><th>Role</th><th>Account status</th></tr></thead><tbody id="accountRows"></tbody></table></div>
+  </section>
 
-    <!-- CLIENT ACCOUNTS -->
-    <section class="panel" aria-labelledby="accountsHeading">
-      <h2 id="accountsHeading">Client accounts</h2>
+  <section class="panel" aria-labelledby="ledgerHeading">
+    <h2 id="ledgerHeading">Ledger management</h2>
+    <div class="notice">
+      <strong>Financial control:</strong> Use this section only for authorized accounting entries supported by independently verified records. A ledger entry records accounting; it does not independently verify an external payment.
+    </div>
+    <p class="muted small">Credits and debits are submitted through the protected <code>admin_post_ledger_entry</code> database function. The database should enforce administrator authorization, reference uniqueness, validation, and debit/overdraft rules.</p>
 
-      <p class="muted small">
-        Account records are loaded through the administrator profile function.
-        The database must independently enforce administrator authorization.
-      </p>
-
-      <div class="search-row">
-        <input
-          id="accountSearch"
-          type="search"
-          placeholder="Search account ID or role"
-          aria-label="Search account IDs or roles"
-        >
-
-        <button id="refreshAccountsButton" type="button">
-          Refresh accounts
-        </button>
-      </div>
-
-      <div id="accountsNotice" class="notice" role="status" aria-live="polite">
-        Client profiles have not been loaded yet.
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Account ID</th>
-              <th>Role</th>
-              <th>Account status</th>
-            </tr>
-          </thead>
-          <tbody id="accountRows"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- LEDGER MANAGEMENT -->
-    <section class="panel" aria-labelledby="ledgerHeading">
-      <h2 id="ledgerHeading">Ledger management</h2>
-
-      <div class="notice">
-        <strong>Important:</strong>
-        Use this section only for authorized accounting corrections or
-        independently verified transactions. Never credit an account solely
-        on the basis of an unverified payment screenshot or client claim.
-      </div>
-
-      <p class="muted small">
-        Credits and debits are submitted to the Supabase
-        admin_post_ledger_entry function. The database enforces administrator
-        authorization, reference uniqueness, input validation, and overdraft prevention.
-      </p>
-
-      <form id="ledgerForm">
-        <div class="form-grid">
-          <div>
-            <label for="ledgerClient">Client account</label>
-            <select id="ledgerClient" required>
-              <option value="">Load accounts first</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="ledgerType">Entry type</label>
-            <select id="ledgerType" required>
-              <option value="credit">Credit</option>
-              <option value="debit">Debit</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="ledgerAmount">Amount</label>
-            <input
-              id="ledgerAmount"
-              type="number"
-              min="0.00000001"
-              max="9999999999999999"
-              step="0.00000001"
-              inputmode="decimal"
-              placeholder="Enter amount"
-              required
-            >
-          </div>
-
-          <div>
-            <label for="ledgerAsset">Asset symbol</label>
-            <input
-              id="ledgerAsset"
-              type="text"
-              minlength="2"
-              maxlength="12"
-              pattern="[A-Za-z0-9]{2,12}"
-              placeholder="Example: USDT"
-              autocomplete="off"
-              required
-            >
-          </div>
-
-          <div>
-            <label for="ledgerReference">Unique reference</label>
-            <input
-              id="ledgerReference"
-              type="text"
-              minlength="3"
-              maxlength="120"
-              placeholder="Enter unique transaction reference"
-              autocomplete="off"
-              required
-            >
-          </div>
-
-          <div>
-            <label for="ledgerDescription">Reason or description</label>
-            <input
-              id="ledgerDescription"
-              type="text"
-              maxlength="1000"
-              placeholder="Explain the authorized accounting entry"
-              required
-            >
-          </div>
+    <form id="ledgerForm">
+      <div class="form-grid">
+        <div>
+          <label for="ledgerClient">Client account</label>
+          <select id="ledgerClient" required><option value="">Load accounts first</option></select>
         </div>
-
-        <div class="button-row">
-          <button id="submitLedgerButton" class="primary" type="submit">
-            Submit ledger entry
-          </button>
-
-          <button id="resetLedgerButton" type="reset">
-            Clear form
-          </button>
+        <div>
+          <label for="ledgerType">Entry type</label>
+          <select id="ledgerType" required><option value="credit">Credit</option><option value="debit">Debit</option></select>
         </div>
-      </form>
-
-      <div id="ledgerNotice" class="notice" role="status" aria-live="polite">
-        Ledger management is ready when the client account list has loaded.
-      </div>
-
-      <p class="muted small">
-        Successful entries should be recorded in the ledger and audit log by
-        the database function. If a request times out or the result is unclear,
-        verify the ledger and audit record before retrying.
-      </p>
-    </section>
-
-    <!-- ADMINISTRATOR VERIFICATION -->
-    <section class="panel">
-      <h2>Administrator verification</h2>
-
-      <p class="muted">
-        Your signed-in account must have an active administrator profile.
-        The database function must independently check authorization before
-        each financial operation.
-      </p>
-
-      <button id="refreshButton" class="primary" type="button">
-        Refresh dashboard
-      </button>
-
-      <div id="dashboardNotice" class="notice" role="status" aria-live="polite">
-        Dashboard data has not been loaded yet.
-      </div>
-    </section>
-
-    <!-- TEST DEPOSIT REVIEW -->
-    <section class="panel" aria-labelledby="depositReviewHeading">
-      <h2 id="depositReviewHeading">Pending test deposit requests</h2>
-
-      <div class="notice">
-        <strong>TEST ONLY:</strong>
-        Approving or rejecting a request changes its test-request status only.
-        It does not credit a client balance or move money.
-      </div>
-
-      <p class="muted small">
-        Only pending requests are shown. Reviews use the existing
-        admin_review_test_deposit database function.
-      </p>
-
-      <button id="refreshDepositsButton" type="button">
-        Refresh test deposits
-      </button>
-
-      <div id="depositReviewNotice" class="notice" role="status" aria-live="polite">
-        Test deposit requests have not been loaded yet.
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Created</th>
-              <th>Request ID</th>
-              <th>Client ID</th>
-              <th>Amount</th>
-              <th>Asset</th>
-              <th>Reference</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="depositReviewRows"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- MANAGEMENT AREAS -->
-    <section class="panel">
-      <h2>Management areas</h2>
-
-      <div class="management-grid">
-        <div class="management-item">
-          <strong>Client accounts</strong>
-          <span class="muted small">Search visible profile IDs and roles.</span>
+        <div>
+          <label for="ledgerAmount">Amount</label>
+          <input id="ledgerAmount" type="number" min="0.00000001" max="9999999999999999" step="0.00000001" inputmode="decimal" placeholder="Enter amount" required>
         </div>
-
-        <div class="management-item">
-          <strong>Ledger</strong>
-          <span class="muted small">Submit authorized credits and debits through the database function.</span>
+        <div>
+          <label for="ledgerAsset">Asset symbol</label>
+          <input id="ledgerAsset" type="text" minlength="2" maxlength="12" pattern="[A-Za-z0-9]{2,12}" placeholder="Example: USDT" autocomplete="off" required>
         </div>
-
-        <div class="management-item">
-          <strong>Deposits</strong>
-          <span class="muted small">Test deposit review is available above. It does not credit balances.</span>
+        <div>
+          <label for="ledgerReference">Unique reference</label>
+          <input id="ledgerReference" type="text" minlength="3" maxlength="120" placeholder="Unique accounting reference" autocomplete="off" required>
         </div>
-
-        <div class="management-item">
-          <strong>Withdrawals</strong>
-          <span class="muted small">Withdrawal processing is not enabled in this version.</span>
-        </div>
-
-        <div class="management-item">
-          <strong>Transactions</strong>
-          <span class="muted small">Review the visible test transaction records below.</span>
-        </div>
-
-        <div class="management-item">
-          <strong>Security and audit</strong>
-          <span class="muted small">Database policies and audit records must remain authoritative.</span>
+        <div>
+          <label for="ledgerDescription">Reason or description</label>
+          <input id="ledgerDescription" type="text" maxlength="1000" placeholder="Authorized accounting reason" required>
         </div>
       </div>
-    </section>
-
-    <!-- TEST TRANSACTIONS -->
-    <section class="panel">
-      <h2>Recent test transactions</h2>
-
-      <p class="muted small">Up to 10 test transaction records visible to this account.</p>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Created</th>
-              <th>User ID</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Asset</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="transactionRows"></tbody>
-        </table>
+      <div class="button-row">
+        <button id="submitLedgerButton" class="primary" type="submit">Post ledger entry</button>
+        <button id="resetLedgerButton" type="reset">Clear form</button>
       </div>
-
-      <div id="transactionsNotice" class="notice" role="status" aria-live="polite">
-        Transactions have not been loaded yet.
-      </div>
-
-      <p class="muted small">
-        These test transactions do not establish real deposits, withdrawals,
-        investment returns, or available client funds.
-      </p>
-    </section>
-
-    <footer>
-      AlpsCoinChain Investment Ventures · Administrative dashboard
-    </footer>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script>
-    'use strict';
-
-    (() => {
-      const SUPABASE_URL =
-        'https://uevofmlzpwrdidjnwxfd.supabase.co';
-
-      const SUPABASE_ANON_KEY =
-        'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
-
-      const $ = (id) => document.getElementById(id);
-
-      let client = null;
-      let visibleProfiles = [];
-      let dashboardUser = null;
-      let reviewInProgress = false;
-      let ledgerSubmissionInProgress = false;
-      let dashboardRefreshInProgress = false;
-      let profileLoadInProgress = false;
-      let depositLoadInProgress = false;
-
-      function setNotice(id, message, type = '') {
-        const element = $(id);
-        element.textContent = message;
-        element.className = 'notice' + (type ? ' ' + type : '');
-      }
-
-      function addCell(row, value) {
-        const cell = document.createElement('td');
-
-        cell.textContent =
-          value === null || value === undefined || value === ''
-            ? '—'
-            : String(value);
-
-        row.appendChild(cell);
-      }
-
-      function formatDate(value) {
-        if (!value) return '—';
-
-        const date = new Date(value);
-
-        return Number.isNaN(date.getTime())
-          ? '—'
-          : date.toLocaleString();
-      }
-
-      function normalizeId(value) {
-        return String(value || '').toLowerCase();
-      }
-
-      function renderAccounts() {
-        const query = $('accountSearch').value.trim().toLowerCase();
-        const body = $('accountRows');
-
-        body.replaceChildren();
-
-        const filtered = visibleProfiles.filter((profile) => {
-          return (
-            normalizeId(profile.id).includes(query) ||
-            String(profile.role || '').toLowerCase().includes(query) ||
-            String(profile.account_status || '').toLowerCase().includes(query)
-          );
-        });
-
-        const clientSelect = $('ledgerClient');
-        const previousSelection = clientSelect.value;
-
-        clientSelect.replaceChildren();
-
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Select a client account';
-        clientSelect.appendChild(placeholder);
-
-        const clientProfiles = visibleProfiles.filter((profile) => {
-          return String(profile.role || '').toLowerCase() === 'client';
-        });
-
-        for (const profile of clientProfiles) {
-          const option = document.createElement('option');
-          option.value = profile.id;
-          option.textContent = profile.id;
-          clientSelect.appendChild(option);
-        }
-
-        if (
-          previousSelection &&
-          clientProfiles.some((profile) => profile.id === previousSelection)
-        ) {
-          clientSelect.value = previousSelection;
-        }
-
-        if (!filtered.length) {
-          setNotice(
-            'accountsNotice',
-            visibleProfiles.length
-              ? 'No visible accounts match your search.'
-              : 'No profiles are visible under the current database function.',
-            visibleProfiles.length ? '' : 'warning'
-          );
-
-          return;
-        }
-
-        for (const profile of filtered) {
-          const row = document.createElement('tr');
-
-          addCell(row, profile.id);
-          addCell(row, profile.role || 'Unspecified');
-          addCell(
-            row,
-            profile.account_status || 'Not returned by profile function'
-          );
-
-          body.appendChild(row);
-        }
-
-        setNotice(
-          'accountsNotice',
-          'Showing ' + filtered.length + ' of ' +
-          visibleProfiles.length + ' visible profiles.'
-        );
-      }
-
-      async function loadAccounts() {
-        if (profileLoadInProgress) return;
-
-        profileLoadInProgress = true;
-
-        const button = $('refreshAccountsButton');
-        button.disabled = true;
-
-        setNotice('accountsNotice', 'Loading visible profiles…');
-
-        try {
-          const { data, error } = await client.rpc('admin_list_profiles');
-
-          if (error) {
-            setNotice(
-              'accountsNotice',
-              'Profiles could not be loaded. Check the admin_list_profiles function and its permissions.',
-              'error'
-            );
-
-            console.error('Profile query failed:', error);
-            return;
-          }
-
-          if (!Array.isArray(data)) {
-            setNotice(
-              'accountsNotice',
-              'The profile function returned an unexpected response.',
-              'error'
-            );
-            return;
-          }
-
-          visibleProfiles = data.filter((profile) => {
-            return (
-              profile &&
-              typeof profile.id === 'string' &&
-              typeof profile.role === 'string'
-            );
-          });
-
-          renderAccounts();
-
-          if (!visibleProfiles.length) {
-            setNotice(
-              'accountsNotice',
-              'The profile function returned no usable account records.',
-              'warning'
-            );
-          }
-        } catch (error) {
-          setNotice(
-            'accountsNotice',
-            'An unexpected error occurred while loading profiles.',
-            'error'
-          );
-
-          console.error(error);
-        } finally {
-          profileLoadInProgress = false;
-          button.disabled = false;
-        }
-      }
-
-      async function loadCounts() {
-        const definitions = [
-          { table: 'test_deposits', target: 'depositCount' },
-          { table: 'test_withdrawals', target: 'withdrawalCount' },
-          { table: 'test_transactions', target: 'transactionCount' }
-        ];
-
-        const results = await Promise.all(
-          definitions.map(async ({ table, target }) => {
-            try {
-              const { count, error } = await client
-                .from(table)
-                .select('*', { count: 'exact', head: true });
-
-              if (error) {
-                $(target).textContent = '—';
-                console.error('Count query failed for ' + table + ':', error);
-                return table + ': unavailable';
-              }
-
-              $(target).textContent = String(count ?? 0);
-              return null;
-            } catch (error) {
-              $(target).textContent = '—';
-              console.error('Count query exception for ' + table + ':', error);
-              return table + ': unavailable';
-            }
-          })
-        );
-
-        const errors = results.filter(Boolean);
-
-        if (errors.length) {
-          setNotice(
-            'dashboardNotice',
-            'Some test counts could not be loaded: ' +
-            errors.join('; ') + '. Check table names and database policies.',
-            'error'
-          );
-
-          return false;
-        }
-
-        setNotice(
-          'dashboardNotice',
-          'Test-record counts refreshed. These are not financial balances.',
-          'success'
-        );
-
-        return true;
-      }
-
-      async function loadTransactions() {
-        const body = $('transactionRows');
-        body.replaceChildren();
-
-        setNotice('transactionsNotice', 'Loading test transactions…');
-
-        try {
-          const { data, error } = await client
-            .from('test_transactions')
-            .select('created_at, user_id, type, amount, asset, status')
-            .order('created_at', { ascending: false })
-            .limit(10);
-
-          if (error) {
-            setNotice(
-              'transactionsNotice',
-              'Transactions could not be loaded. Check the table columns and database policies.',
-              'error'
-            );
-
-            console.error('Transaction query failed:', error);
-            return false;
-          }
-
-          if (!Array.isArray(data) || data.length === 0) {
-            setNotice(
-              'transactionsNotice',
-              'No test transaction records are visible to this account.'
-            );
-
-            return true;
-          }
-
-          for (const transaction of data) {
-            const row = document.createElement('tr');
-
-            addCell(row, formatDate(transaction.created_at));
-            addCell(row, transaction.user_id);
-            addCell(row, transaction.type);
-            addCell(row, transaction.amount);
-            addCell(row, transaction.asset);
-            addCell(row, transaction.status);
-
-            body.appendChild(row);
-          }
-
-          setNotice(
-            'transactionsNotice',
-            'Showing ' + data.length +
-            ' visible test transaction record(s).',
-            'success'
-          );
-
-          return true;
-        } catch (error) {
-          setNotice(
-            'transactionsNotice',
-            'An unexpected error occurred while loading test transactions.',
-            'error'
-          );
-
-          console.error(error);
-          return false;
-        }
-      }
-
-      async function loadPendingTestDeposits() {
-        if (depositLoadInProgress) return;
-
-        depositLoadInProgress = true;
-
-        const button = $('refreshDepositsButton');
-        const body = $('depositReviewRows');
-
-        button.disabled = true;
-        body.replaceChildren();
-
-        setNotice(
-          'depositReviewNotice',
-          'Loading pending test deposit requests…'
-        );
-
-        try {
-          const { data, error } = await client
-            .from('test_deposits')
-            .select('id, user_id, amount, asset, status, reference, created_at')
-            .eq('status', 'pending')
-            .order('created_at', { ascending: false })
-            .limit(50);
-
-          if (error) {
-            setNotice(
-              'depositReviewNotice',
-              'Pending test deposits could not be loaded. Check test_deposits permissions and row-level security policies.',
-              'error'
-            );
-
-            console.error('Pending test deposit query failed:', error);
-            return false;
-          }
-
-          if (!Array.isArray(data) || data.length === 0) {
-            setNotice(
-              'depositReviewNotice',
-              'No pending test deposit requests are visible.'
-            );
-
-            return true;
-          }
-
-          for (const deposit of data) {
-            const row = document.createElement('tr');
-
-            addCell(row, formatDate(deposit.created_at));
-            addCell(row, deposit.id);
-            addCell(row, deposit.user_id);
-            addCell(row, deposit.amount);
-            addCell(row, deposit.asset);
-            addCell(row, deposit.reference);
-
-            const actionCell = document.createElement('td');
-            const actions = document.createElement('div');
-            actions.className = 'action-buttons';
-
-            const approveButton = document.createElement('button');
-            approveButton.type = 'button';
-            approveButton.className = 'primary';
-            approveButton.textContent = 'Approve TEST';
-
-            approveButton.addEventListener('click', () => {
-              reviewTestDeposit(deposit.id, 'approved');
-            });
-
-            const rejectButton = document.createElement('button');
-            rejectButton.type = 'button';
-            rejectButton.className = 'danger-button';
-            rejectButton.textContent = 'Reject TEST';
-
-            rejectButton.addEventListener('click', () => {
-              reviewTestDeposit(deposit.id, 'rejected');
-            });
-
-            actions.append(approveButton, rejectButton);
-            actionCell.appendChild(actions);
-            row.appendChild(actionCell);
-            body.appendChild(row);
-          }
-
-          setNotice(
-            'depositReviewNotice',
-            'Showing ' + data.length +
-            ' pending TEST request(s). Reviews do not change client balances.'
-          );
-
-          return true;
-        } catch (error) {
-          setNotice(
-            'depositReviewNotice',
-            'An unexpected error occurred while loading test deposits.',
-            'error'
-          );
-
-          console.error(error);
-          return false;
-        } finally {
-          depositLoadInProgress = false;
-          button.disabled = reviewInProgress;
-        }
-      }
-
-      async function reviewTestDeposit(depositId, decision) {
-        if (reviewInProgress) return;
-
-        if (decision !== 'approved' && decision !== 'rejected') {
-          setNotice('depositReviewNotice', 'Invalid review decision.', 'error');
-          return;
-        }
-
-        let reason = null;
-
-        if (decision === 'rejected') {
-          reason = window.prompt(
-            'Enter a reason for rejecting this TEST deposit request:'
-          );
-
-          if (reason === null) return;
-
-          reason = reason.trim();
-
-          if (!reason) {
-            setNotice(
-              'depositReviewNotice',
-              'A reason is required to reject a request.',
-              'error'
-            );
-            return;
-          }
-        } else {
-          const confirmed = window.confirm(
-            'Approve this TEST deposit request? This changes its test status only. It will NOT credit a client balance or move money.'
-          );
-
-          if (!confirmed) return;
-        }
-
-        reviewInProgress = true;
-
-        $('refreshDepositsButton').disabled = true;
-        $('refreshButton').disabled = true;
-
-        $('depositReviewRows')
-          .querySelectorAll('button')
-          .forEach((button) => {
-            button.disabled = true;
-          });
-
-        setNotice('depositReviewNotice', 'Submitting review to Supabase…');
-
-        let reviewConfirmed = false;
-
-        try {
-          const { data, error } = await client.rpc(
-            'admin_review_test_deposit',
-            {
-              p_deposit_id: depositId,
-              p_decision: decision,
-              p_reason: reason
-            }
-          );
-
-          if (error) {
-            setNotice(
-              'depositReviewNotice',
-              'Review was not confirmed: ' + error.message +
-              '. Refresh the list and check the request status before retrying.',
-              'error'
-            );
-
-            console.error('Test deposit review failed:', error);
-            return;
-          }
-
-          if (
-            !data ||
-            data.success !== true ||
-            data.balance_credited !== false ||
-            normalizeId(data.request_id) !== normalizeId(depositId) ||
-            String(data.status || '').toLowerCase() !== decision
-          ) {
-            setNotice(
-              'depositReviewNotice',
-              'The review response could not be verified. Refresh the list and check the request status before retrying.',
-              'error'
-            );
-
-            console.error('Unexpected test deposit review response:', data);
-            return;
-          }
-
-          reviewConfirmed = true;
-
-          setNotice(
-            'depositReviewNotice',
-            'TEST request ' + decision +
-            ' confirmed by Supabase. No client balance was changed.',
-            'success'
-          );
-        } catch (error) {
-          setNotice(
-            'depositReviewNotice',
-            'The result of the review is uncertain. Refresh the request list and check its status before retrying.',
-            'error'
-          );
-
-          console.error(error);
-        } finally {
-          reviewInProgress = false;
-          $('refreshButton').disabled = false;
-          $('refreshDepositsButton').disabled = false;
-        }
-
-        if (reviewConfirmed) {
-          await loadPendingTestDeposits();
-          await loadCounts();
-        }
-      }
-
-      async function submitLedgerEntry(event) {
-        event.preventDefault();
-
-        if (ledgerSubmissionInProgress) return;
-
-        const clientId = $('ledgerClient').value;
-        const entryType = $('ledgerType').value;
-        const rawAmount = $('ledgerAmount').value.trim();
-        const amount = Number(rawAmount);
-        const asset = $('ledgerAsset').value.trim().toUpperCase();
-        const reference = $('ledgerReference').value.trim();
-        const description = $('ledgerDescription').value.trim();
-
-        if (!clientId) {
-          setNotice('ledgerNotice', 'Select a client account before submitting.', 'error');
-          return;
-        }
-
-        if (entryType !== 'credit' && entryType !== 'debit') {
-          setNotice('ledgerNotice', 'Select a valid entry type.', 'error');
-          return;
-        }
-
-        if (
-          !rawAmount ||
-          !Number.isFinite(amount) ||
-          amount <= 0
-        ) {
-          setNotice('ledgerNotice', 'Enter a valid amount greater than zero.', 'error');
-          return;
-        }
-
-        if (!/^[A-Z0-9]{2,12}$/.test(asset)) {
-          setNotice(
-            'ledgerNotice',
-            'The asset symbol must contain 2–12 letters or numbers.',
-            'error'
-          );
-          return;
-        }
-
-        if (reference.length < 3 || reference.length > 120) {
-          setNotice(
-            'ledgerNotice',
-            'The reference must contain between 3 and 120 characters.',
-            'error'
-          );
-          return;
-        }
-
-        if (!description || description.length > 1000) {
-          setNotice(
-            'ledgerNotice',
-            'Enter a reason of no more than 1,000 characters.',
-            'error'
-          );
-          return;
-        }
-
-        const selectedProfile = visibleProfiles.find(
-          (profile) => profile.id === clientId
-        );
-
-        if (
-          !selectedProfile ||
-          String(selectedProfile.role || '').toLowerCase() !== 'client' ||
-          String(selectedProfile.account_status || '').toLowerCase() !== 'active'
-        ) {
-          setNotice(
-            'ledgerNotice',
-            'Select an active client account from the refreshed profile list.',
-            'error'
-          );
-          return;
-        }
-
-        const confirmed = window.confirm(
-          'Confirm this ' + entryType.toUpperCase() +
-          ' ledger entry?\n\n' +
-          'Client: ' + clientId + '\n' +
-          'Amount: ' + amount + ' ' + asset + '\n' +
-          'Reference: ' + reference + '\n\n' +
-          'Only continue if this accounting action is authorized and supported by verified evidence.'
-        );
-
-        if (!confirmed) return;
-
-        ledgerSubmissionInProgress = true;
-
-        const button = $('submitLedgerButton');
-        button.disabled = true;
-
-        setNotice(
-          'ledgerNotice',
-          'Submitting the ledger entry… Do not repeat the request while it is processing.'
-        );
-
-        try {
-          const { data, error } = await client.rpc(
-            'admin_post_ledger_entry',
-            {
-              p_user_id: clientId,
-              p_entry_type: entryType,
-              p_amount: amount,
-              p_asset: asset,
-              p_reference: reference,
-              p_description: description
-            }
-          );
-
-          if (error) {
-            setNotice(
-              'ledgerNotice',
-              'The ledger entry was not confirmed: ' + error.message +
-              '. Check the ledger and audit records before retrying.',
-              'error'
-            );
-
-            console.error('Ledger entry submission failed:', error);
-            return;
-          }
-
-          const responseMatches =
-            data &&
-            data.success === true &&
-            normalizeId(data.user_id) === normalizeId(clientId) &&
-            String(data.entry_type || '').toLowerCase() === entryType &&
-            Number(data.amount) === amount &&
-            String(data.asset || '').toUpperCase() === asset &&
-            String(data.reference || '') === reference &&
-            typeof data.entry_id === 'string' &&
-            data.entry_id.length > 0;
-
-          if (!responseMatches) {
-            setNotice(
-              'ledgerNotice',
-              'The database response did not contain all expected confirmation fields. Check the ledger and audit records before retrying.',
-              'error'
-            );
-
-            console.error('Unexpected ledger response:', data);
-            return;
-          }
-
-          setNotice(
-            'ledgerNotice',
-            'Ledger entry confirmed. Entry ID: ' + data.entry_id +
-            '. This updates the recorded accounting ledger only; it does not verify or transfer external funds.',
-            'success'
-          );
-
-          /*
-           * Reset only after the database returns a matching success response.
-           * Never automatically repeat an uncertain financial operation.
-           */
-          $('ledgerForm').reset();
-        } catch (error) {
-          setNotice(
-            'ledgerNotice',
-            'The result of the ledger request is uncertain. Check the ledger and audit records before attempting it again.',
-            'error'
-          );
-
-          console.error('Ledger submission exception:', error);
-        } finally {
-          ledgerSubmissionInProgress = false;
-          button.disabled = false;
-        }
-      }
-
-      async function refreshDashboard() {
-        if (dashboardRefreshInProgress) return;
-
-        dashboardRefreshInProgress = true;
-        $('refreshButton').disabled = true;
-
-        try {
-          await Promise.all([
-            loadCounts(),
-            loadAccounts(),
-            loadTransactions(),
-            loadPendingTestDeposits()
-          ]);
-        } catch (error) {
-          setNotice(
-            'dashboardNotice',
-            'The dashboard could not refresh all data.',
-            'error'
-          );
-
-          console.error(error);
-        } finally {
-          dashboardRefreshInProgress = false;
-          $('refreshButton').disabled = false;
-        }
-      }
-
-      async function signOut() {
-        const button = $('signOutButton');
-        button.disabled = true;
-
-        try {
-          const { error } = await client.auth.signOut();
-
-          if (error) throw error;
-
-          window.location.replace('/login');
-        } catch (error) {
-          setNotice(
-            'sessionNotice',
-            'Sign-out failed. Please try again.',
-            'error'
-          );
-
-          console.error(error);
-          button.disabled = false;
-        }
-      }
-
-      async function init() {
-        setNotice('sessionNotice', 'Verifying administrator session…');
-
-        if (
-          !window.supabase ||
-          typeof window.supabase.createClient !== 'function'
-        ) {
-          setNotice(
-            'sessionNotice',
-            'The Supabase client library did not load. Check your internet connection and refresh.',
-            'error'
-          );
-
-          return;
-        }
-
-        client = window.supabase.createClient(
-          SUPABASE_URL,
-          SUPABASE_ANON_KEY
-        );
-
-        try {
-          const { data, error } = await client.auth.getSession();
-
-          if (error) throw error;
-
-          const session = data.session;
-
-          if (!session || !session.user) {
-            window.location.replace('/login');
-            return;
-          }
-
-          dashboardUser = session.user;
-
-          const {
-            data: profile,
-            error: profileError
-          } = await client
-            .from('profiles')
-            .select('role, account_status')
-            .eq('id', dashboardUser.id)
-            .maybeSingle();
-
-          if (profileError) {
-            setNotice(
-              'sessionNotice',
-              'Could not verify the administrator role and account status. Check the profiles table and database policies.',
-              'error'
-            );
-
-            console.error('Administrator role check failed:', profileError);
-            return;
-          }
-
-          if (
-            !profile ||
-            String(profile.role || '').toLowerCase() !== 'admin' ||
-            String(profile.account_status || '').toLowerCase() !== 'active'
-          ) {
-            setNotice(
-              'sessionNotice',
-              'Active administrator access was not confirmed. Returning to login.',
-              'error'
-            );
-
-            await client.auth.signOut();
-            window.location.replace('/login');
-            return;
-          }
-
-          $('accountEmail').textContent =
-            'Signed-in administrator: ' +
-            (dashboardUser.email || 'Email unavailable');
-
-          setNotice(
-            'sessionNotice',
-            'Active administrator session verified.',
-            'success'
-          );
-
-          $('refreshButton').addEventListener('click', refreshDashboard);
-          $('refreshAccountsButton').addEventListener('click', loadAccounts);
-          $('refreshDepositsButton').addEventListener(
-            'click',
-            loadPendingTestDeposits
-          );
-          $('accountSearch').addEventListener('input', renderAccounts);
-          $('ledgerForm').addEventListener('submit', submitLedgerEntry);
-          $('signOutButton').addEventListener('click', signOut);
-
-          $('resetLedgerButton').addEventListener('click', () => {
-            setNotice('ledgerNotice', 'The ledger form has been cleared.');
-          });
-
-          await refreshDashboard();
-        } catch (error) {
-          setNotice(
-            'sessionNotice',
-            'An error occurred while checking the administrator session.',
-            'error'
-          );
-
-          console.error(error);
-        }
-      }
-
-      init();
-    })();
-  </script>
+    </form>
+
+    <div id="ledgerNotice" class="notice" role="status" aria-live="polite">Load client accounts, complete the form, and submit an authorized ledger entry.</div>
+    <p class="muted small">After a successful ledger post, the client's dashboard will calculate its current recorded balance from the ledger RPC. If a request times out, verify the ledger and audit records before retrying.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Fund request review</h2>
+    <p class="muted">Review client deposit and withdrawal requests in the dedicated administrator request centre. Approving a request should only change funds when the administrator workflow explicitly performs an authorized ledger operation.</p>
+    <div class="button-row">
+      <a class="button" href="/fund-request-admin.html" style="display:inline-block;padding:10px 15px;border-radius:8px;background:#17694f;border:1px solid #248566;color:#fff;text-decoration:none;font-weight:700">Open request review</a>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Administrator verification</h2>
+    <p class="muted">Your signed-in account must have an active administrator profile. Authorization is checked again by the database for financial operations.</p>
+    <button id="refreshButton" class="primary" type="button">Refresh dashboard</button>
+    <div id="dashboardNotice" class="notice" role="status" aria-live="polite">Dashboard data has not been refreshed yet.</div>
+  </section>
+
+  <section class="panel">
+    <h2>Management controls</h2>
+    <div class="management-grid">
+      <div class="management-item"><strong>Client accounts</strong><span class="muted small">Review account IDs, roles, and status.</span></div>
+      <div class="management-item"><strong>Ledger</strong><span class="muted small">Post authorized credits and debits through the protected database function.</span></div>
+      <div class="management-item"><strong>Fund requests</strong><span class="muted small">Review requests separately from accounting balances.</span></div>
+    </div>
+  </section>
+</main>
+<footer>AlpsCoinChain Investment Ventures · Administrator dashboard</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  "use strict";
+  const SUPABASE_URL="https://uevofmlzpwrdidjnwxfd.supabase.co";
+  const SUPABASE_KEY="sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
+  const $=id=>document.getElementById(id);
+  let client=null,visibleProfiles=[],dashboardUser=null,ledgerSubmissionInProgress=false,profileLoadInProgress=false;
+
+  function setNotice(id,message,type=""){const el=$(id);if(!el)return;el.textContent=message;el.className="notice"+(type?" "+type:"")}
+  function normalizeId(value){return String(value||"").toLowerCase()}
+
+  function renderAccounts(){
+    const query=$("accountSearch").value.trim().toLowerCase(),body=$("accountRows");body.replaceChildren();
+    const filtered=visibleProfiles.filter(profile=>normalizeId(profile.id).includes(query)||String(profile.role||"").toLowerCase().includes(query)||String(profile.account_status||"").toLowerCase().includes(query));
+    const select=$("ledgerClient");select.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select a client account";select.appendChild(placeholder);
+    for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client")){const option=document.createElement("option");option.value=profile.id;option.textContent=profile.id+" · "+(profile.account_status||"status unavailable");select.appendChild(option)}
+    if(!filtered.length){setNotice("accountsNotice",visibleProfiles.length?"No visible accounts match your search.":"No profiles are visible under the current database function.",visibleProfiles.length?"":"warning");return}
+    for(const profile of filtered){const row=document.createElement("tr");for(const value of [profile.id,profile.role,profile.account_status]){const cell=document.createElement("td");cell.textContent=value||"—";row.appendChild(cell)}body.appendChild(row)}
+    setNotice("accountsNotice","Showing "+filtered.length+" of "+visibleProfiles.length+" visible profiles.");
+  }
+
+  async function loadAccounts(){
+    if(profileLoadInProgress||!client)return;profileLoadInProgress=true;const button=$("refreshAccountsButton");button.disabled=true;setNotice("accountsNotice","Loading client accounts…");
+    try{const {data,error}=await client.rpc("admin_list_profiles");if(error){console.error("Profile query failed:",error);setNotice("accountsNotice","Profiles could not be loaded. Check the administrator database function and permissions.","error");return}visibleProfiles=(Array.isArray(data)?data:[]).filter(profile=>profile&&typeof profile.id==="string"&&typeof profile.role==="string");renderAccounts();if(!visibleProfiles.length)setNotice("accountsNotice","The profile function returned no usable account records.","warning");}
+    catch(error){console.error(error);setNotice("accountsNotice","An unexpected error occurred while loading profiles.","error")}
+    finally{profileLoadInProgress=false;button.disabled=false}
+  }
+
+  async function verifySession(){
+    if(!window.supabase||!window.supabase.createClient){setNotice("sessionNotice","The account service did not load. Refresh and try again.","error");return false}
+    client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    try{
+      const {data,error}=await client.auth.getSession();if(error)throw error;const session=data.session;if(!session||!session.user){window.location.replace("/login");return false}
+      dashboardUser=session.user;$("accountEmail").textContent=dashboardUser.email||"";
+      const {data:profile,error:profileError}=await client.from("profiles").select("role, account_status").eq("id",dashboardUser.id).maybeSingle();
+      if(profileError)throw profileError;
+      const isAdmin=profile&&String(profile.role).toLowerCase()==="admin"&&String(profile.account_status).toLowerCase()==="active";
+      if(!isAdmin){setNotice("sessionNotice","This account is not authorized for administrator access.","error");return false}
+      setNotice("sessionNotice","Administrator session verified.","success");return true;
+    }catch(error){console.error("Administrator verification failed:",error);setNotice("sessionNotice","Administrator verification failed. Please sign in again.","error");return false}
+  }
+
+  async function postLedgerEntry(event){
+    event.preventDefault();if(ledgerSubmissionInProgress)return;
+    const clientId=$("ledgerClient").value,entryType=$("ledgerType").value,amount=Number($("ledgerAmount").value),asset=$("ledgerAsset").value.trim().toUpperCase(),reference=$("ledgerReference").value.trim(),description=$("ledgerDescription").value.trim();
+    if(!clientId||!entryType||!Number.isFinite(amount)||amount<=0||!asset||!reference||!description){setNotice("ledgerNotice","Complete every ledger field with valid values.","error");return}
+    const selectedProfile=visibleProfiles.find(profile=>profile.id===clientId);if(!selectedProfile||String(selectedProfile.role||"").toLowerCase()!=="client"){setNotice("ledgerNotice","Select a valid client account.","error");return}
+    const confirmed=window.confirm((entryType==="credit"?"Credit ":"Debit ")+amount+" "+asset+" for client "+clientId+"?\n\nReference: "+reference+"\n\nConfirm only if this accounting entry is authorized and verified.");if(!confirmed)return;
+    const button=$("submitLedgerButton");button.disabled=true;ledgerSubmissionInProgress=true;setNotice("ledgerNotice","Submitting the ledger entry… Do not repeat the request while it is processing.");
+    try{
+      const {data,error}=await client.rpc("admin_post_ledger_entry",{p_user_id:clientId,p_entry_type:entryType,p_amount:amount,p_asset:asset,p_reference:reference,p_description:description});
+      if(error)throw error;
+      if(data&&data.success===false)throw new Error(data.message||"The ledger entry was not accepted.");
+      setNotice("ledgerNotice","Ledger entry posted successfully. The client's recorded balance will reflect the new ledger entry after the dashboard refreshes.","success");$("ledgerForm").reset();renderAccounts();
+    }catch(error){console.error("Ledger submission failed:",error);setNotice("ledgerNotice",error.message||"The ledger entry could not be posted. Verify the reference and accounting details and try again.","error")}
+    finally{ledgerSubmissionInProgress=false;button.disabled=false}
+  }
+
+  async function refreshDashboard(){
+    setNotice("dashboardNotice","Refreshing administrator data…");const ok=await verifySession();if(!ok)return;await loadAccounts();setNotice("dashboardNotice","Administrator dashboard refreshed.","success")
+  }
+
+  $("signOutButton").addEventListener("click",async()=>{const button=$("signOutButton");button.disabled=true;try{const {error}=await client.auth.signOut();if(error)throw error;window.location.replace("/login")}catch(error){console.error(error);button.disabled=false;setNotice("sessionNotice","Could not sign out. Please try again.","error")}});
+  $("refreshAccountsButton").addEventListener("click",loadAccounts);
+  $("accountSearch").addEventListener("input",renderAccounts);
+  $("ledgerForm").addEventListener("submit",postLedgerEntry);
+  $("refreshButton").addEventListener("click",refreshDashboard);
+
+  (async()=>{const ok=await verifySession();if(ok)await loadAccounts()})();
+})();
+</script>
 </body>
 </html>
