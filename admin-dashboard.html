@@ -384,16 +384,26 @@
       </div>
     </section>
 
+    <section class="panel" aria-labelledby="walletHeading">
+      <h2 id="walletHeading">Deposit wallet addresses</h2>
+      <p class="muted">Add the public receiving address for each supported asset and network. Verify the address and network before activating it. Never enter private keys or recovery phrases.</p>
+      <form id="walletForm">
+        <div class="form-grid">
+          <div><label for="walletAsset">Asset code</label><input id="walletAsset" required minlength="2" maxlength="20" pattern="[A-Za-z0-9._-]{2,20}" placeholder="USDT"></div>
+          <div><label for="walletNetwork">Network</label><input id="walletNetwork" required minlength="2" maxlength="60" placeholder="TRON (TRC20)"></div>
+          <div style="grid-column:1/-1"><label for="walletAddress">Public deposit wallet address</label><input id="walletAddress" required minlength="8" maxlength="300" placeholder="Receiving address"></div>
+          <div style="grid-column:1/-1"><label for="walletInstructions">Client instructions (optional)</label><textarea id="walletInstructions" maxlength="1000" placeholder="Confirmations, memo/tag requirements, etc."></textarea></div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px"><input id="walletActive" type="checkbox" checked style="width:auto"> Active and visible to clients</label>
+        <div class="button-row"><button id="saveWalletButton" class="primary" type="submit">Save deposit address</button><button type="reset">Clear form</button></div>
+      </form>
+      <div id="walletNotice" class="notice" role="status" aria-live="polite">Wallet settings have not been loaded.</div>
+      <div class="table-wrap"><table><thead><tr><th>Asset</th><th>Network</th><th>Address</th><th>Status</th><th>Action</th></tr></thead><tbody id="walletRows"></tbody></table></div>
+    </section>
+
     <!-- LEDGER MANAGEMENT -->
     <section class="panel" aria-labelledby="ledgerHeading">
       <h2 id="ledgerHeading">Ledger management</h2>
-
-      <div class="notice">
-        <strong>Important:</strong>
-        Use this section only for authorized accounting corrections or
-        independently verified transactions. Never credit an account solely
-        on the basis of an unverified payment screenshot or client claim.
-      </div>
 
       <p class="muted small">
         Credits and debits are submitted to the Supabase
@@ -914,6 +924,77 @@
         }
       }
 
+      async function loadWalletAddresses() {
+        const body = $('walletRows');
+        body.replaceChildren();
+        setNotice('walletNotice', 'Loading wallet addresses…');
+        try {
+          const { data, error } = await client.from('deposit_wallet_addresses')
+            .select('id,asset_code,network,wallet_address,instructions,is_active')
+            .order('asset_code').order('network');
+          if (error) throw error;
+          if (!data || !data.length) {
+            const row = document.createElement('tr'), cell = document.createElement('td');
+            cell.colSpan = 5; cell.textContent = 'No deposit addresses configured yet.';
+            row.appendChild(cell); body.appendChild(row);
+          }
+          for (const wallet of (data || [])) {
+            const row = document.createElement('tr');
+            for (const value of [wallet.asset_code, wallet.network, wallet.wallet_address, wallet.is_active ? 'Active' : 'Inactive']) {
+              const cell = document.createElement('td'); cell.textContent = value || '—'; row.appendChild(cell);
+            }
+            const cell = document.createElement('td'), edit = document.createElement('button');
+            edit.type = 'button'; edit.textContent = 'Edit';
+            edit.addEventListener('click', () => {
+              $('walletAsset').value = wallet.asset_code; $('walletNetwork').value = wallet.network;
+              $('walletAddress').value = wallet.wallet_address; $('walletInstructions').value = wallet.instructions || '';
+              $('walletActive').checked = Boolean(wallet.is_active);
+              $('walletForm').dataset.originalAsset = wallet.asset_code;
+              $('walletForm').dataset.originalNetwork = wallet.network;
+              $('walletForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+            cell.appendChild(edit); row.appendChild(cell); body.appendChild(row);
+          }
+          setNotice('walletNotice', (data || []).length + ' wallet address setting(s) loaded.');
+        } catch (error) {
+          console.error('Wallet address load failed:', error);
+          setNotice('walletNotice', 'Wallet settings unavailable. Apply the deposit-wallet migration in Supabase, then refresh.', 'error');
+        }
+      }
+
+      async function saveWalletAddress(event) {
+        event.preventDefault();
+        const asset = $('walletAsset').value.trim().toUpperCase();
+        const network = $('walletNetwork').value.trim();
+        const address = $('walletAddress').value.trim();
+        const instructions = $('walletInstructions').value.trim();
+        if (!/^[A-Z0-9._-]{2,20}$/.test(asset) || network.length < 2 || address.length < 8) {
+          setNotice('walletNotice', 'Enter a valid asset, network, and public wallet address.', 'error'); return;
+        }
+        if (!window.confirm('Save the receiving address for ' + asset + ' on ' + network + '? Verify the address and network carefully.')) return;
+        const button = $('saveWalletButton'); button.disabled = true;
+        try {
+          const oldAsset = $('walletForm').dataset.originalAsset;
+          const oldNetwork = $('walletForm').dataset.originalNetwork;
+          if (oldAsset && oldNetwork && (oldAsset !== asset || oldNetwork !== network)) {
+            const { error } = await client.from('deposit_wallet_addresses').delete().eq('asset_code', oldAsset).eq('network', oldNetwork);
+            if (error) throw error;
+          }
+          const { error } = await client.from('deposit_wallet_addresses').upsert({
+            asset_code: asset, network, wallet_address: address, instructions,
+            is_active: $('walletActive').checked, updated_by: dashboardUser.id,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'asset_code,network' });
+          if (error) throw error;
+          $('walletForm').reset(); delete $('walletForm').dataset.originalAsset; delete $('walletForm').dataset.originalNetwork;
+          setNotice('walletNotice', 'Deposit address saved. Clients can see it on the deposit page.', 'success');
+          await loadWalletAddresses();
+        } catch (error) {
+          console.error('Wallet address save failed:', error);
+          setNotice('walletNotice', 'Could not save address. Ensure the Supabase migration is applied and admin policies are active.', 'error');
+        } finally { button.disabled = false; }
+      }
+
       async function refreshDashboard() {
         if (dashboardRefreshInProgress) return;
 
@@ -959,7 +1040,7 @@
         }
       }
 
-      async function init() {
+      $('walletForm').addEventListener('submit', saveWalletAddress);\n      $('walletForm').addEventListener('reset', () => { delete $('walletForm').dataset.originalAsset; delete $('walletForm').dataset.originalNetwork; });\n\n      async function init() {
         setNotice('sessionNotice', 'Verifying administrator session…');
 
         if (
