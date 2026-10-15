@@ -217,6 +217,88 @@
       .card { padding: 15px; }
       .welcome h2 { font-size: 22px; }
     }
+  
+    /* AlpsCoinChain homepage-matched client workspace */
+    :root {
+      color-scheme: dark;
+      --bg: #06101d;
+      --card: rgba(12, 27, 45, .92);
+      --text: #f2f7ff;
+      --muted: #a3b4ca;
+      --primary: #3889ff;
+      --primary-dark: #205ec5;
+      --border: rgba(164, 192, 227, .18);
+      --success: #75e4d0;
+      --warning: #e6c889;
+      --danger: #ff9a9a;
+    }
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 82% 8%, rgba(32,119,220,.22), transparent 34%),
+        radial-gradient(ellipse at 12% 42%, rgba(26,171,150,.10), transparent 30%),
+        linear-gradient(145deg, #071321, #091a2c 56%, #07111e);
+      color: var(--text);
+      font-family: "DM Sans", Arial, sans-serif;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: .13;
+      background-image: linear-gradient(rgba(157,191,228,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(157,191,228,.12) 1px, transparent 1px);
+      background-size: 52px 52px;
+    }
+    header {
+      background: rgba(5,14,25,.9);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 10px 35px rgba(0,0,0,.18);
+    }
+    header p { color: #b7cbe4; }
+    .notice {
+      background: rgba(230,200,137,.09);
+      color: #f0dca9;
+      border-color: rgba(230,200,137,.25);
+    }
+    .card {
+      background: linear-gradient(145deg, rgba(17,37,59,.94), rgba(8,22,38,.96));
+      border-color: var(--border);
+      box-shadow: 0 18px 48px rgba(0,0,0,.16), inset 0 1px rgba(255,255,255,.025);
+      backdrop-filter: blur(10px);
+    }
+    .card h3, .welcome h2 { color: #f2f7ff; }
+    .status {
+      background: rgba(117,228,208,.10);
+      color: #8cebd8;
+      border: 1px solid rgba(117,228,208,.20);
+    }
+    .button, button {
+      background: linear-gradient(135deg, #3889ff, #205ec5);
+      box-shadow: 0 8px 22px rgba(28,100,211,.15);
+    }
+    .button.secondary {
+      background: rgba(255,255,255,.055);
+      color: #e2edfb;
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+    .button.secondary:hover { background: rgba(255,255,255,.10); }
+    th { background: rgba(255,255,255,.035); color: #b6c8df; }
+    td { color: #dce8f7; }
+    input, textarea {
+      background: #071422;
+      color: #f2f7ff;
+      border-color: rgba(157,188,226,.24);
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #438fff;
+      box-shadow: 0 0 0 3px rgba(56,137,255,.13);
+    }
+    footer { color: #8499b4; }
+    
   </style>
 </head>
 
