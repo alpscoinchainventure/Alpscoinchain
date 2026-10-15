@@ -605,7 +605,7 @@
           for (const [asset, item] of balanceByAsset) {
             const row = document.createElement("p");
             row.className = "balance";
-            row.textContent = formatAmount(item.balance) + " " + asset;
+            row.textContent = (Number(item.balance) === 0 ? "0.00" : formatAmount(item.balance)) + " " + asset;
             ledgerBalanceList.appendChild(row);
           }
           ledgerBalanceMessage.textContent =
