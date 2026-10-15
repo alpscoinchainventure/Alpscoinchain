@@ -328,7 +328,7 @@
       <h1>Admin Dashboard</h1>
 
       <p class="muted">
-        Platform overview, client records, ledger operations, and test-request management.
+        Platform overview, client accounts, and authorized ledger operations.
       </p>
 
       <div id="sessionNotice" class="notice" role="status" aria-live="polite">
@@ -338,26 +338,8 @@
       <p class="small" id="accountEmail"></p>
     </section>
 
-    <section class="stats" aria-label="Test record counts">
-      <div class="stat">
-        <div class="stat-label">Test deposits</div>
-        <div class="stat-value" id="depositCount">—</div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-label">Test withdrawals</div>
-        <div class="stat-value" id="withdrawalCount">—</div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-label">Test transactions</div>
-        <div class="stat-value" id="transactionCount">—</div>
-      </div>
-    </section>
-
     <div class="notice">
       <strong>Financial operations notice:</strong>
-      These counts and request statuses are not proof of payment.
       Ledger entries update recorded accounting balances only. They do not
       independently verify external payments or transfer money.
     </div>
@@ -530,47 +512,6 @@
       </div>
     </section>
 
-    <!-- TEST DEPOSIT REVIEW -->
-    <section class="panel" aria-labelledby="depositReviewHeading">
-      <h2 id="depositReviewHeading">Pending test deposit requests</h2>
-
-      <div class="notice">
-        <strong>TEST ONLY:</strong>
-        Approving or rejecting a request changes its test-request status only.
-        It does not credit a client balance or move money.
-      </div>
-
-      <p class="muted small">
-        Only pending requests are shown. Reviews use the existing
-        admin_review_test_deposit database function.
-      </p>
-
-      <button id="refreshDepositsButton" type="button">
-        Refresh test deposits
-      </button>
-
-      <div id="depositReviewNotice" class="notice" role="status" aria-live="polite">
-        Test deposit requests have not been loaded yet.
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Created</th>
-              <th>Request ID</th>
-              <th>Client ID</th>
-              <th>Amount</th>
-              <th>Asset</th>
-              <th>Reference</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="depositReviewRows"></tbody>
-        </table>
-      </div>
-    </section>
-
     <!-- MANAGEMENT AREAS -->
     <section class="panel">
       <h2>Management areas</h2>
@@ -588,17 +529,17 @@
 
         <div class="management-item">
           <strong>Deposits</strong>
-          <span class="muted small">Test deposit review is available above. It does not credit balances.</span>
+          <span class="muted small">Client requests are recorded for review and require independent verification.</span>
         </div>
 
         <div class="management-item">
           <strong>Withdrawals</strong>
-          <span class="muted small">Withdrawal processing is not enabled in this version.</span>
+          <span class="muted small">Withdrawals require independent review and authorized ledger recording.</span>
         </div>
 
         <div class="management-item">
           <strong>Transactions</strong>
-          <span class="muted small">Review the visible test transaction records below.</span>
+          <span class="muted small">Recorded account activity is represented by authorized ledger entries.</span>
         </div>
 
         <div class="management-item">
@@ -606,38 +547,6 @@
           <span class="muted small">Database policies and audit records must remain authoritative.</span>
         </div>
       </div>
-    </section>
-
-    <!-- TEST TRANSACTIONS -->
-    <section class="panel">
-      <h2>Recent test transactions</h2>
-
-      <p class="muted small">Up to 10 test transaction records visible to this account.</p>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Created</th>
-              <th>User ID</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Asset</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="transactionRows"></tbody>
-        </table>
-      </div>
-
-      <div id="transactionsNotice" class="notice" role="status" aria-live="polite">
-        Transactions have not been loaded yet.
-      </div>
-
-      <p class="muted small">
-        These test transactions do not establish real deposits, withdrawals,
-        investment returns, or available client funds.
-      </p>
     </section>
 
     <footer>
@@ -662,11 +571,9 @@
       let client = null;
       let visibleProfiles = [];
       let dashboardUser = null;
-      let reviewInProgress = false;
       let ledgerSubmissionInProgress = false;
       let dashboardRefreshInProgress = false;
       let profileLoadInProgress = false;
-      let depositLoadInProgress = false;
 
       function setNotice(id, message, type = '') {
         const element = $(id);
@@ -834,345 +741,6 @@
         } finally {
           profileLoadInProgress = false;
           button.disabled = false;
-        }
-      }
-
-      async function loadCounts() {
-        const definitions = [
-          { table: 'test_deposits', target: 'depositCount' },
-          { table: 'test_withdrawals', target: 'withdrawalCount' },
-          { table: 'test_transactions', target: 'transactionCount' }
-        ];
-
-        const results = await Promise.all(
-          definitions.map(async ({ table, target }) => {
-            try {
-              const { count, error } = await client
-                .from(table)
-                .select('*', { count: 'exact', head: true });
-
-              if (error) {
-                $(target).textContent = '—';
-                console.error('Count query failed for ' + table + ':', error);
-                return table + ': unavailable';
-              }
-
-              $(target).textContent = String(count ?? 0);
-              return null;
-            } catch (error) {
-              $(target).textContent = '—';
-              console.error('Count query exception for ' + table + ':', error);
-              return table + ': unavailable';
-            }
-          })
-        );
-
-        const errors = results.filter(Boolean);
-
-        if (errors.length) {
-          setNotice(
-            'dashboardNotice',
-            'Some test counts could not be loaded: ' +
-            errors.join('; ') + '. Check table names and database policies.',
-            'error'
-          );
-
-          return false;
-        }
-
-        setNotice(
-          'dashboardNotice',
-          'Test-record counts refreshed. These are not financial balances.',
-          'success'
-        );
-
-        return true;
-      }
-
-      async function loadTransactions() {
-        const body = $('transactionRows');
-        body.replaceChildren();
-
-        setNotice('transactionsNotice', 'Loading test transactions…');
-
-        try {
-          const { data, error } = await client
-            .from('test_transactions')
-            .select('created_at, user_id, type, amount, asset, status')
-            .order('created_at', { ascending: false })
-            .limit(10);
-
-          if (error) {
-            setNotice(
-              'transactionsNotice',
-              'Transactions could not be loaded. Check the table columns and database policies.',
-              'error'
-            );
-
-            console.error('Transaction query failed:', error);
-            return false;
-          }
-
-          if (!Array.isArray(data) || data.length === 0) {
-            setNotice(
-              'transactionsNotice',
-              'No test transaction records are visible to this account.'
-            );
-
-            return true;
-          }
-
-          for (const transaction of data) {
-            const row = document.createElement('tr');
-
-            addCell(row, formatDate(transaction.created_at));
-            addCell(row, transaction.user_id);
-            addCell(row, transaction.type);
-            addCell(row, transaction.amount);
-            addCell(row, transaction.asset);
-            addCell(row, transaction.status);
-
-            body.appendChild(row);
-          }
-
-          setNotice(
-            'transactionsNotice',
-            'Showing ' + data.length +
-            ' visible test transaction record(s).',
-            'success'
-          );
-
-          return true;
-        } catch (error) {
-          setNotice(
-            'transactionsNotice',
-            'An unexpected error occurred while loading test transactions.',
-            'error'
-          );
-
-          console.error(error);
-          return false;
-        }
-      }
-
-      async function loadPendingTestDeposits() {
-        if (depositLoadInProgress) return;
-
-        depositLoadInProgress = true;
-
-        const button = $('refreshDepositsButton');
-        const body = $('depositReviewRows');
-
-        button.disabled = true;
-        body.replaceChildren();
-
-        setNotice(
-          'depositReviewNotice',
-          'Loading pending test deposit requests…'
-        );
-
-        try {
-          const { data, error } = await client
-            .from('test_deposits')
-            .select('id, user_id, amount, asset, status, reference, created_at')
-            .eq('status', 'pending')
-            .order('created_at', { ascending: false })
-            .limit(50);
-
-          if (error) {
-            setNotice(
-              'depositReviewNotice',
-              'Pending test deposits could not be loaded. Check test_deposits permissions and row-level security policies.',
-              'error'
-            );
-
-            console.error('Pending test deposit query failed:', error);
-            return false;
-          }
-
-          if (!Array.isArray(data) || data.length === 0) {
-            setNotice(
-              'depositReviewNotice',
-              'No pending test deposit requests are visible.'
-            );
-
-            return true;
-          }
-
-          for (const deposit of data) {
-            const row = document.createElement('tr');
-
-            addCell(row, formatDate(deposit.created_at));
-            addCell(row, deposit.id);
-            addCell(row, deposit.user_id);
-            addCell(row, deposit.amount);
-            addCell(row, deposit.asset);
-            addCell(row, deposit.reference);
-
-            const actionCell = document.createElement('td');
-            const actions = document.createElement('div');
-            actions.className = 'action-buttons';
-
-            const approveButton = document.createElement('button');
-            approveButton.type = 'button';
-            approveButton.className = 'primary';
-            approveButton.textContent = 'Approve TEST';
-
-            approveButton.addEventListener('click', () => {
-              reviewTestDeposit(deposit.id, 'approved');
-            });
-
-            const rejectButton = document.createElement('button');
-            rejectButton.type = 'button';
-            rejectButton.className = 'danger-button';
-            rejectButton.textContent = 'Reject TEST';
-
-            rejectButton.addEventListener('click', () => {
-              reviewTestDeposit(deposit.id, 'rejected');
-            });
-
-            actions.append(approveButton, rejectButton);
-            actionCell.appendChild(actions);
-            row.appendChild(actionCell);
-            body.appendChild(row);
-          }
-
-          setNotice(
-            'depositReviewNotice',
-            'Showing ' + data.length +
-            ' pending TEST request(s). Reviews do not change client balances.'
-          );
-
-          return true;
-        } catch (error) {
-          setNotice(
-            'depositReviewNotice',
-            'An unexpected error occurred while loading test deposits.',
-            'error'
-          );
-
-          console.error(error);
-          return false;
-        } finally {
-          depositLoadInProgress = false;
-          button.disabled = reviewInProgress;
-        }
-      }
-
-      async function reviewTestDeposit(depositId, decision) {
-        if (reviewInProgress) return;
-
-        if (decision !== 'approved' && decision !== 'rejected') {
-          setNotice('depositReviewNotice', 'Invalid review decision.', 'error');
-          return;
-        }
-
-        let reason = null;
-
-        if (decision === 'rejected') {
-          reason = window.prompt(
-            'Enter a reason for rejecting this TEST deposit request:'
-          );
-
-          if (reason === null) return;
-
-          reason = reason.trim();
-
-          if (!reason) {
-            setNotice(
-              'depositReviewNotice',
-              'A reason is required to reject a request.',
-              'error'
-            );
-            return;
-          }
-        } else {
-          const confirmed = window.confirm(
-            'Approve this TEST deposit request? This changes its test status only. It will NOT credit a client balance or move money.'
-          );
-
-          if (!confirmed) return;
-        }
-
-        reviewInProgress = true;
-
-        $('refreshDepositsButton').disabled = true;
-        $('refreshButton').disabled = true;
-
-        $('depositReviewRows')
-          .querySelectorAll('button')
-          .forEach((button) => {
-            button.disabled = true;
-          });
-
-        setNotice('depositReviewNotice', 'Submitting review to Supabase…');
-
-        let reviewConfirmed = false;
-
-        try {
-          const { data, error } = await client.rpc(
-            'admin_review_test_deposit',
-            {
-              p_deposit_id: depositId,
-              p_decision: decision,
-              p_reason: reason
-            }
-          );
-
-          if (error) {
-            setNotice(
-              'depositReviewNotice',
-              'Review was not confirmed: ' + error.message +
-              '. Refresh the list and check the request status before retrying.',
-              'error'
-            );
-
-            console.error('Test deposit review failed:', error);
-            return;
-          }
-
-          if (
-            !data ||
-            data.success !== true ||
-            data.balance_credited !== false ||
-            normalizeId(data.request_id) !== normalizeId(depositId) ||
-            String(data.status || '').toLowerCase() !== decision
-          ) {
-            setNotice(
-              'depositReviewNotice',
-              'The review response could not be verified. Refresh the list and check the request status before retrying.',
-              'error'
-            );
-
-            console.error('Unexpected test deposit review response:', data);
-            return;
-          }
-
-          reviewConfirmed = true;
-
-          setNotice(
-            'depositReviewNotice',
-            'TEST request ' + decision +
-            ' confirmed by Supabase. No client balance was changed.',
-            'success'
-          );
-        } catch (error) {
-          setNotice(
-            'depositReviewNotice',
-            'The result of the review is uncertain. Refresh the request list and check its status before retrying.',
-            'error'
-          );
-
-          console.error(error);
-        } finally {
-          reviewInProgress = false;
-          $('refreshButton').disabled = false;
-          $('refreshDepositsButton').disabled = false;
-        }
-
-        if (reviewConfirmed) {
-          await loadPendingTestDeposits();
-          await loadCounts();
         }
       }
 
@@ -1353,12 +921,8 @@
         $('refreshButton').disabled = true;
 
         try {
-          await Promise.all([
-            loadCounts(),
-            loadAccounts(),
-            loadTransactions(),
-            loadPendingTestDeposits()
-          ]);
+          await loadAccounts();
+          setNotice('dashboardNotice', 'Dashboard refreshed.', 'success');
         } catch (error) {
           setNotice(
             'dashboardNotice',
@@ -1478,10 +1042,6 @@
 
           $('refreshButton').addEventListener('click', refreshDashboard);
           $('refreshAccountsButton').addEventListener('click', loadAccounts);
-          $('refreshDepositsButton').addEventListener(
-            'click',
-            loadPendingTestDeposits
-          );
           $('accountSearch').addEventListener('input', renderAccounts);
           $('ledgerForm').addEventListener('submit', submitLedgerEntry);
           $('signOutButton').addEventListener('click', signOut);
