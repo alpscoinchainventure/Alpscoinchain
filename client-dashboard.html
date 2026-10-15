@@ -98,13 +98,18 @@
   function formatAmount(value){const amount=Number(value);if(!Number.isFinite(amount))return"Unavailable";return amount.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:8})}
 
   async function loadProfile(){
-    const result=await supabaseClient.from("profiles").select("role, account_status").eq("id",currentUser.id).maybeSingle();
-    if(result.error){console.error("Profile query failed:",result.error);setText("account-status","Could not load");setText("account-role","Could not load");return}
+    const result=await supabaseClient.from("profiles").select("role, account_status, kyc_status").eq("id",currentUser.id).maybeSingle();
+    if(result.error){console.error("Profile query failed:",result.error);setText("account-status","Could not load");setText("account-role","Could not load");showPageMessage("We could not verify your KYC status. Please refresh or contact support.");return false}
     const profile=result.data;
-    if(!profile){setText("account-status","Not available");setText("account-role","Not available");return}
+    if(!profile){setText("account-status","Not available");setText("account-role","Not available");showPageMessage("Your account profile could not be found. Please contact support.");return false}
     setText("account-status",profile.account_status||"Not available");setText("account-role",profile.role||"Not available");
     const isActiveAdmin=String(profile.role).toLowerCase()==="admin"&&String(profile.account_status).toLowerCase()==="active";
     document.getElementById("admin-requests-link").hidden=!isActiveAdmin;
+    if(String(profile.role).toLowerCase()==="client" && String(profile.account_status).toLowerCase()==="active" && profile.kyc_status!=="approved"){
+      window.location.replace("/kyc.html");
+      return false;
+    }
+    return true;
   }
 
   async function loadLedgerBalances(){
@@ -230,7 +235,7 @@
     supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
     try{
       const result=await supabaseClient.auth.getSession();if(result.error)throw result.error;const session=result.data.session;if(!session||!session.user){window.location.replace("/login");return}
-      currentUser=session.user;setText("account-email",currentUser.email);setText("account-id",currentUser.id);showPageMessage("You are signed in.");await loadProfile();await Promise.all([loadLedgerBalances(),loadRequestHistory()]);
+      currentUser=session.user;setText("account-email",currentUser.email);setText("account-id",currentUser.id);showPageMessage("You are signed in.");const profileReady=await loadProfile();if(!profileReady)return;await Promise.all([loadLedgerBalances(),loadRequestHistory()]);
     }catch(error){console.error("Dashboard initialization failed:",error);showPageMessage("We could not load your account. Please refresh or sign in again.")}
   }
 
