@@ -223,10 +223,10 @@
     </p>
 
     <div class="notice warning">
-      <strong>TEST MODE ONLY.</strong>
-      Reviewing, approving, or rejecting a request changes its record only.
+      <strong>Important:</strong>
+      Reviewing, approving, or rejecting a request updates its request record only.
       It does not transfer funds, validate a wallet, or change any balance.
-      A ledger entry must be handled separately through the authorized
+      Any accounting entry must be handled separately through the authorized
       accounting process.
     </div>
 
@@ -420,7 +420,12 @@
           return;
         }
 
-        if (!data || data.length === 0) {
+        const visibleRequests = (data || []).filter(request =>
+          !['TEST', 'TES'].includes(String(request.asset || '').trim().toUpperCase()) &&
+          !String(request.reference || '').toUpperCase().includes('TEST')
+        );
+
+        if (visibleRequests.length === 0) {
           notice(
             'listNotice',
             'No requests found for this filter.'
@@ -429,7 +434,7 @@
           return;
         }
 
-        for (const request of data) {
+        for (const request of visibleRequests) {
           const row = document.createElement('tr');
 
           addCell(row, formatDate(request.created_at));
@@ -537,7 +542,7 @@
 
         notice(
           'listNotice',
-          'Loaded ' + data.length +
+          'Loaded ' + visibleRequests.length +
           ' request(s). Review actions change request records only.'
         );
       } catch (error) {
@@ -576,13 +581,13 @@
 
       const messages = {
         under_review:
-          'Mark this TEST request as under review? No money will move.',
+          'Mark this request as under review? No money will move.',
 
         approved:
-          'Approve this TEST request record? No funds will transfer and no balance will change.',
+          'Approve this request record? No funds will transfer and no balance will change.',
 
         rejected:
-          'Reject this TEST request record using the note provided? No funds will move.'
+          'Reject this request record using the note provided? No funds will move.'
       };
 
       if (!confirm(messages[status])) {
