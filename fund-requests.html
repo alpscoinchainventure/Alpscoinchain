@@ -69,16 +69,15 @@
 <header>
   <div>
     <h1>AlpsCoinChain Investment</h1>
-    <p>Deposit and withdrawal request tracking · Test environment</p>
+    <p>Deposit and withdrawal request tracking</p>
   </div>
 </header>
 
 <main>
   <div class="notice">
-    <strong>Test environment only.</strong>
-    This page records requests for review. It does not move money,
-    confirm deposits, execute withdrawals, or calculate balances.
-    Never enter passwords, recovery phrases, or private keys.
+    Requests are recorded for review. Submission alone does not confirm
+    receipt of a deposit or execute a withdrawal. Never enter passwords,
+    recovery phrases, or private keys.
   </div>
 
   <div class="actions">
@@ -99,7 +98,7 @@
         </label>
         <label>Asset code
           <input name="asset" type="text" minlength="2" maxlength="20"
-            placeholder="e.g. TEST" required>
+            placeholder="e.g. USDT" required>
         </label>
         <p class="muted">This creates a pending request only. It does not verify receipt of funds.</p>
         <button type="submit">Submit deposit request</button>
@@ -115,7 +114,7 @@
         </label>
         <label>Asset code
           <input name="asset" type="text" minlength="2" maxlength="20"
-            placeholder="e.g. TEST" required>
+            placeholder="e.g. USDT" required>
         </label>
         <label>Saved beneficiary
           <select name="beneficiary_id" id="beneficiary-select" required>
@@ -317,7 +316,8 @@
       request_type: type,
       amount,
       asset,
-      status: "pending"
+      status: "pending",
+      reference: "ACC-" + type.toUpperCase() + "-" + crypto.randomUUID()
     };
 
     if (type === "withdrawal") {
