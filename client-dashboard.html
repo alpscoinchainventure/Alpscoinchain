@@ -595,7 +595,9 @@
 
           if (result.error) throw result.error;
 
-          const balances = Array.isArray(result.data) ? result.data : [];
+          const balances = (Array.isArray(result.data) ? result.data : []).filter(item =>
+            !["TEST", "TES"].includes(String(item?.asset || "").trim().toUpperCase())
+          );
           ledgerBalanceList.replaceChildren();
 
           if (balances.length === 0) {
@@ -687,7 +689,10 @@
             return;
           }
 
-          const records = result.data || [];
+          const records = (result.data || []).filter(item =>
+            !["TEST", "TES"].includes(String(item?.asset || "").trim().toUpperCase()) &&
+            !String(item?.reference || "").toUpperCase().includes("TEST")
+          );
 
           if (records.length === 0) {
             showEmptyRows(
