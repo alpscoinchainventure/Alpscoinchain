@@ -241,15 +241,15 @@
       color: var(--text);
       font-family: "DM Sans", Arial, sans-serif;
     }
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
-      opacity: .13;
-      background-image: linear-gradient(rgba(157,191,228,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(157,191,228,.12) 1px, transparent 1px);
-      background-size: 52px 52px;
+    body {
+      background-image:
+        linear-gradient(rgba(157,191,228,.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(157,191,228,.07) 1px, transparent 1px),
+        radial-gradient(ellipse at 82% 8%, rgba(32,119,220,.22), transparent 34%),
+        radial-gradient(ellipse at 12% 42%, rgba(26,171,150,.10), transparent 30%),
+        linear-gradient(145deg, #071321, #091a2c 56%, #07111e);
+      background-size: 52px 52px, 52px 52px, auto, auto, auto;
+      background-attachment: fixed;
     }
     header {
       background: rgba(5,14,25,.9);
