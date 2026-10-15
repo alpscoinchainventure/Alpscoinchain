@@ -3,634 +3,849 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Identity Verification Review | AlpsCoinChain</title>
   <meta name="robots" content="noindex, nofollow">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>KYC Administration | AlpsCoinChain</title>
+
   <style>
     :root {
       color-scheme: dark;
       --bg: #0b1220;
-      --panel: #121d30;
+      --card: #141f32;
       --border: #293850;
-      --text: #eef4ff;
-      --muted: #a8b7cc;
-      --accent: #72b7ff;
-      --green: #68d6a0;
-      --red: #ff9292;
-      --yellow: #f6d27b;
+      --text: #edf3ff;
+      --muted: #aab8ce;
+      --accent: #6ee7b7;
+      --danger: #fca5a5;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
-      padding: 24px 16px 48px;
+      padding: 20px;
       background: var(--bg);
       color: var(--text);
-      font: 15px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.6;
     }
 
-    main {
-      width: 100%;
-      max-width: 1000px;
-      margin: auto;
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
     }
 
-    header, .card {
-      background: var(--panel);
+    header,
+    .card {
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 20px;
       margin-bottom: 18px;
     }
 
-    h1 { margin: 0 0 8px; font-size: 25px; }
-    h2 { margin-top: 0; font-size: 19px; }
-    p { overflow-wrap: anywhere; }
-    .muted { color: var(--muted); }
-    .warning {
-      padding: 13px;
-      border: 1px solid #765f2c;
-      border-radius: 9px;
-      background: #2a2415;
-      color: var(--yellow);
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 25px;
+    }
+
+    h2 {
+      font-size: 20px;
+    }
+
+    .muted {
+      color: var(--muted);
     }
 
     .notice {
+      border-left: 4px solid #fbbf24;
       padding: 12px;
-      border-radius: 8px;
-      background: #17263a;
+      background: #27251c;
+      border-radius: 6px;
+      margin-bottom: 18px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      background: #26374e;
+    }
+
+    .status.pending_review {
+      color: #fcd34d;
+    }
+
+    .status.approved {
+      color: var(--accent);
+    }
+
+    .status.rejected {
+      color: var(--danger);
+    }
+
+    button,
+    .button {
+      display: inline-block;
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 7px;
+      background: var(--accent);
+      color: #062b20;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 4px 4px 4px 0;
+    }
+
+    button.secondary,
+    .button.secondary {
+      background: #33445f;
+      color: var(--text);
+    }
+
+    button.danger {
+      background: #7f1d1d;
+      color: #fff;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    input,
+    select,
+    textarea {
+      display: block;
+      width: 100%;
+      padding: 11px;
+      margin: 7px 0 14px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: #0b1220;
+      color: var(--text);
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 95px;
+      resize: vertical;
+    }
+
+    label {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 7px;
       margin: 12px 0;
       overflow-wrap: anywhere;
     }
 
-    .success { color: var(--green); }
-    .error { color: var(--red); }
-
-    button, a.button {
-      display: inline-block;
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: #21334d;
-      color: var(--text);
-      font: inherit;
-      cursor: pointer;
-      text-decoration: none;
-      margin: 4px 6px 4px 0;
+    .message.error {
+      background: #3b1d26;
+      color: #fecaca;
     }
 
-    button.primary { background: #164b7b; }
-    button.approve { background: #155a3e; }
-    button.reject { background: #702d38; }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 11px;
-      margin: 5px 0 14px;
-      background: #0b1424;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font: inherit;
+    .message.success {
+      background: #12352c;
+      color: #bbf7d0;
     }
 
-    label { display: block; font-weight: 600; }
+    .message.info {
+      background: #1b2c45;
+      color: #dbeafe;
+    }
 
-    .record {
-      padding: 16px 0;
+    .hidden {
+      display: none !important;
+    }
+
+    .submission {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 14px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .submission p {
+      margin: 6px 0;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .small {
+      font-size: 13px;
+    }
+
+    hr {
+      border: 0;
       border-top: 1px solid var(--border);
+      margin: 18px 0;
     }
-
-    .record:first-child { border-top: 0; }
-    .record p { margin: 6px 0; }
-    .status { font-weight: 700; }
-    .hidden { display: none !important; }
-
-    a { color: var(--accent); }
-    .small { font-size: 13px; }
 
     @media (max-width: 600px) {
-      body { padding: 14px 10px 30px; }
-      header, .card { padding: 15px; }
-      h1 { font-size: 22px; }
+      body {
+        padding: 12px;
+      }
+
+      header, .card {
+        padding: 15px;
+      }
+
+      h1 {
+        font-size: 21px;
+      }
+
+      button, .button {
+        width: 100%;
+        text-align: center;
+        margin: 4px 0;
+      }
     }
   </style>
 </head>
+
 <body>
-<main>
-  <header>
-    <h1>AlpsCoinChain</h1>
-    <p class="muted">Administrator identity-verification review</p>
-    <p class="warning">
-      Confidential information: only review documents when necessary.
-      Approval confirms the identity-verification review outcome; it does not
-      guarantee account funding, investment returns, or financial eligibility.
-    </p>
-    <button id="refreshBtn" class="primary" disabled>Refresh submissions</button>
-    <button id="signOutBtn" disabled>Sign out</button>
-    <a class="button" href="/client-dashboard.html">Client dashboard</a>
-    <div id="pageMessage" class="notice" role="status" aria-live="polite">
-      Checking your administrator access…
+  <main class="container">
+    <header>
+      <h1>AlpsCoinChain Investment Ventures</h1>
+      <p class="muted">Administrator — Identity Verification Review</p>
+
+      <div class="actions">
+        <a class="button secondary" href="/client-dashboard.html">
+          Client Dashboard
+        </a>
+
+        <button id="refreshBtn" type="button">
+          Refresh Submissions
+        </button>
+
+        <button id="signOutBtn" class="danger" type="button">
+          Sign Out
+        </button>
+      </div>
+    </header>
+
+    <div class="notice">
+      <strong>Security notice:</strong>
+      Identity documents are confidential. Open them only when necessary
+      for legitimate verification. Approval records identity-review status;
+      it does not move funds or guarantee financial eligibility.
     </div>
-  </header>
 
-  <section id="loginCard" class="card hidden">
-    <h2>Administrator sign in</h2>
-    <p class="muted">Sign in with your authorized AlpsCoinChain administrator account.</p>
-    <form id="loginForm">
-      <label for="email">Administrator email</label>
-      <input id="email" type="email" autocomplete="username" required>
+    <section id="message" class="message info" role="status" aria-live="polite">
+      Checking administrator access...
+    </section>
 
-      <label for="password">Password</label>
-      <input id="password" type="password" autocomplete="current-password" required>
+    <section id="loginRequired" class="card hidden">
+      <h2>Administrator login required</h2>
+      <p class="muted">
+        Sign in with your AlpsCoinChain administrator account to continue.
+      </p>
+      <a class="button" href="/login.html">Go to Login</a>
+    </section>
 
-      <button class="primary" type="submit">Sign in</button>
-    </form>
-    <p id="loginMessage" role="status" aria-live="polite"></p>
-  </section>
+    <section id="adminArea" class="hidden">
+      <section class="card">
+        <h2>Verification Overview</h2>
 
-  <section id="reviewCard" class="card hidden">
-    <h2>Pending identity submissions</h2>
-    <p class="muted">
-      Documents are stored privately. Open a document only when you need it
-      for the review, and do not download or share it unnecessarily.
-    </p>
-    <div id="submissionList" aria-live="polite">Loading submissions…</div>
-  </section>
+        <div class="grid">
+          <div>
+            <p class="muted">Pending review</p>
+            <h2 id="pendingCount">—</h2>
+          </div>
 
-  <section id="auditCard" class="card hidden">
-    <h2>Recent review audit log</h2>
-    <p class="muted">
-      This log records completed approval and rejection decisions.
-    </p>
-    <div id="auditList">Loading audit log…</div>
-  </section>
-</main>
+          <div>
+            <p class="muted">Approved</p>
+            <h2 id="approvedCount">—</h2>
+          </div>
 
-<script>
-(() => {
-  "use strict";
+          <div>
+            <p class="muted">Rejected</p>
+            <h2 id="rejectedCount">—</h2>
+          </div>
+        </div>
+      </section>
 
-  const SUPABASE_URL = "https://uevofmlzpwrdidjnwxfd.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
-  const BUCKET = "kyc-documents";
+      <section class="card">
+        <h2>Identity Submissions</h2>
 
-  const client = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    }
-  );
+        <label for="statusFilter">Filter submissions</label>
+        <select id="statusFilter">
+          <option value="all">All statuses</option>
+          <option value="pending_review">Pending review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
 
-  const $ = (id) => document.getElementById(id);
+        <p class="muted small">
+          Client IDs are displayed instead of personal identity details.
+          Only authorized administrators should access this page.
+        </p>
 
-  let currentUser = null;
-  let refreshInProgress = false;
+        <div id="submissionList">
+          Loading submissions...
+        </div>
+      </section>
 
-  function setMessage(message, type = "") {
-    const el = $("pageMessage");
-    el.textContent = message;
-    el.className = "notice" + (type ? " " + type : "");
-  }
+      <section class="card">
+        <h2>Review Activity</h2>
+        <p class="muted">
+          Successful approval and rejection actions are recorded by the
+          database review function. The audit log is not editable here.
+        </p>
+        <p class="muted small">
+          Review outcomes are available in the KYC audit log in Supabase.
+        </p>
+      </section>
+    </section>
+  </main>
 
-  function setLoginMessage(message, type = "") {
-    $("loginMessage").textContent = message;
-    $("loginMessage").className = type;
-  }
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  function showLogin() {
-    $("loginCard").classList.remove("hidden");
-    $("reviewCard").classList.add("hidden");
-    $("auditCard").classList.add("hidden");
-    $("refreshBtn").disabled = true;
-    $("signOutBtn").disabled = false;
-  }
+  <script>
+    (() => {
+      "use strict";
 
-  function showReview() {
-    $("loginCard").classList.add("hidden");
-    $("reviewCard").classList.remove("hidden");
-    $("auditCard").classList.remove("hidden");
-    $("refreshBtn").disabled = false;
-    $("signOutBtn").disabled = false;
-  }
+      const SUPABASE_URL =
+        "https://uevofmlzpwrdidjnwxfd.supabase.co";
 
-  function addText(parent, tag, text, className = "") {
-    const el = document.createElement(tag);
-    el.textContent = text;
-    if (className) el.className = className;
-    parent.appendChild(el);
-    return el;
-  }
+      const SUPABASE_KEY =
+        "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
 
-  function formatDate(value) {
-    if (!value) return "Not recorded";
-    const date = new Date(value);
-    return Number.isNaN(date.getTime())
-      ? "Not recorded"
-      : date.toLocaleString();
-  }
-
-  function friendlyStatus(status) {
-    return {
-      pending_review: "Pending review",
-      approved: "Approved",
-      rejected: "Rejected"
-    }[status] || "Unknown status";
-  }
-
-  async function checkAdmin() {
-    const { data: sessionData, error: sessionError } =
-      await client.auth.getSession();
-
-    if (sessionError) {
-      showLogin();
-      setMessage("Unable to check your session. Please sign in again.", "error");
-      return false;
-    }
-
-    const user = sessionData.session?.user;
-
-    if (!user) {
-      currentUser = null;
-      showLogin();
-      setMessage("Please sign in with your administrator account.");
-      return false;
-    }
-
-    const { data: profile, error: profileError } = await client
-      .from("profiles")
-      .select("id, role, account_status")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      currentUser = null;
-      showLogin();
-      setMessage(
-        "Could not verify your administrator profile. Access has not been granted.",
-        "error"
-      );
-      return false;
-    }
-
-    if (
-      !profile ||
-      profile.role !== "admin" ||
-      profile.account_status !== "active"
-    ) {
-      currentUser = null;
-      showLogin();
-      setMessage(
-        "Access denied. An active administrator profile is required.",
-        "error"
-      );
-      return false;
-    }
-
-    currentUser = user;
-    showReview();
-    setMessage("Administrator access verified.", "success");
-    return true;
-  }
-
-  async function openPrivateDocument(storagePath, button) {
-    if (!currentUser) {
-      setMessage("Please sign in again before opening a document.", "error");
-      return;
-    }
-
-    button.disabled = true;
-    button.textContent = "Preparing secure link…";
-
-    try {
-      // Re-check the session before creating a short-lived private link.
-      const isAdmin = await checkAdmin();
-      if (!isAdmin) return;
-
-      const { data, error } = await client.storage
-        .from(BUCKET)
-        .createSignedUrl(storagePath, 60);
-
-      if (error || !data?.signedUrl) {
-        throw new Error(error?.message || "Could not create private document link.");
-      }
-
-      // Open the short-lived link only after the administrator clicks.
-      const opened = window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-
-      if (!opened) {
-        setMessage(
-          "Your browser blocked the document window. Allow pop-ups for this site and try again.",
-          "error"
-        );
-      } else {
-        setMessage(
-          "A short-lived private document link was opened. It expires in approximately 60 seconds.",
-          "success"
-        );
-      }
-    } catch (error) {
-      setMessage(
-        "Document access failed: " + (error.message || "Unknown error"),
-        "error"
-      );
-    } finally {
-      button.disabled = false;
-      button.textContent = "Open private document";
-    }
-  }
-
-  async function reviewSubmission(record, decision, button, reasonField) {
-    if (!currentUser) {
-      setMessage("Please sign in again before reviewing a submission.", "error");
-      return;
-    }
-
-    let reason = null;
-
-    if (decision === "rejected") {
-      reason = reasonField.value.trim();
-
-      if (reason.length < 3 || reason.length > 1000) {
-        setMessage(
-          "Enter a rejection reason between 3 and 1000 characters.",
-          "error"
-        );
-        reasonField.focus();
-        return;
-      }
-    }
-
-    const promptText = decision === "approved"
-      ? "Approve this identity-verification submission?"
-      : "Reject this identity-verification submission?";
-
-    if (!window.confirm(
-      promptText + "\n\nThis records a review decision; it does not move money."
-    )) {
-      return;
-    }
-
-    button.disabled = true;
-    const previousText = button.textContent;
-    button.textContent = "Saving decision…";
-
-    try {
-      // The database function must independently validate administrator
-      // permissions, the pending state, and the rejection reason.
-      const isAdmin = await checkAdmin();
-      if (!isAdmin) return;
-
-      const { error } = await client.rpc("admin_review_kyc", {
-        p_submission_id: record.id,
-        p_decision: decision,
-        p_rejection_reason: reason
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setMessage(
-        "Review decision saved. Refreshing submissions and audit log…",
-        "success"
+      const supabase = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY,
+        {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
+        }
       );
 
-      await loadSubmissions();
-      await loadAuditLog();
-    } catch (error) {
-      setMessage(
-        "The review decision was not confirmed: " +
-        (error.message || "Unknown error"),
-        "error"
-      );
-    } finally {
-      button.disabled = false;
-      button.textContent = previousText;
-    }
-  }
+      const messageEl = document.getElementById("message");
+      const loginRequiredEl = document.getElementById("loginRequired");
+      const adminAreaEl = document.getElementById("adminArea");
+      const submissionListEl = document.getElementById("submissionList");
+      const statusFilterEl = document.getElementById("statusFilter");
 
-  async function loadSubmissions() {
-    if (refreshInProgress) return;
-    refreshInProgress = true;
+      let currentUser = null;
+      let submissions = [];
+      let busy = false;
 
-    const container = $("submissionList");
-    container.replaceChildren();
-    addText(container, "p", "Loading pending submissions…", "muted");
-
-    try {
-      const isAdmin = await checkAdmin();
-      if (!isAdmin) return;
-
-      const { data, error } = await client
-        .from("kyc_submissions")
-        .select(
-          "id, user_id, document_type, storage_path, status, rejection_reason, submitted_at"
-        )
-        .eq("status", "pending_review")
-        .order("submitted_at", { ascending: true });
-
-      if (error) throw new Error(error.message);
-
-      container.replaceChildren();
-
-      if (!data || data.length === 0) {
-        addText(container, "p", "There are no pending identity submissions.", "muted");
-        return;
+      function showMessage(text, type = "info") {
+        messageEl.textContent = text;
+        messageEl.className = "message " + type;
+        messageEl.classList.remove("hidden");
       }
 
-      for (const record of data) {
-        const article = document.createElement("article");
-        article.className = "record";
-
-        addText(article, "h3", "Identity submission");
-        addText(article, "p", "Submission ID: " + record.id);
-        addText(article, "p", "Client user ID: " + record.user_id);
-        addText(
-          article,
-          "p",
-          "Document type: " + String(record.document_type || "Unknown")
-        );
-        addText(
-          article,
-          "p",
-          "Submitted: " + formatDate(record.submitted_at)
-        );
-        addText(
-          article,
-          "p",
-          "Status: " + friendlyStatus(record.status),
-          "status"
-        );
-
-        const documentButton = document.createElement("button");
-        documentButton.type = "button";
-        documentButton.textContent = "Open private document";
-        documentButton.addEventListener("click", () =>
-          openPrivateDocument(record.storage_path, documentButton)
-        );
-        article.appendChild(documentButton);
-
-        const reasonLabel = addText(
-          article,
-          "label",
-          "Rejection reason (required only when rejecting)"
-        );
-        const reasonField = document.createElement("textarea");
-        reasonField.rows = 3;
-        reasonField.maxLength = 1000;
-        reasonField.placeholder =
-          "Provide a clear, factual reason if rejecting this submission.";
-        reasonField.setAttribute("aria-label", "Rejection reason");
-        reasonLabel.appendChild(reasonField);
-
-        const approveButton = document.createElement("button");
-        approveButton.type = "button";
-        approveButton.className = "approve";
-        approveButton.textContent = "Approve";
-        approveButton.addEventListener("click", () =>
-          reviewSubmission(record, "approved", approveButton, reasonField)
-        );
-        article.appendChild(approveButton);
-
-        const rejectButton = document.createElement("button");
-        rejectButton.type = "button";
-        rejectButton.className = "reject";
-        rejectButton.textContent = "Reject";
-        rejectButton.addEventListener("click", () =>
-          reviewSubmission(record, "rejected", rejectButton, reasonField)
-        );
-        article.appendChild(rejectButton);
-
-        container.appendChild(article);
-      }
-    } catch (error) {
-      container.replaceChildren();
-      addText(
-        container,
-        "p",
-        "Could not load submissions: " + (error.message || "Unknown error"),
-        "error"
-      );
-    } finally {
-      refreshInProgress = false;
-    }
-  }
-
-  async function loadAuditLog() {
-    const container = $("auditList");
-    container.replaceChildren();
-    addText(container, "p", "Loading audit log…", "muted");
-
-    try {
-      const isAdmin = await checkAdmin();
-      if (!isAdmin) return;
-
-      const { data, error } = await client
-        .from("kyc_audit_log")
-        .select("id, submission_id, client_id, admin_id, action, reason, created_at")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (error) throw new Error(error.message);
-
-      container.replaceChildren();
-
-      if (!data || data.length === 0) {
-        addText(container, "p", "No review decisions have been recorded yet.", "muted");
-        return;
+      function hideMessage() {
+        messageEl.classList.add("hidden");
       }
 
-      for (const entry of data) {
-        const row = document.createElement("div");
-        row.className = "record";
+      function makeElement(tag, text, className) {
+        const el = document.createElement(tag);
 
-        addText(row, "p", "Decision: " + entry.action.toUpperCase(), "status");
-        addText(row, "p", "Submission ID: " + entry.submission_id);
-        addText(row, "p", "Client user ID: " + entry.client_id);
-        addText(row, "p", "Administrator ID: " + entry.admin_id);
-        addText(row, "p", "Date: " + formatDate(entry.created_at));
-
-        if (entry.reason) {
-          addText(row, "p", "Rejection reason: " + entry.reason);
+        if (text !== undefined && text !== null) {
+          el.textContent = String(text);
         }
 
-        container.appendChild(row);
+        if (className) {
+          el.className = className;
+        }
+
+        return el;
       }
-    } catch (error) {
-      container.replaceChildren();
-      addText(
-        container,
-        "p",
-        "Could not load audit log: " + (error.message || "Unknown error"),
-        "error"
-      );
-    }
-  }
 
-  async function refreshAll() {
-    const isAdmin = await checkAdmin();
-    if (!isAdmin) return;
-    await loadSubmissions();
-    await loadAuditLog();
-  }
+      function formatDate(value) {
+        if (!value) return "Not recorded";
 
-  $("loginForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    setLoginMessage("Signing in…");
+        const date = new Date(value);
 
-    const email = $("email").value.trim();
-    const password = $("password").value;
+        if (Number.isNaN(date.getTime())) {
+          return "Date unavailable";
+        }
 
-    const { error } = await client.auth.signInWithPassword({ email, password });
+        return date.toLocaleString();
+      }
 
-    if (error) {
-      setLoginMessage(
-        "Sign-in failed. Check your credentials and try again.",
-        "error"
-      );
-      return;
-    }
+      function formatDocumentType(value) {
+        const labels = {
+          passport: "Passport",
+          national_id: "National ID",
+          drivers_license: "Driver's licence",
+          other: "Other document"
+        };
 
-    $("password").value = "";
-    setLoginMessage("Signed in. Checking administrator permissions…");
-    await refreshAll();
-  });
+        return labels[value] || "Unrecognized document type";
+      }
 
-  $("refreshBtn").addEventListener("click", refreshAll);
+      function shortId(value) {
+        if (!value) return "Unavailable";
+        return value;
+      }
 
-  $("signOutBtn").addEventListener("click", async () => {
-    $("signOutBtn").disabled = true;
-    await client.auth.signOut();
-    currentUser = null;
-    showLogin();
-    setMessage("You have signed out.");
-    $("signOutBtn").disabled = false;
-  });
+      function statusBadge(status) {
+        return makeElement(
+          "span",
+          status.replaceAll("_", " "),
+          "status " + status
+        );
+      }
 
-  client.auth.onAuthStateChange((event) => {
-    if (event === "SIGNED_OUT") {
-      currentUser = null;
-      showLogin();
-      setMessage("You have signed out.");
-    }
-  });
+      function setButtonsDisabled(disabled) {
+        document.querySelectorAll("button").forEach((button) => {
+          button.disabled = disabled;
+        });
+      }
 
-  (async () => {
-    const isAdmin = await checkAdmin();
-    if (isAdmin) {
-      await loadSubmissions();
-      await loadAuditLog();
-    }
-  })();
-})();
-</script>
+      async function verifyAdministrator() {
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.getSession();
+
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        const user = sessionData.session?.user;
+
+        if (!user) {
+          currentUser = null;
+          adminAreaEl.classList.add("hidden");
+          loginRequiredEl.classList.remove("hidden");
+          showMessage("Please sign in to continue.", "info");
+          return false;
+        }
+
+        currentUser = user;
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, role, account_status")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          throw profileError;
+        }
+
+        if (
+          !profile ||
+          profile.role !== "admin" ||
+          profile.account_status !== "active"
+        ) {
+          adminAreaEl.classList.add("hidden");
+          loginRequiredEl.classList.add("hidden");
+
+          showMessage(
+            "Access denied. An active administrator account is required.",
+            "error"
+          );
+
+          return false;
+        }
+
+        loginRequiredEl.classList.add("hidden");
+        adminAreaEl.classList.remove("hidden");
+
+        showMessage(
+          "Administrator access confirmed. Loading submissions...",
+          "success"
+        );
+
+        return true;
+      }
+
+      async function loadSubmissions() {
+        if (busy) return;
+
+        busy = true;
+        setButtonsDisabled(true);
+
+        try {
+          const allowed = await verifyAdministrator();
+
+          if (!allowed) {
+            return;
+          }
+
+          const { data, error } = await supabase
+            .from("kyc_submissions")
+            .select(
+              "id, user_id, document_type, storage_path, status, rejection_reason, submitted_at, reviewed_at"
+            )
+            .order("submitted_at", { ascending: false });
+
+          if (error) {
+            throw error;
+          }
+
+          submissions = data || [];
+
+          document.getElementById("pendingCount").textContent =
+            submissions.filter(
+              item => item.status === "pending_review"
+            ).length;
+
+          document.getElementById("approvedCount").textContent =
+            submissions.filter(
+              item => item.status === "approved"
+            ).length;
+
+          document.getElementById("rejectedCount").textContent =
+            submissions.filter(
+              item => item.status === "rejected"
+            ).length;
+
+          renderSubmissions();
+
+          showMessage(
+            "Submissions loaded. Review each document carefully.",
+            "success"
+          );
+        } catch (error) {
+          console.error("KYC loading error:", error);
+
+          showMessage(
+            "Unable to load submissions. Check administrator permissions and the Supabase configuration.",
+            "error"
+          );
+        } finally {
+          busy = false;
+          setButtonsDisabled(false);
+        }
+      }
+
+      function renderSubmissions() {
+        submissionListEl.replaceChildren();
+
+        const filter = statusFilterEl.value;
+
+        const visible = submissions.filter((item) => {
+          return filter === "all" || item.status === filter;
+        });
+
+        if (visible.length === 0) {
+          submissionListEl.appendChild(
+            makeElement(
+              "p",
+              "No submissions found for this filter.",
+              "muted"
+            )
+          );
+
+          return;
+        }
+
+        visible.forEach((item) => {
+          const card = makeElement("article", null, "submission");
+
+          const heading = makeElement("h3", "Identity submission");
+          card.appendChild(heading);
+
+          const statusLine = makeElement("p", "Status: ");
+          statusLine.appendChild(statusBadge(item.status));
+          card.appendChild(statusLine);
+
+          card.appendChild(
+            makeElement("p", "Submission ID: " + item.id)
+          );
+
+          card.appendChild(
+            makeElement("p", "Client ID: " + shortId(item.user_id))
+          );
+
+          card.appendChild(
+            makeElement(
+              "p",
+              "Document type: " + formatDocumentType(item.document_type)
+            )
+          );
+
+          card.appendChild(
+            makeElement(
+              "p",
+              "Submitted: " + formatDate(item.submitted_at)
+            )
+          );
+
+          if (item.reviewed_at) {
+            card.appendChild(
+              makeElement(
+                "p",
+                "Reviewed: " + formatDate(item.reviewed_at)
+              )
+            );
+          }
+
+          if (item.status === "rejected" && item.rejection_reason) {
+            card.appendChild(
+              makeElement(
+                "p",
+                "Rejection reason: " + item.rejection_reason
+              )
+            );
+          }
+
+          const actions = makeElement("div", null, "actions");
+
+          const viewButton = makeElement(
+            "button",
+            "Open Document"
+          );
+
+          viewButton.type = "button";
+
+          viewButton.addEventListener("click", () => {
+            openDocument(item, viewButton);
+          });
+
+          actions.appendChild(viewButton);
+
+          if (item.status === "pending_review") {
+            const approveButton = makeElement(
+              "button",
+              "Approve"
+            );
+
+            approveButton.type = "button";
+
+            approveButton.addEventListener("click", () => {
+              reviewSubmission(item, "approved");
+            });
+
+            actions.appendChild(approveButton);
+
+            const rejectButton = makeElement(
+              "button",
+              "Reject"
+            );
+
+            rejectButton.type = "button";
+            rejectButton.className = "danger";
+
+            rejectButton.addEventListener("click", () => {
+              reviewSubmission(item, "rejected");
+            });
+
+            actions.appendChild(rejectButton);
+          }
+
+          card.appendChild(actions);
+          submissionListEl.appendChild(card);
+        });
+      }
+
+      async function openDocument(item, button) {
+        if (busy) return;
+
+        if (!item.storage_path) {
+          showMessage(
+            "This submission has no stored document path.",
+            "error"
+          );
+          return;
+        }
+
+        busy = true;
+        button.disabled = true;
+
+        try {
+          const allowed = await verifyAdministrator();
+
+          if (!allowed) return;
+
+          /*
+           * A short-lived signed URL is created only after the administrator
+           * has been checked. Supabase Storage policies must also authorize
+           * access. Do not publish or share the generated URL.
+           */
+          const { data, error } = await supabase.storage
+            .from("kyc-documents")
+            .createSignedUrl(item.storage_path, 60);
+
+          if (error) {
+            throw error;
+          }
+
+          if (!data?.signedUrl) {
+            throw new Error("No document URL was returned.");
+          }
+
+          const opened = window.open(
+            data.signedUrl,
+            "_blank",
+            "noopener,noreferrer"
+          );
+
+          if (!opened) {
+            showMessage(
+              "The browser blocked the document window. Allow pop-ups for this site and try again.",
+              "error"
+            );
+          } else {
+            showMessage(
+              "Document link created. It expires in 60 seconds.",
+              "success"
+            );
+          }
+        } catch (error) {
+          console.error("Document access error:", error);
+
+          showMessage(
+            "Unable to open this document. Check Storage permissions and the saved file path.",
+            "error"
+          );
+        } finally {
+          busy = false;
+          button.disabled = false;
+        }
+      }
+
+      async function reviewSubmission(item, decision) {
+        if (busy) return;
+
+        if (item.status !== "pending_review") {
+          showMessage(
+            "Only pending submissions can be reviewed.",
+            "error"
+          );
+          return;
+        }
+
+        let rejectionReason = null;
+
+        if (decision === "approved") {
+          const confirmed = window.confirm(
+            "Confirm that you reviewed this document and want to approve this identity submission?"
+          );
+
+          if (!confirmed) return;
+        } else {
+          rejectionReason = window.prompt(
+            "Enter a clear reason for rejecting this submission (3–1000 characters):"
+          );
+
+          if (rejectionReason === null) return;
+
+          rejectionReason = rejectionReason.trim();
+
+          if (
+            rejectionReason.length < 3 ||
+            rejectionReason.length > 1000
+          ) {
+            showMessage(
+              "The rejection reason must be between 3 and 1000 characters.",
+              "error"
+            );
+            return;
+          }
+
+          const confirmed = window.confirm(
+            "Confirm rejection of this identity submission?"
+          );
+
+          if (!confirmed) return;
+        }
+
+        busy = true;
+        setButtonsDisabled(true);
+
+        try {
+          const allowed = await verifyAdministrator();
+
+          if (!allowed) return;
+
+          const { error } = await supabase.rpc("admin_review_kyc", {
+            p_submission_id: item.id,
+            p_decision: decision,
+            p_rejection_reason: rejectionReason
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          showMessage(
+            "Review saved. The database recorded the " +
+              decision +
+              " decision.",
+            "success"
+          );
+
+          /*
+           * Reload after the review function completes. The RPC is responsible
+           * for changing status and recording the audit entry.
+           */
+          await loadSubmissions();
+        } catch (error) {
+          console.error("KYC review error:", error);
+
+          showMessage(
+            "The review could not be saved. Verify the admin_review_kyc function, its permissions, and the audit-table configuration.",
+            "error"
+          );
+        } finally {
+          busy = false;
+          setButtonsDisabled(false);
+        }
+      }
+
+      document
+        .getElementById("refreshBtn")
+        .addEventListener("click", loadSubmissions);
+
+      statusFilterEl.addEventListener("change", renderSubmissions);
+
+      document
+        .getElementById("signOutBtn")
+        .addEventListener("click", async () => {
+          const { error } = await supabase.auth.signOut();
+
+          if (error) {
+            showMessage(
+              "Unable to sign out. Please try again.",
+              "error"
+            );
+            return;
+          }
+
+          window.location.replace("/login.html");
+        });
+
+      supabase.auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_OUT") {
+          window.location.replace("/login.html");
+        }
+      });
+
+      loadSubmissions();
+    })();
+  </script>
 </body>
 </html>
