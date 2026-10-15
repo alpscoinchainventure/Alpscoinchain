@@ -204,6 +204,10 @@
   Create Account
 </button>
 
+<button type="button" class="secondary" id="resendVerificationButton">
+  Resend verification email
+</button>
+
 <div class="links">
   <button type="button" id="forgotButton">
     Forgot your password?
@@ -229,6 +233,7 @@
     const loginForm = document.getElementById('loginForm');
     const loginButton = document.getElementById('loginButton');
     const signupButton = document.getElementById('signupButton');
+    const resendVerificationButton = document.getElementById('resendVerificationButton');
     const forgotButton = document.getElementById('forgotButton');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
@@ -341,6 +346,42 @@
 
     signupButton.addEventListener('click', function () {
       window.location.href = '/signup.html';
+    });
+
+    resendVerificationButton.addEventListener('click', async function () {
+      const email = emailInput.value.trim();
+
+      if (!email) {
+        message.textContent = 'Enter the email address you used to register first.';
+        emailInput.focus();
+        return;
+      }
+
+      resendVerificationButton.disabled = true;
+      resendVerificationButton.textContent = 'Sending verification email...';
+      message.textContent = '';
+
+      try {
+        const { error } = await supabaseClient.auth.resend({
+          type: 'signup',
+          email,
+          options: {
+            emailRedirectTo: 'https://alpscoinchaininvestment.uk/auth-callback.html'
+          }
+        });
+
+        if (error) throw error;
+
+        message.textContent =
+          'If your account still needs confirmation, a new verification email has been sent. Check your inbox.';
+      } catch (error) {
+        console.error('Verification email resend failed:', error);
+        message.textContent =
+          'Unable to resend the verification email. Check the email address and try again.';
+      } finally {
+        resendVerificationButton.disabled = false;
+        resendVerificationButton.textContent = 'Resend verification email';
+      }
     });
 
     forgotButton.addEventListener('click', async function () {
