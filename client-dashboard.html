@@ -229,13 +229,6 @@
   </header>
 
   <main>
-    <div class="notice">
-      <strong>Financial account notice:</strong>
-      Your portfolio displays entries recorded in the account ledger.
-      A ledger entry alone does not prove an external payment was received.
-      Deposit and withdrawal requests do not automatically move funds.
-    </div>
-
     <section class="welcome">
       <h2>Welcome to your dashboard</h2>
       <p class="muted">
@@ -273,7 +266,7 @@
         </p>
 
         <div class="button-row">
-          <button type="button" id="sign-out-button">Sign out</button>
+          <a class="button secondary" href="/">Homepage</a>\n          <button type="button" id="sign-out-button">Sign out</button>
         </div>
       </section>
 
@@ -600,32 +593,23 @@
           );
           ledgerBalanceList.replaceChildren();
 
-          if (balances.length === 0) {
-            const empty = document.createElement("p");
-            empty.className = "balance";
-            empty.textContent = "No posted ledger entries";
-            ledgerBalanceList.appendChild(empty);
-
-            ledgerBalanceMessage.textContent =
-              "No ledger entries have been recorded for this account. " +
-              "This does not establish that funds are available elsewhere.";
-            return;
-          }
-
+          const assetNames = ["BTC","ETH","USDT","USDC","BNB","SOL","XRP","LTC"];
+          const balanceByAsset = new Map();
           for (const item of balances) {
+            const asset = String(item.asset || "").trim().toUpperCase();
+            if (asset) balanceByAsset.set(asset, item);
+          }
+          for (const asset of assetNames) {
+            if (!balanceByAsset.has(asset)) balanceByAsset.set(asset, { asset, balance: 0 });
+          }
+          for (const [asset, item] of balanceByAsset) {
             const row = document.createElement("p");
             row.className = "balance";
-
-            const asset = String(item.asset || "");
-            row.textContent =
-              formatAmount(item.balance) + (asset ? " " + asset : "");
-
+            row.textContent = formatAmount(item.balance) + " " + asset;
             ledgerBalanceList.appendChild(row);
           }
-
           ledgerBalanceMessage.textContent =
-            "Calculated from recorded ledger entries. " +
-            "This display does not independently verify external payments.";
+            "Balances show recorded ledger amounts. Assets without posted entries display 0.00; deposits are credited only after receipt is verified and an authorized ledger entry is posted.";
 
         } catch (error) {
           console.error("Ledger balance loading failed:", error);
