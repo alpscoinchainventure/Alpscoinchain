@@ -1,10 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#102e68">
   <title>Client Dashboard | AlpsCoinChain Investment</title>
 
   <style>
@@ -21,7 +21,9 @@
       --danger: #b42318;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -37,7 +39,8 @@
       padding: 22px 16px;
     }
 
-    .header-inner, main {
+    .header-inner,
+    main {
       width: min(1100px, 100%);
       margin: 0 auto;
     }
@@ -53,7 +56,9 @@
       font-size: 14px;
     }
 
-    main { padding: 22px 16px 45px; }
+    main {
+      padding: 22px 16px 45px;
+    }
 
     .notice {
       border: 1px solid #f0d48a;
@@ -64,14 +69,18 @@
       margin-bottom: 18px;
     }
 
-    .welcome { margin-bottom: 20px; }
+    .welcome {
+      margin-bottom: 20px;
+    }
 
     .welcome h2 {
       margin: 0 0 5px;
       font-size: 25px;
     }
 
-    .muted { color: var(--muted); }
+    .muted {
+      color: var(--muted);
+    }
 
     .grid {
       display: grid;
@@ -90,7 +99,9 @@
       margin-bottom: 18px;
     }
 
-    .grid .card { margin-bottom: 0; }
+    .grid .card {
+      margin-bottom: 0;
+    }
 
     .card h3 {
       margin: 0 0 13px;
@@ -106,6 +117,7 @@
       font-size: 23px;
       font-weight: 700;
       margin: 5px 0;
+      overflow-wrap: anywhere;
     }
 
     .status {
@@ -125,7 +137,8 @@
       margin-top: 14px;
     }
 
-    .button, button {
+    .button,
+    button {
       display: inline-block;
       border: 0;
       border-radius: 8px;
@@ -136,9 +149,11 @@
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
+      font-family: inherit;
     }
 
-    .button:hover, button:hover {
+    .button:hover,
+    button:hover {
       background: var(--primary-dark);
     }
 
@@ -147,7 +162,9 @@
       color: var(--primary-dark);
     }
 
-    .button.secondary:hover { background: #dbe5f7; }
+    .button.secondary:hover {
+      background: #dbe5f7;
+    }
 
     button:disabled {
       opacity: 0.65;
@@ -166,7 +183,8 @@
       font-size: 13px;
     }
 
-    th, td {
+    th,
+    td {
       text-align: left;
       padding: 11px 9px;
       border-bottom: 1px solid var(--border);
@@ -190,7 +208,8 @@
       font-weight: 700;
     }
 
-    input, textarea {
+    input,
+    textarea {
       display: block;
       width: 100%;
       border: 1px solid #cbd5e1;
@@ -211,6 +230,14 @@
       overflow-wrap: anywhere;
     }
 
+    .success-message {
+      color: var(--success);
+    }
+
+    .error-message {
+      color: var(--danger);
+    }
+
     footer {
       text-align: center;
       padding: 20px 15px;
@@ -218,11 +245,26 @@
       font-size: 12px;
     }
 
+    [hidden] {
+      display: none !important;
+    }
+
     @media (max-width: 700px) {
-      .grid { grid-template-columns: 1fr; }
-      main { padding: 16px 12px 30px; }
-      .card { padding: 15px; }
-      .welcome h2 { font-size: 22px; }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      main {
+        padding: 16px 12px 30px;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .welcome h2 {
+        font-size: 22px;
+      }
     }
   </style>
 </head>
@@ -237,14 +279,19 @@
 
   <main>
     <div class="notice">
-      <strong>Test environment:</strong>
-      This dashboard displays account information and test activity only.
-      No real-money balance or completed transfer is represented here.
+      <strong>Financial account notice:</strong>
+      Your portfolio displays entries recorded in the account ledger.
+      A ledger entry alone does not prove an external payment was received.
+      Deposit and withdrawal requests do not automatically move funds.
     </div>
 
     <section class="welcome">
       <h2>Welcome to your dashboard</h2>
-      <p class="muted">Review your account details and request history.</p>
+      <p class="muted">
+        Review your account, recorded portfolio balances, transaction
+        activity, and deposit or withdrawal requests.
+      </p>
+
       <p id="page-message" role="status" aria-live="polite">
         Checking your sign-in session…
       </p>
@@ -275,32 +322,49 @@
         </p>
 
         <div class="button-row">
-          <button type="button" id="sign-out-button">Sign out</button>
+          <button type="button" id="sign-out-button">
+            Sign out
+          </button>
         </div>
       </section>
 
       <section class="card">
         <h3>Portfolio overview</h3>
-        <p class="muted">Verified portfolio balance</p>
-        <p class="balance">Not available</p>
+
         <p class="muted">
-          A verified balance will only be displayed after a secure financial
-          ledger has been implemented and tested.
+          Recorded ledger balance by asset
         </p>
+
+        <div id="ledger-balance-list" aria-live="polite">
+          <p class="balance">Loading…</p>
+        </div>
+
+        <p id="ledger-balance-message"
+           class="muted form-message"
+           role="status"
+           aria-live="polite">
+          Checking your authorized ledger entries…
+        </p>
+
         <div class="button-row">
-          <a class="button" href="/fund-requests.html">
+          <button type="button" id="refresh-balances-button">
+            Refresh balances
+          </button>
+
+          <a class="button secondary" href="/fund-requests.html">
             Deposits &amp; Withdrawals
           </a>
         </div>
       </section>
     </div>
 
-    <!-- Existing test transaction activity -->
     <section class="card">
       <h3>Recent test transaction activity</h3>
+
       <p class="muted">
-        These records come from the test_transactions table. They are not
-        verified financial statements and do not establish an available balance.
+        These records come from the test_transactions table. They are
+        separate from the ledger and are not proof of a completed
+        financial transaction.
       </p>
 
       <div class="button-row">
@@ -309,8 +373,12 @@
         </button>
       </div>
 
-      <p id="activity-message" class="form-message" role="status"
-         aria-live="polite">Activity has not been loaded yet.</p>
+      <p id="activity-message"
+         class="form-message"
+         role="status"
+         aria-live="polite">
+        Activity has not been loaded yet.
+      </p>
 
       <div class="table-wrap">
         <table>
@@ -324,6 +392,7 @@
               <th>Reference</th>
             </tr>
           </thead>
+
           <tbody id="activity-rows">
             <tr>
               <td colspan="6" class="empty">
@@ -335,12 +404,13 @@
       </div>
     </section>
 
-    <!-- New request history from fund_requests -->
     <section class="card">
       <h3>Deposit &amp; Withdrawal Request History</h3>
+
       <p class="muted">
-        These are recorded requests, not proof of payment or completed transfers.
-        Reviewing a request does not move funds or change your balance.
+        These are recorded requests, not proof of payment or completed
+        transfers. Reviewing a request does not automatically change
+        your portfolio balance.
       </p>
 
       <div class="button-row">
@@ -349,8 +419,10 @@
         </button>
       </div>
 
-      <p id="request-history-message" class="form-message"
-         role="status" aria-live="polite">
+      <p id="request-history-message"
+         class="form-message"
+         role="status"
+         aria-live="polite">
         Request history has not been loaded yet.
       </p>
 
@@ -366,6 +438,7 @@
               <th>Reference</th>
             </tr>
           </thead>
+
           <tbody id="request-history-rows">
             <tr>
               <td colspan="6" class="empty">
@@ -379,17 +452,22 @@
 
     <section class="card">
       <h3>Deposits and withdrawals</h3>
+
       <p>
-        Submit a test deposit or withdrawal request and check its recorded
-        status. Requests are subject to review; submitting a request does not
-        move money or change your balance.
+        Submit a deposit or withdrawal request and track its recorded
+        status. Submitting a request does not transfer money or
+        automatically change your ledger balance.
       </p>
+
       <div class="button-row">
         <a class="button" href="/fund-requests.html">
           Open request centre
         </a>
-        <a class="button secondary" href="/fund-request-admin.html"
-           id="admin-requests-link" hidden>
+
+        <a class="button secondary"
+           href="/fund-request-admin.html"
+           id="admin-requests-link"
+           hidden>
           Admin request review
         </a>
       </div>
@@ -397,15 +475,16 @@
 
     <section class="card">
       <h3>Identity verification</h3>
+
       <p class="muted">
-        Verification status is not connected to this dashboard yet.
-        Do not treat this section as confirmation that your identity has
-        been verified.
+        Identity verification is not connected to this dashboard yet.
+        This page does not confirm that your identity has been verified.
       </p>
     </section>
 
     <section class="card">
       <h3>Contact support</h3>
+
       <p class="muted">
         Send a message to the support team. Do not include passwords,
         private keys, recovery phrases, or sensitive payment details.
@@ -413,6 +492,7 @@
 
       <form id="support-form">
         <label for="support-subject">Subject</label>
+
         <input
           id="support-subject"
           name="subject"
@@ -422,6 +502,7 @@
         >
 
         <label for="support-message">Message</label>
+
         <textarea
           id="support-message"
           name="message"
@@ -436,14 +517,16 @@
           </button>
         </div>
 
-        <p id="support-status" class="form-message"
-           role="status" aria-live="polite"></p>
+        <p id="support-status"
+           class="form-message"
+           role="status"
+           aria-live="polite"></p>
       </form>
     </section>
   </main>
 
   <footer>
-    AlpsCoinChain Investment Ventures · Test dashboard
+    AlpsCoinChain Investment Ventures · Client dashboard
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -458,21 +541,42 @@
       const SUPABASE_KEY =
         "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
 
-      const pageMessage = document.getElementById("page-message");
-      const activityMessage = document.getElementById("activity-message");
-      const activityRows = document.getElementById("activity-rows");
+      const pageMessage =
+        document.getElementById("page-message");
+
+      const activityMessage =
+        document.getElementById("activity-message");
+
+      const activityRows =
+        document.getElementById("activity-rows");
+
       const requestHistoryMessage =
         document.getElementById("request-history-message");
+
       const requestHistoryRows =
         document.getElementById("request-history-rows");
-      const supportStatus = document.getElementById("support-status");
+
+      const supportStatus =
+        document.getElementById("support-status");
+
+      const ledgerBalanceList =
+        document.getElementById("ledger-balance-list");
+
+      const ledgerBalanceMessage =
+        document.getElementById("ledger-balance-message");
 
       let supabaseClient = null;
       let currentUser = null;
 
       function setText(id, value) {
-        document.getElementById(id).textContent =
-          value === null || value === undefined || value === ""
+        const element = document.getElementById(id);
+
+        if (!element) return;
+
+        element.textContent =
+          value === null ||
+          value === undefined ||
+          value === ""
             ? "Not available"
             : String(value);
       }
@@ -485,17 +589,24 @@
         if (!value) return "Not available";
 
         const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return String(value);
+
+        if (Number.isNaN(date.getTime())) {
+          return String(value);
+        }
 
         return date.toLocaleString();
       }
 
       function addCell(row, value) {
         const cell = document.createElement("td");
+
         cell.textContent =
-          value === null || value === undefined || value === ""
+          value === null ||
+          value === undefined ||
+          value === ""
             ? "—"
             : String(value);
+
         row.appendChild(cell);
       }
 
@@ -513,6 +624,19 @@
         tbody.appendChild(row);
       }
 
+      function formatAmount(value) {
+        const amount = Number(value);
+
+        if (!Number.isFinite(amount)) {
+          return "Unavailable";
+        }
+
+        return amount.toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 8
+        });
+      }
+
       async function loadProfile() {
         const result = await supabaseClient
           .from("profiles")
@@ -521,8 +645,11 @@
           .maybeSingle();
 
         if (result.error) {
+          console.error("Profile query failed:", result.error);
+
           setText("account-status", "Could not load");
           setText("account-role", "Could not load");
+
           return;
         }
 
@@ -531,6 +658,7 @@
         if (!profile) {
           setText("account-status", "Not available");
           setText("account-role", "Not available");
+
           return;
         }
 
@@ -538,13 +666,127 @@
           "account-status",
           profile.account_status || "Not available"
         );
-        setText("account-role", profile.role || "Not available");
 
-        if (
-          profile.role === "admin" &&
-          profile.account_status === "active"
-        ) {
-          document.getElementById("admin-requests-link").hidden = false;
+        setText(
+          "account-role",
+          profile.role || "Not available"
+        );
+
+        const isActiveAdmin =
+          String(profile.role).toLowerCase() === "admin" &&
+          String(profile.account_status).toLowerCase() === "active";
+
+        document.getElementById("admin-requests-link").hidden =
+          !isActiveAdmin;
+      }
+
+      async function loadLedgerBalances() {
+        if (!currentUser) return;
+
+        const refreshButton =
+          document.getElementById("refresh-balances-button");
+
+        refreshButton.disabled = true;
+
+        ledgerBalanceList.replaceChildren();
+
+        const loading = document.createElement("p");
+        loading.className = "balance";
+        loading.textContent = "Loading balances…";
+
+        ledgerBalanceList.appendChild(loading);
+
+        ledgerBalanceMessage.textContent =
+          "Retrieving your recorded ledger balances…";
+
+        let timeoutId;
+
+        try {
+          const query = supabaseClient.rpc(
+            "get_my_ledger_balances"
+          );
+
+          const timeout = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => {
+              reject(
+                new Error(
+                  "The balance request timed out. Please try again."
+                )
+              );
+            }, 15000);
+          });
+
+          const result = await Promise.race([
+            query,
+            timeout
+          ]);
+
+          if (result.error) {
+            throw result.error;
+          }
+
+          const balances = Array.isArray(result.data)
+            ? result.data
+            : [];
+
+          ledgerBalanceList.replaceChildren();
+
+          if (balances.length === 0) {
+            const empty = document.createElement("p");
+
+            empty.className = "balance";
+            empty.textContent = "No posted ledger entries";
+
+            ledgerBalanceList.appendChild(empty);
+
+            ledgerBalanceMessage.textContent =
+              "No ledger entries have been recorded for this account. " +
+              "This does not establish that funds are available elsewhere.";
+
+            return;
+          }
+
+          for (const item of balances) {
+            const row = document.createElement("p");
+
+            row.className = "balance";
+
+            const asset = String(item.asset || "");
+
+            row.textContent =
+              formatAmount(item.balance) +
+              (asset ? " " + asset : "");
+
+            ledgerBalanceList.appendChild(row);
+          }
+
+          ledgerBalanceMessage.textContent =
+            "Calculated from recorded ledger entries. " +
+            "This display does not independently verify external payments.";
+
+        } catch (error) {
+          console.error(
+            "Ledger balance loading failed:",
+            error
+          );
+
+          ledgerBalanceList.replaceChildren();
+
+          const unavailable = document.createElement("p");
+
+          unavailable.className = "balance";
+          unavailable.textContent = "Balance unavailable";
+
+          ledgerBalanceList.appendChild(unavailable);
+
+          ledgerBalanceMessage.textContent =
+            "We could not retrieve your ledger balances. " +
+            "Please try again later or contact support.";
+
+        } finally {
+          if (timeoutId) clearTimeout(timeoutId);
+
+          refreshButton.disabled = false;
         }
       }
 
@@ -555,7 +797,10 @@
           document.getElementById("refresh-activity-button");
 
         refreshButton.disabled = true;
-        activityMessage.textContent = "Loading test activity…";
+
+        activityMessage.textContent =
+          "Loading test activity…";
+
         showEmptyRows(activityRows, "Loading…");
 
         let timeoutId;
@@ -570,28 +815,48 @@
 
           const timeout = new Promise((_, reject) => {
             timeoutId = setTimeout(() => {
-              reject(new Error(
-                "The activity request timed out after 15 seconds. Please refresh and try again."
-              ));
+              reject(
+                new Error(
+                  "The activity request timed out after 15 seconds. Please refresh and try again."
+                )
+              );
             }, 15000);
           });
 
-          const result = await Promise.race([query, timeout]);
+          const result = await Promise.race([
+            query,
+            timeout
+          ]);
 
           if (result.error) {
-            showEmptyRows(activityRows, "Test activity could not be loaded.");
+            console.error(
+              "Test activity query failed:",
+              result.error
+            );
+
+            showEmptyRows(
+              activityRows,
+              "Test activity could not be loaded."
+            );
+
             activityMessage.textContent =
               "The test activity query failed. Check the test_transactions " +
               "table, its columns, and its Row Level Security policies.";
+
             return;
           }
 
           const records = result.data || [];
 
           if (records.length === 0) {
-            showEmptyRows(activityRows, "No test activity records found.");
+            showEmptyRows(
+              activityRows,
+              "No test activity records found."
+            );
+
             activityMessage.textContent =
               "No test activity records were found for this account.";
+
             return;
           }
 
@@ -602,15 +867,33 @@
 
             addCell(
               row,
-              item.transaction_type || item.type || "Not specified"
+              item.transaction_type ||
+              item.type ||
+              "Not specified"
             );
+
             addCell(row, item.amount);
-            addCell(row, item.asset || item.asset_code || "—");
-            addCell(row, item.status || "—");
-            addCell(row, formatDate(item.created_at));
+
             addCell(
               row,
-              item.reference || item.reference_id || item.id || "—"
+              item.asset ||
+              item.asset_code ||
+              "—"
+            );
+
+            addCell(row, item.status || "—");
+
+            addCell(
+              row,
+              formatDate(item.created_at)
+            );
+
+            addCell(
+              row,
+              item.reference ||
+              item.reference_id ||
+              item.id ||
+              "—"
             );
 
             activityRows.appendChild(row);
@@ -618,16 +901,27 @@
 
           activityMessage.textContent =
             records.length +
-            " test transaction record(s) loaded. These records do not " +
-            "represent a verified balance or prove that money moved.";
+            " test transaction record(s) loaded. " +
+            "These records do not establish an available balance.";
+
         } catch (error) {
-          console.error("Could not load test activity:", error);
-          showEmptyRows(activityRows, "Test activity could not be loaded.");
+          console.error(
+            "Could not load test activity:",
+            error
+          );
+
+          showEmptyRows(
+            activityRows,
+            "Test activity could not be loaded."
+          );
+
           activityMessage.textContent =
             error.message ||
             "The activity request failed. Please refresh and try again.";
+
         } finally {
           if (timeoutId) clearTimeout(timeoutId);
+
           refreshButton.disabled = false;
         }
       }
@@ -639,8 +933,14 @@
           document.getElementById("refresh-requests-button");
 
         refreshButton.disabled = true;
-        requestHistoryMessage.textContent = "Loading request history…";
-        showEmptyRows(requestHistoryRows, "Loading…");
+
+        requestHistoryMessage.textContent =
+          "Loading request history…";
+
+        showEmptyRows(
+          requestHistoryRows,
+          "Loading…"
+        );
 
         let timeoutId;
 
@@ -656,23 +956,34 @@
 
           const timeout = new Promise((_, reject) => {
             timeoutId = setTimeout(() => {
-              reject(new Error(
-                "Request history timed out after 15 seconds. Please refresh and try again."
-              ));
+              reject(
+                new Error(
+                  "Request history timed out after 15 seconds. Please refresh and try again."
+                )
+              );
             }, 15000);
           });
 
-          const result = await Promise.race([query, timeout]);
+          const result = await Promise.race([
+            query,
+            timeout
+          ]);
 
           if (result.error) {
-            console.error("Request history query failed:", result.error);
+            console.error(
+              "Request history query failed:",
+              result.error
+            );
+
             showEmptyRows(
               requestHistoryRows,
               "Request history could not be loaded."
             );
+
             requestHistoryMessage.textContent =
-              "Unable to load request history. Please check the fund_requests " +
-              "table and its existing Row Level Security policies.";
+              "Unable to load request history. Check the fund_requests " +
+              "table and its Row Level Security policies.";
+
             return;
           }
 
@@ -683,8 +994,10 @@
               requestHistoryRows,
               "No deposit or withdrawal requests found."
             );
+
             requestHistoryMessage.textContent =
               "No request records were found for this account.";
+
             return;
           }
 
@@ -697,7 +1010,12 @@
             addCell(row, item.amount);
             addCell(row, item.asset);
             addCell(row, item.status);
-            addCell(row, formatDate(item.created_at));
+
+            addCell(
+              row,
+              formatDate(item.created_at)
+            );
+
             addCell(row, item.reference);
 
             requestHistoryRows.appendChild(row);
@@ -706,66 +1024,94 @@
           requestHistoryMessage.textContent =
             records.length +
             " request record(s) loaded. These are request statuses only; " +
-            "they do not prove payment, transfer, or a change in balance.";
+            "they do not prove payment or a completed transfer.";
+
         } catch (error) {
-          console.error("Could not load request history:", error);
+          console.error(
+            "Could not load request history:",
+            error
+          );
+
           showEmptyRows(
             requestHistoryRows,
             "Request history could not be loaded."
           );
+
           requestHistoryMessage.textContent =
             error.message ||
             "The request history query failed. Please refresh and try again.";
+
         } finally {
           if (timeoutId) clearTimeout(timeoutId);
+
           refreshButton.disabled = false;
         }
       }
 
       async function signOut() {
-        const button = document.getElementById("sign-out-button");
+        const button =
+          document.getElementById("sign-out-button");
+
         button.disabled = true;
 
-        const result = await supabaseClient.auth.signOut();
+        try {
+          const result =
+            await supabaseClient.auth.signOut();
 
-        if (result.error) {
+          if (result.error) {
+            throw result.error;
+          }
+
+          window.location.replace("/login");
+
+        } catch (error) {
+          console.error("Sign-out failed:", error);
+
           button.disabled = false;
-          showPageMessage("Could not sign out. Please try again.");
-          return;
-        }
 
-        window.location.replace("/login");
+          showPageMessage(
+            "Could not sign out. Please try again."
+          );
+        }
       }
 
       async function submitSupport(event) {
         event.preventDefault();
 
-        const form = document.getElementById("support-form");
-        const button = document.getElementById("support-submit-button");
+        const form =
+          document.getElementById("support-form");
+
+        const button =
+          document.getElementById("support-submit-button");
 
         if (!currentUser || !currentUser.email) {
           supportStatus.textContent =
             "Your sign-in session is unavailable. Please sign in again.";
+
           return;
         }
 
         const subject = document
           .getElementById("support-subject")
-          .value.trim();
+          .value
+          .trim();
 
         const message = document
           .getElementById("support-message")
-          .value.trim();
+          .value
+          .trim();
 
         if (!subject || !message) {
           supportStatus.textContent =
             "Please complete both fields.";
+
           return;
         }
 
-        if (message.length > 3000) {
+        if (subject.length > 120 || message.length > 3000) {
           supportStatus.textContent =
-            "Your message must be 3,000 characters or fewer.";
+            "Please check the subject and message lengths.";
+
           return;
         }
 
@@ -775,7 +1121,9 @@
           currentUser.email;
 
         button.disabled = true;
-        supportStatus.textContent = "Sending your message…";
+
+        supportStatus.textContent =
+          "Sending your message…";
 
         try {
           const response = await fetch("/api/contact", {
@@ -791,7 +1139,8 @@
             })
           });
 
-          const data = await response.json().catch(() => ({}));
+          const data =
+            await response.json().catch(() => ({}));
 
           if (!response.ok) {
             throw new Error(
@@ -802,23 +1151,39 @@
           }
 
           supportStatus.textContent =
-            data.message || "Your support message was submitted.";
+            data.message ||
+            "Your support message was submitted.";
+
+          supportStatus.className =
+            "form-message success-message";
 
           form.reset();
+
         } catch (error) {
+          console.error(
+            "Support message submission failed:",
+            error
+          );
+
           supportStatus.textContent =
             error.message ||
             "Could not send the message. Please try again later.";
+
+          supportStatus.className =
+            "form-message error-message";
+
         } finally {
           button.disabled = false;
         }
       }
 
       async function startDashboard() {
-        if (!window.supabase || !window.supabase.createClient) {
+        if (!window.supabase ||
+            !window.supabase.createClient) {
           showPageMessage(
             "The account service did not load. Check your internet connection and refresh."
           );
+
           return;
         }
 
@@ -828,32 +1193,51 @@
         );
 
         try {
-          const result = await supabaseClient.auth.getSession();
+          const result =
+            await supabaseClient.auth.getSession();
 
-          if (result.error) throw result.error;
+          if (result.error) {
+            throw result.error;
+          }
 
           const session = result.data.session;
 
           if (!session || !session.user) {
             window.location.replace("/login");
+
             return;
           }
 
           currentUser = session.user;
 
-          setText("account-email", currentUser.email);
-          setText("account-id", currentUser.id);
+          setText(
+            "account-email",
+            currentUser.email
+          );
 
-          showPageMessage("You are signed in.");
+          setText(
+            "account-id",
+            currentUser.id
+          );
+
+          showPageMessage(
+            "You are signed in."
+          );
 
           await loadProfile();
 
           await Promise.all([
+            loadLedgerBalances(),
             loadActivity(),
             loadRequestHistory()
           ]);
+
         } catch (error) {
-          console.error("Dashboard initialization failed:", error);
+          console.error(
+            "Dashboard initialization failed:",
+            error
+          );
+
           showPageMessage(
             "We could not load your account. Please refresh or sign in again."
           );
@@ -863,6 +1247,10 @@
       document
         .getElementById("sign-out-button")
         .addEventListener("click", signOut);
+
+      document
+        .getElementById("refresh-balances-button")
+        .addEventListener("click", loadLedgerBalances);
 
       document
         .getElementById("refresh-activity-button")
