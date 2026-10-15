@@ -354,7 +354,10 @@
                 const { data, error } =
                     await supabaseClient.auth.signUp({
                         email,
-                        password
+                        password,
+                        options: {
+                            emailRedirectTo: "https://alpscoinchaininvestment.uk/auth-callback.html"
+                        }
                     });
 
                 if (error) {
@@ -415,7 +418,7 @@
 
         try {
             const redirectUrl =
-                window.location.origin + '/reset-password.html';
+                'https://alpscoinchaininvestment.uk/reset-password.html';
 
             const { error } =
                 await supabaseClient.auth.resetPasswordForEmail(
