@@ -231,7 +231,12 @@
 
       if (error) throw error;
 
-      if (!data || !data.length) {
+      const visibleRequests = (data || []).filter(request =>
+        !["TEST", "TES"].includes(String(request.asset || "").trim().toUpperCase()) &&
+        !String(request.reference || "").toUpperCase().includes("TEST")
+      );
+
+      if (!visibleRequests.length) {
         const empty = document.createElement("div");
         empty.className = "empty";
         empty.textContent = "You have not submitted any requests yet.";
@@ -239,7 +244,7 @@
         return;
       }
 
-      for (const request of data) {
+      for (const request of visibleRequests) {
         const item = document.createElement("article");
         item.className = "request";
 
