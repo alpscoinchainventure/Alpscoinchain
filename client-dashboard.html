@@ -310,52 +310,6 @@
     </div>
 
     <section class="card">
-      <h3>Recent test transaction activity</h3>
-
-      <p class="muted">
-        These records come from the test_transactions table. They are
-        separate from the ledger and are not proof of a completed
-        financial transaction.
-      </p>
-
-      <div class="button-row">
-        <button type="button" id="refresh-activity-button">
-          Refresh activity
-        </button>
-      </div>
-
-      <p id="activity-message"
-         class="form-message"
-         role="status"
-         aria-live="polite">
-        Activity has not been loaded yet.
-      </p>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Asset</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Reference</th>
-            </tr>
-          </thead>
-
-          <tbody id="activity-rows">
-            <tr>
-              <td colspan="6" class="empty">
-                Sign in to load your test activity.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="card">
       <h3>Deposit &amp; Withdrawal Request History</h3>
 
       <p class="muted">
@@ -504,8 +458,6 @@
         "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
 
       const pageMessage = document.getElementById("page-message");
-      const activityMessage = document.getElementById("activity-message");
-      const activityRows = document.getElementById("activity-rows");
       const requestHistoryMessage =
         document.getElementById("request-history-message");
       const requestHistoryRows =
@@ -685,90 +637,6 @@
           ledgerBalanceMessage.textContent =
             "We could not retrieve your ledger balances. " +
             "Please try again later or contact support.";
-        } finally {
-          if (timeoutId) clearTimeout(timeoutId);
-          refreshButton.disabled = false;
-        }
-      }
-
-      async function loadActivity() {
-        if (!currentUser) return;
-
-        const refreshButton =
-          document.getElementById("refresh-activity-button");
-
-        refreshButton.disabled = true;
-        activityMessage.textContent = "Loading test activity…";
-        showEmptyRows(activityRows, "Loading…");
-
-        let timeoutId;
-
-        try {
-          const query = supabaseClient
-            .from("test_transactions")
-            .select("*")
-            .eq("user_id", currentUser.id)
-            .order("created_at", { ascending: false })
-            .limit(20);
-
-          const timeout = new Promise((_, reject) => {
-            timeoutId = setTimeout(() => {
-              reject(new Error(
-                "The activity request timed out after 15 seconds. Please refresh and try again."
-              ));
-            }, 15000);
-          });
-
-          const result = await Promise.race([query, timeout]);
-
-          if (result.error) {
-            console.error("Test activity query failed:", result.error);
-
-            showEmptyRows(activityRows, "Test activity could not be loaded.");
-
-            activityMessage.textContent =
-              "The test activity query failed. Check the test_transactions " +
-              "table, its columns, and its Row Level Security policies.";
-            return;
-          }
-
-          const records = result.data || [];
-
-          if (records.length === 0) {
-            showEmptyRows(activityRows, "No test activity records found.");
-
-            activityMessage.textContent =
-              "No test activity records were found for this account.";
-            return;
-          }
-
-          activityRows.replaceChildren();
-
-          for (const item of records) {
-            const row = document.createElement("tr");
-
-            addCell(row, item.transaction_type || item.type || "Not specified");
-            addCell(row, item.amount);
-            addCell(row, item.asset || item.asset_code || "—");
-            addCell(row, item.status || "—");
-            addCell(row, formatDate(item.created_at));
-            addCell(row, item.reference || item.reference_id || item.id || "—");
-
-            activityRows.appendChild(row);
-          }
-
-          activityMessage.textContent =
-            records.length +
-            " test transaction record(s) loaded. These records do not establish an available balance.";
-
-        } catch (error) {
-          console.error("Could not load test activity:", error);
-
-          showEmptyRows(activityRows, "Test activity could not be loaded.");
-
-          activityMessage.textContent =
-            error.message ||
-            "The activity request failed. Please refresh and try again.";
         } finally {
           if (timeoutId) clearTimeout(timeoutId);
           refreshButton.disabled = false;
@@ -1002,7 +870,6 @@
 
           await Promise.all([
             loadLedgerBalances(),
-            loadActivity(),
             loadRequestHistory()
           ]);
 
@@ -1022,10 +889,6 @@
       document
         .getElementById("refresh-balances-button")
         .addEventListener("click", loadLedgerBalances);
-
-      document
-        .getElementById("refresh-activity-button")
-        .addEventListener("click", loadActivity);
 
       document
         .getElementById("refresh-requests-button")
