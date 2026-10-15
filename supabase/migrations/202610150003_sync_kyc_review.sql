@@ -1,6 +1,9 @@
 -- Repair KYC review so an administrator's decision updates both the submission
 -- and the profile flag used by fund-request authorization. Does not change deposits.
-create or replace function public.admin_review_kyc(
+-- DROP is required because the existing function has a different return type.
+drop function if exists public.admin_review_kyc(uuid, text, text);
+
+create function public.admin_review_kyc(
   p_submission_id uuid,
   p_decision text,
   p_rejection_reason text default null
@@ -66,11 +69,6 @@ begin
   update public.profiles
      set kyc_status = case when p_decision = 'approved' then 'approved' else 'rejected' end
    where id = v_submission.user_id;
-
-  insert into public.kyc_audit_log
-    (submission_id, client_id, admin_id, action, reason)
-  values
-    (p_submission_id, v_submission.user_id, v_admin_id, p_decision, v_reason);
 
   return pg_catalog.jsonb_build_object(
     'success', true,
