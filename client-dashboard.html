@@ -204,7 +204,7 @@
       const timeout=new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error("Request history timed out after 15 seconds. Please refresh and try again.")),15000)});
       const result=await Promise.race([query,timeout]);
       if(result.error){console.error("Request history query failed:",result.error);showEmptyRows(requestHistoryRows,"Request history could not be loaded.");requestHistoryMessage.textContent="Unable to load request history. Please try again later or contact support.";return}
-      const records=result.data||[];
+      const records=(result.data||[]).filter(item=>!["TEST","TES"].includes(String(item.asset||"").trim().toUpperCase())&&!String(item.reference||"").toUpperCase().includes("TEST"));
       if(records.length===0){showEmptyRows(requestHistoryRows,"No deposit or withdrawal requests found.");requestHistoryMessage.textContent="No request records were found for this account.";return}
       requestHistoryRows.replaceChildren();
       for(const item of records){const row=document.createElement("tr");addCell(row,item.request_type);addCell(row,item.amount);addCell(row,item.asset);addCell(row,item.status);addCell(row,formatDate(item.created_at));addCell(row,item.reference);requestHistoryRows.appendChild(row)}
