@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Completing Registration | AlpsCoinChain</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: #0a0e27;
+      color: #f8fafc;
+      font-family: Arial, sans-serif;
+    }
+
+    main {
+      width: 100%;
+      max-width: 460px;
+      padding: 30px;
+      text-align: center;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 16px;
+    }
+
+    h1 {
+      font-size: 24px;
+    }
+
+    p {
+      line-height: 1.6;
+      color: #cbd5e1;
+      overflow-wrap: anywhere;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 12px 18px;
+      border-radius: 8px;
+      background: #6366f1;
+      color: white;
+      text-decoration: none;
+    }
+
+    #message {
+      margin-top: 18px;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+  <main>
+    <h1>AlpsCoinChain</h1>
+    <h2>Completing your registration</h2>
+
+    <p id="message" role="status" aria-live="polite">
+      Checking your confirmation and account status. Please wait.
+    </p>
+
+    <p id="action"></p>
+  </main>
+
+  <script>
+    (async function () {
+      "use strict";
+
+      const SUPABASE_URL =
+        "https://uevofmlzpwrdidjnwxfd.supabase.co";
+
+      const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
+
+      const message = document.getElementById("message");
+      const action = document.getElementById("action");
+
+      function showError(text) {
+        message.textContent = text;
+
+        const link = document.createElement("a");
+        link.href = "/login.html";
+        link.textContent = "Go to sign in";
+
+        action.replaceChildren(link);
+      }
+
+      try {
+        const client = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_PUBLISHABLE_KEY,
+          {
+            auth: {
+              persistSession: true,
+              autoRefreshToken: true,
+              detectSessionInUrl: true
+            }
+          }
+        );
+
+        /*
+         * Supabase handles supported email-confirmation links and exchanges
+         * authorization codes for sessions through detectSessionInUrl.
+         * Give the SDK a moment to process the callback URL before checking
+         * the session.
+         */
+        let user = null;
+
+        for (let attempt = 0; attempt < 10; attempt++) {
+          const { data, error } = await client.auth.getSession();
+
+          if (error) {
+            throw error;
+          }
+
+          if (data.session?.user) {
+            user = data.session.user;
+            break;
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+
+        if (!user) {
+          showError(
+            "Your confirmation link may have expired, or your session " +
+            "could not be established. Please sign in and try again."
+          );
+          return;
+        }
+
+        /*
+         * Do not rely on a client-supplied role or name. The profile is
+         * retrieved from the authenticated database record.
+         */
+        const { data: profile, error: profileError } = await client
+          .from("profiles")
+          .select("id, role, account_status")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          throw profileError;
+        }
+
+        if (!profile) {
+          showError(
+            "Your account is confirmed, but its client profile is not " +
+            "ready yet. Please contact support before continuing."
+          );
+          return;
+        }
+
+        if (
+          profile.role !== "client" ||
+          profile.account_status !== "active"
+        ) {
+          showError(
+            "Your account requires administrator attention before " +
+            "you can continue."
+          );
+          return;
+        }
+
+        /*
+         * Read only this authenticated user's own KYC submission.
+         * The database's row-level security policies must enforce ownership.
+         */
+        const { data: kyc, error: kycError } = await client
+          .from("kyc_submissions")
+          .select("id, status")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (kycError) {
+          throw kycError;
+        }
+
+        if (!kyc) {
+          message.textContent =
+            "Your email is confirmed. Next, complete identity verification.";
+
+          window.location.replace("/kyc.html");
+          return;
+        }
+
+        if (kyc.status === "rejected") {
+          message.textContent =
+            "Your identity submission needs attention. Opening verification.";
+
+          window.location.replace("/kyc.html");
+          return;
+        }
+
+        message.textContent =
+          kyc.status === "approved"
+            ? "Your email and identity-verification status are confirmed."
+            : "Your email is confirmed. Your identity document is awaiting review.";
+
+        window.location.replace("/client-dashboard.html");
+
+      } catch (error) {
+        console.error("Registration callback error:", error);
+
+        showError(
+          "We couldn't finish setting up your account. Please sign in " +
+          "again. If the problem continues, contact support."
+        );
+      }
+    })();
+  </script>
+</body>
+</html>
