@@ -1,307 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client Login | AlpsCoinChain</title>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <style>
-        :root{color-scheme:dark;--ink:#edf5ff;--muted:#9eb1cb;--line:rgba(154,185,226,.2);--blue:#2f83ff;--deep:#07111f}
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(ellipse at 15% 12%,rgba(35,119,212,.25),transparent 36%),radial-gradient(ellipse at 88% 85%,rgba(25,176,150,.16),transparent 32%),linear-gradient(145deg,#050b14,#0a1a2e 54%,#07101c);color:var(--ink)}
-        .login-container{width:100%;max-width:470px}
-        .brand{text-align:center;margin-bottom:26px}.brand-mark{display:block;width:74px;height:74px;margin:0 auto 14px;filter:drop-shadow(0 8px 20px rgba(47,131,255,.22))}
-        .brand h1{color:#f3f8ff;font-size:clamp(28px,5vw,36px);letter-spacing:-.055em;margin-bottom:8px;font-weight:800;text-shadow:0 0 34px rgba(47,131,255,.25)}
-        .brand p{color:#a8c1e2;letter-spacing:.08em;text-transform:uppercase;font-size:11px;font-weight:700}
-        .login-card{background:linear-gradient(145deg,rgba(18,35,58,.94),rgba(8,22,39,.96));border:1px solid var(--line);border-radius:22px;padding:clamp(22px,5vw,32px);box-shadow:0 28px 80px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.045);backdrop-filter:blur(18px)}
-        .tabs{display:flex;gap:8px;margin-bottom:24px;padding:5px;border:1px solid rgba(154,185,226,.12);background:rgba(3,12,23,.45);border-radius:13px}
-        .tab{flex:1;padding:12px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;font-weight:700;font-family:inherit;transition:all .18s ease}
-        .tab.active{background:linear-gradient(135deg,#2f83ff,#1b5bc3);border-color:rgba(133,186,255,.4);color:#fff;box-shadow:0 6px 18px rgba(30,105,218,.24)}
-        .form-group{margin-bottom:18px}label{display:block;margin-bottom:8px;color:#cbdcf0;font-size:13px;font-weight:650}
-        input{width:100%;padding:14px;border-radius:11px;border:1px solid rgba(154,185,226,.2);background:rgba(3,12,23,.65);color:white;outline:none;font:inherit;transition:border-color .18s,box-shadow .18s}
-        input:focus{border-color:#438fff;box-shadow:0 0 0 3px rgba(47,131,255,.14)}
-        .password-row{position:relative}
-        .submit-btn{width:100%;padding:14px;border:1px solid rgba(144,194,255,.3);border-radius:11px;background:linear-gradient(135deg,#2f83ff,#1c5ec9);color:white;font-size:15px;font-weight:750;cursor:pointer;margin-top:4px;font-family:inherit;box-shadow:0 10px 24px rgba(25,95,202,.2);transition:filter .18s,transform .18s}
-        .submit-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}.submit-btn:disabled{opacity:.6;cursor:wait;transform:none}
-        .forgot{display:block;text-align:right;margin:10px 0 20px;color:#7fb2ff;font-size:13px;cursor:pointer}
-        .message{display:none;padding:12px 13px;border-radius:10px;margin-bottom:18px;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
-        .message.success{display:block;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.28);color:#8de7c0}
-        .message.error{display:block;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.28);color:#ffb0b0}
-        .back-link{display:block;text-align:center;margin-top:22px;color:#a9bdd6;text-decoration:none;font-size:13px}.back-link:hover{color:white}
-        .signup-note{margin-top:18px;color:#8298b5;text-align:center;font-size:12px;line-height:1.6}
-        @media(max-width:480px){body{padding:16px}.login-card{border-radius:18px}}
-        @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#07111f">
+<meta name="description" content="Discover AlpsCoinChain Investment Ventures: market insights, transparent investment-plan information, portfolio access and client support.">
+<title>AlpsCoinChain Investment Ventures | Invest with Clarity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#06101d;--panel:#0c1b2d;--panel2:#10243a;--ink:#f2f7ff;--muted:#a3b4ca;--blue:#3889ff;--cyan:#75e4d0;--gold:#e6c889;--line:rgba(164,192,227,.16);--max:1180px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",sans-serif;line-height:1.65}a{color:inherit;text-decoration:none}button,input,textarea,select{font:inherit}button,a{ -webkit-tap-highlight-color:transparent}.wrap{width:min(var(--max),calc(100% - 40px));margin:auto}.topbar{border-bottom:1px solid var(--line);background:#050d18;color:#b8c7d9;font-size:12px}.topbar .wrap{display:flex;justify-content:space-between;gap:16px;padding:8px 0}.topbar strong{color:#d9f5ef;font-weight:600}.nav{position:sticky;top:0;z-index:20;background:rgba(5,14,25,.88);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}.nav-inner{min-height:78px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:12px;min-width:230px}.brand-mark{width:48px;height:48px;flex:0 0 48px;filter:drop-shadow(0 5px 14px rgba(47,131,255,.2))}.brand-text{font-family:Manrope,sans-serif;font-weight:800;letter-spacing:-.045em;font-size:18px;line-height:1.15}.brand-text small{display:block;font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#a8c4e6;font-weight:700;margin-top:5px}.nav-links{display:flex;align-items:center;gap:24px;color:#c0cfe1;font-size:13px}.nav-links a:hover{color:white}.nav-actions{display:flex;gap:10px;align-items:center}.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:1px solid rgba(107,168,255,.3);border-radius:11px;padding:12px 17px;background:linear-gradient(135deg,#3889ff,#205ec5);font-weight:700;font-size:13px;color:white;box-shadow:0 8px 24px rgba(28,100,211,.17);transition:transform .2s,filter .2s}.btn:hover{transform:translateY(-2px);filter:brightness(1.1)}.btn.ghost{background:rgba(255,255,255,.035);border-color:var(--line);box-shadow:none;color:#e2edfb}.btn.small{padding:9px 13px}.menu-toggle{display:none;background:transparent;color:white;border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.hero{position:relative;overflow:hidden;padding:86px 0 70px;background:radial-gradient(ellipse at 75% 28%,rgba(32,119,220,.23),transparent 35%),radial-gradient(ellipse at 12% 70%,rgba(26,171,150,.11),transparent 30%),linear-gradient(145deg,#071321,#091a2c 56%,#07111e)}.hero:before{content:"";position:absolute;inset:0;opacity:.16;background-image:linear-gradient(rgba(157,191,228,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(157,191,228,.12) 1px,transparent 1px);background-size:52px 52px;mask-image:linear-gradient(to bottom,black,transparent 90%);pointer-events:none}.hero-grid{position:relative;display:grid;grid-template-columns:1.12fr .88fr;gap:58px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:9px;border:1px solid rgba(117,228,208,.22);border-radius:30px;padding:7px 12px;color:#a8f0df;background:rgba(35,149,132,.09);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px rgba(117,228,208,.8)}h1,h2,h3,p{margin-top:0}h1,h2,h3{font-family:Manrope,sans-serif;line-height:1.13;letter-spacing:-.045em}h1{font-size:clamp(39px,5vw,65px);margin:22px 0 20px;max-width:720px}h1 span{background:linear-gradient(90deg,#fff 5%,#9dc6ff 50%,#8cebd8);-webkit-background-clip:text;background-clip:text;color:transparent}.hero-copy{font-size:17px;color:#b5c6db;max-width:620px;line-height:1.8}.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin:28px 0 26px}.fineprint{font-size:11px;color:#8499b4;max-width:600px}.hero-panel{border:1px solid rgba(150,189,233,.2);border-radius:23px;padding:23px;background:linear-gradient(145deg,rgba(19,42,66,.94),rgba(8,23,39,.96));box-shadow:0 30px 80px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.05);position:relative}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}.panel-head h3{font-size:16px;margin:0;letter-spacing:-.02em}.market-pill{border:1px solid rgba(117,228,208,.22);border-radius:30px;padding:5px 9px;font-size:10px;color:#9be9d7;background:rgba(117,228,208,.07)}.market-lines{display:grid;gap:10px}.market-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.market-row:last-child{border-bottom:0}.market-name{display:flex;align-items:center;gap:11px}.market-icon{width:35px;height:35px;border-radius:10px;background:rgba(89,143,210,.12);border:1px solid rgba(133,175,224,.15);display:grid;place-items:center;font-size:11px;font-weight:800;color:#b8d5ff}.market-name strong{display:block;font-size:13px}.market-name small{display:block;color:#8da4c0;font-size:11px}.market-value{text-align:right;font-size:13px;font-weight:700}.market-value small{display:block;font-size:10px;font-weight:500;color:#91a7c0}.panel-foot{margin-top:15px;padding-top:14px;border-top:1px solid var(--line);color:#8fa5bf;font-size:10px}
+.trust-strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#091625}.trust-grid{display:grid;grid-template-columns:repeat(4,1fr)}.trust-item{padding:22px 20px;border-right:1px solid var(--line)}.trust-item:first-child{padding-left:0}.trust-item:last-child{border:0}.trust-item strong{display:block;font-family:Manrope,sans-serif;font-size:14px}.trust-item span{font-size:11px;color:#91a5bf}
+section{padding:84px 0}.section-head{max-width:720px;margin-bottom:34px}.section-head.center{text-align:center;margin-left:auto;margin-right:auto}.kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);font-weight:800;margin-bottom:13px}.section-head h2{font-size:clamp(30px,4vw,43px);margin-bottom:14px}.section-head p{color:var(--muted);font-size:15px}.about-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:50px;align-items:start}.about-aside{padding:27px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,#10243a,#0a192a)}.about-aside .big-mark{font-size:29px;color:var(--cyan);font-family:Manrope,sans-serif;font-weight:800}.about-aside p{color:#b0c1d5;font-size:13px;margin:12px 0 0}.about-copy h2{font-size:clamp(29px,3.6vw,42px);margin-bottom:16px}.about-copy p{color:var(--muted);font-size:15px}.value-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:26px}.value-card{padding:19px;border-radius:14px;background:rgba(255,255,255,.025);border:1px solid var(--line)}.value-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:rgba(56,137,255,.12);color:#9dc5ff;font-size:17px;margin-bottom:14px}.value-card h3{font-size:15px;margin-bottom:8px;letter-spacing:-.02em}.value-card p{font-size:12px;color:#93a8c1;margin:0}
+.plans{background:linear-gradient(180deg,#081524,#0a1929 50%,#07111f);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.plan-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;align-items:stretch}.plan-card{position:relative;padding:23px 20px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,rgba(17,37,59,.92),rgba(9,24,41,.94));display:flex;flex-direction:column;min-height:390px}.plan-card.featured{border-color:rgba(117,228,208,.5);box-shadow:0 15px 45px rgba(18,117,118,.11)}.plan-tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8de8d6;font-weight:800;min-height:19px}.plan-card h3{font-size:23px;margin:12px 0 9px}.plan-intro{font-size:12px;color:#a7bad0;min-height:54px}.risk{display:inline-flex;align-self:flex-start;border-radius:6px;padding:5px 8px;background:rgba(230,200,137,.1);color:#ecd8a7;font-size:10px;font-weight:700;margin:4px 0 17px}.plan-card ul{padding-left:18px;margin:0 0 23px;color:#c0cfe0;font-size:12px;flex:1}.plan-card li{margin:9px 0}.plan-card .btn{width:100%;font-size:12px;padding:11px 10px}.plan-note{margin:22px auto 0;max-width:850px;text-align:center;color:#91a5bd;font-size:11px}
+.market-section{background:#06101d}.market-layout{display:grid;grid-template-columns:.72fr 1.28fr;gap:24px;align-items:stretch}.market-explain{border:1px solid var(--line);border-radius:18px;padding:25px;background:linear-gradient(145deg,#10243a,#0a192a)}.market-explain h3{font-size:21px;margin-bottom:13px}.market-explain p{font-size:13px;color:var(--muted)}.market-explain ul{padding-left:19px;color:#c3d2e4;font-size:12px}.market-explain li{margin:10px 0}.chart-card{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#0b1828;min-height:470px}.tradingview-widget-container{height:100%;min-height:470px}.tradingview-widget-container__widget{height:calc(100% - 32px);width:100%}.tradingview-widget-copyright{font-size:10px;text-align:center;padding:7px;color:#8399b3}.tradingview-widget-copyright a{color:#a9c9f4}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.step{padding:24px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.025)}.step-no{font-family:Manrope,sans-serif;color:var(--cyan);font-size:12px;letter-spacing:.14em;font-weight:800}.step h3{font-size:19px;margin:12px 0}.step p{font-size:13px;color:var(--muted);margin:0}
+.testimonials{background:#0a1928;border-block:1px solid var(--line)}.testimonials-inner{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}.testimonial-note{border:1px solid rgba(117,228,208,.22);background:rgba(117,228,208,.05);border-radius:17px;padding:24px}.testimonial-note strong{display:block;font-family:Manrope,sans-serif;font-size:16px;margin-bottom:8px}.testimonial-note p{color:#aabdd2;font-size:13px;margin:0}.quote-mark{font-family:Georgia,serif;font-size:46px;line-height:1;color:var(--cyan);margin-bottom:10px}
+.faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.faq-item{padding:19px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.02)}.faq-item h3{font-size:15px;margin-bottom:8px;letter-spacing:-.02em}.faq-item p{font-size:12px;color:var(--muted);margin:0}
+.contact{background:radial-gradient(ellipse at 10% 20%,rgba(35,118,218,.13),transparent 35%),#081625;border-top:1px solid var(--line)}.contact-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:42px}.contact-copy h2{font-size:clamp(30px,4vw,43px);margin-bottom:14px}.contact-copy p{font-size:14px;color:var(--muted)}.contact-info{margin-top:25px;display:grid;gap:13px}.contact-info div{padding:13px 15px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.025)}.contact-info strong{display:block;font-size:12px}.contact-info span{font-size:11px;color:#9cb0c8}.contact-form{padding:25px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,rgba(17,37,59,.94),rgba(8,22,38,.96))}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{margin-bottom:14px}.field label{display:block;font-size:12px;font-weight:700;color:#c7d7ea;margin-bottom:7px}.field input,.field select,.field textarea{width:100%;border:1px solid rgba(157,188,226,.2);border-radius:10px;background:#071422;color:#f2f7ff;padding:12px 13px;outline:none}.field textarea{min-height:125px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{border-color:#438fff;box-shadow:0 0 0 3px rgba(56,137,255,.13)}.form-status{display:none;padding:12px;border-radius:9px;font-size:12px;margin-bottom:14px}.form-status.show{display:block}.form-status.ok{background:rgba(20,157,113,.12);color:#8de8c2;border:1px solid rgba(20,157,113,.25)}.form-status.err{background:rgba(220,76,76,.1);color:#ffb1b1;border:1px solid rgba(220,76,76,.25)}.privacy-note{font-size:10px;color:#8196b0;margin:12px 0 0}
+.footer{background:#040b13;border-top:1px solid var(--line);padding:30px 0 20px}.footer-main{display:flex;justify-content:space-between;gap:35px;align-items:flex-start;padding-bottom:25px}.footer-brand{max-width:380px}.footer-brand p{font-size:12px;color:#8499b2;margin:13px 0 0}.footer-links{display:flex;flex-wrap:wrap;gap:18px;font-size:12px;color:#b0c0d3}.footer-links a:hover{color:white}.footer-bottom{border-top:1px solid var(--line);padding-top:16px;display:flex;justify-content:space-between;gap:20px;color:#71869f;font-size:10px}.risk-disclaimer{max-width:850px}
+@media(max-width:1000px){.nav-links{gap:14px}.hero-grid{gap:30px}.plan-grid{grid-template-columns:repeat(2,1fr)}.plan-card{min-height:350px}.market-layout{grid-template-columns:1fr}.market-explain{display:grid;grid-template-columns:1fr 1fr;gap:20px}.market-explain h3{grid-column:1/-1}.about-grid{gap:30px}}
+@media(max-width:760px){.wrap{width:min(var(--max),calc(100% - 30px))}.topbar .wrap{font-size:10px}.topbar .right-note{display:none}.nav-inner{min-height:70px;flex-wrap:wrap}.brand{min-width:0}.brand-mark{width:42px;height:42px;flex-basis:42px}.brand-text{font-size:15px}.brand-text small{font-size:8px}.menu-toggle{display:block}.nav-links{display:none;order:3;flex-direction:column;align-items:stretch;width:100%;padding:0 0 15px;gap:0}.nav-links.open{display:flex}.nav-links a{padding:11px 2px;border-top:1px solid var(--line)}.nav-actions .ghost{display:none}.nav-actions .btn{padding:10px 12px;font-size:11px}.hero{padding:55px 0 48px}.hero-grid{grid-template-columns:1fr;gap:30px}h1{font-size:clamp(37px,11vw,54px)}.hero-copy{font-size:15px}.hero-panel{padding:18px}.trust-grid{grid-template-columns:1fr 1fr}.trust-item{padding:17px 12px;border-bottom:1px solid var(--line)}.trust-item:first-child{padding-left:12px}.trust-item:nth-child(2){border-right:0}.trust-item:nth-child(3),.trust-item:nth-child(4){border-bottom:0}section{padding:60px 0}.about-grid{grid-template-columns:1fr}.value-grid{grid-template-columns:1fr}.plan-grid{grid-template-columns:1fr}.plan-card{min-height:0}.plan-intro{min-height:0}.market-explain{display:block}.chart-card,.tradingview-widget-container{min-height:430px}.steps-grid{grid-template-columns:1fr}.testimonials-inner{grid-template-columns:1fr;gap:22px}.faq-grid{grid-template-columns:1fr}.contact-grid{grid-template-columns:1fr;gap:25px}.form-grid{grid-template-columns:1fr;gap:0}.contact-form{padding:18px}.footer-main{flex-direction:column}.footer-bottom{flex-direction:column;gap:8px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
+</style>
 </head>
-
 <body>
-
-<div class="login-container">
-
-    <div class="brand">
-        <svg class="brand-mark" viewBox="0 0 64 64" role="img" aria-label="AlpsCoinChain mountain and coin logo" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="accLogoGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#72e5c0"/><stop offset="1" stop-color="#3287ff"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="18" fill="#0b1b30" stroke="#5f9bdb" stroke-opacity=".55"/><circle cx="43" cy="22" r="11" fill="none" stroke="url(#accLogoGrad)" stroke-width="2.5"/><path d="M10 45 24 25l8 11 6-8 15 17H10Z" fill="url(#accLogoGrad)" fill-opacity=".2" stroke="url(#accLogoGrad)" stroke-width="2.5" stroke-linejoin="round"/><path d="M18 45 28 32l5 7 4-5 10 11" fill="none" stroke="#d9f8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <h1>AlpsCoinChain</h1>
-        <p>Client Account Access</p>
-    </div>
-
-    <div class="login-card">
-
-        <div class="tabs">
-            <button type="button" class="tab active" id="loginTab">
-                Sign In
-            </button>
-
-            <button type="button" class="tab" id="signupTab">
-                Create Account
-            </button>
-        </div>
-
-        <div id="message" class="message"></div>
-
-        <form id="authForm">
-
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input
-                    type="email"
-                    id="email"
-                    placeholder="you@example.com"
-                    required
-                    autocomplete="email"
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input
-                    type="password"
-                    id="password"
-                    placeholder="Enter your password"
-                    required
-                    minlength="6"
-                    autocomplete="current-password"
-                >
-            </div>
-
-            <div id="confirmPasswordGroup" class="form-group" style="display:none;">
-                <label for="confirmPassword">Confirm Password</label>
-                <input
-                    type="password"
-                    id="confirmPassword"
-                    placeholder="Confirm your password"
-                    minlength="6"
-                    autocomplete="new-password"
-                >
-            </div>
-
-            <span id="forgotPassword" class="forgot">
-                Forgot your password?
-            </span>
-
-            <button type="submit" class="submit-btn" id="submitButton">
-                Sign In
-            </button>
-
-        </form>
-
-        <div class="signup-note">
-            By creating an account, you agree to use this platform responsibly.
-        </div>
-
-        <a href="index.html" class="back-link">
-            ← Back to AlpsCoinChain
-        </a>
-
-    </div>
-</div>
-
+<div class="topbar"><div class="wrap"><span><strong>ALPSCOINCHAIN INVESTMENT VENTURES</strong> &nbsp;·&nbsp; Market awareness. Clear information.</span><span class="right-note">Support hours: Monday–Friday, 08:00–18:00 UK time</span></div></div>
+<header class="nav"><div class="wrap nav-inner">
+<a class="brand" href="#home" aria-label="AlpsCoinChain home">
+<svg class="brand-mark" viewBox="0 0 64 64" role="img" aria-label="AlpsCoinChain mountain and coin logo" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="accLogoGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#72e5c0"/><stop offset="1" stop-color="#3287ff"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="18" fill="#0b1b30" stroke="#5f9bdb" stroke-opacity=".55"/><circle cx="43" cy="22" r="11" fill="none" stroke="url(#accLogoGrad)" stroke-width="2.5"/><path d="M10 45 24 25l8 11 6-8 15 17H10Z" fill="url(#accLogoGrad)" fill-opacity=".2" stroke="url(#accLogoGrad)" stroke-width="2.5" stroke-linejoin="round"/><path d="M18 45 28 32l5 7 4-5 10 11" fill="none" stroke="#d9f8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<span class="brand-text">AlpsCoinChain<small>Investment Ventures</small></span></a>
+<nav class="nav-links" id="navLinks" aria-label="Main navigation"><a href="#about">About us</a><a href="#plans">Investment options</a><a href="#markets">Forex markets</a><a href="#process">How it works</a><a href="#faq">FAQs</a><a href="#contact">Contact</a></nav>
+<div class="nav-actions"><a class="btn ghost small" href="/login.html">Client sign in</a><a class="btn small" href="#plans">Explore options&nbsp; ↗</a><button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="navLinks">Menu</button></div>
+</div></header>
+<main>
+<section class="hero" id="home"><div class="wrap hero-grid">
+<div><span class="eyebrow"><span class="dot"></span> A clearer view of investing</span><h1>Make your next move with <span>more clarity.</span></h1><p class="hero-copy">Welcome to AlpsCoinChain Investment Ventures. Explore market information, understand the options available to you, and access a client portal designed to keep account records and requests in one place.</p><div class="hero-actions"><a class="btn" href="#plans">Explore investment options&nbsp; →</a><a class="btn ghost" href="#markets">View forex markets</a></div><p class="fineprint">Markets involve risk. This website provides general information and is not a promise of returns or a substitute for independent financial advice.</p></div>
+<aside class="hero-panel" aria-label="Market snapshot"><div class="panel-head"><h3>Market watchlist</h3><span class="market-pill">MARKET DATA</span></div><div class="market-lines">
+<div class="market-row"><div class="market-name"><span class="market-icon">EU</span><span><strong>EUR / USD</strong><small>Euro · US dollar</small></span></div><div class="market-value">Open chart<small>Forex pair</small></div></div>
+<div class="market-row"><div class="market-name"><span class="market-icon">GU</span><span><strong>GBP / USD</strong><small>British pound · US dollar</small></span></div><div class="market-value">Open chart<small>Forex pair</small></div></div>
+<div class="market-row"><div class="market-name"><span class="market-icon">UJ</span><span><strong>USD / JPY</strong><small>US dollar · Japanese yen</small></span></div><div class="market-value">Open chart<small>Forex pair</small></div></div>
+<div class="market-row"><div class="market-name"><span class="market-icon">AU</span><span><strong>XAU / USD</strong><small>Gold · US dollar</small></span></div><div class="market-value">Open chart<small>Commodity</small></div></div>
+</div><div class="panel-foot">Open the chart section below for third-party market charts. Quotes and availability may vary by provider.</div></aside>
+</div></section>
+<div class="trust-strip"><div class="wrap trust-grid"><div class="trust-item"><strong>Clarity first</strong><span>Understand the terms before deciding</span></div><div class="trust-item"><strong>Risk awareness</strong><span>No guaranteed-profit language</span></div><div class="trust-item"><strong>Account visibility</strong><span>Review records in the client portal</span></div><div class="trust-item"><strong>Direct support</strong><span>Send questions to our team</span></div></div></div>
+<section id="about"><div class="wrap about-grid"><aside class="about-aside"><div class="big-mark">AC / 01</div><h3>Built around informed decisions.</h3><p>We aim to make information easier to understand, explain account processes clearly, and help visitors ask the right questions before committing funds.</p></aside><div class="about-copy"><div class="kicker">About AlpsCoinChain</div><h2>A more considered approach to digital-asset and market participation.</h2><p>AlpsCoinChain Investment Ventures brings together market awareness, account tools, and client support in one online experience. Visitors can explore investment-option categories, review general forex market charts, and contact the team before choosing a next step.</p><p>We believe clients should be able to understand the risks, fees, eligibility requirements, withdrawal conditions, and status of their account requests. Any product-specific terms should be provided and agreed before an investment is made.</p><div class="value-grid"><article class="value-card"><div class="value-icon">⌁</div><h3>Clear information</h3><p>Key terms and risks should be explained before you choose an option.</p></article><article class="value-card"><div class="value-icon">◈</div><h3>Account records</h3><p>Review recorded activity and request status in your private client portal.</p></article><article class="value-card"><div class="value-icon">↗</div><h3>Human support</h3><p>Send questions about onboarding, account access, and available options.</p></article></div></div></div></section>
+<section class="plans" id="plans"><div class="wrap"><div class="section-head center"><div class="kicker">Investment options</div><h2>Explore the approach that fits your goals.</h2><p>These are introductory option categories to help you start a conversation—not active offers, guaranteed outcomes, or personalised financial advice. Availability, eligibility, minimums, fees, and terms must be confirmed with the team before any funds are sent.</p></div>
+<div class="plan-grid">
+<article class="plan-card"><div class="plan-tag">Option 01</div><h3>Starter</h3><p class="plan-intro">For people who want to begin with a simple, guided introduction.</p><span class="risk">Risk: market-dependent</span><ul><li>Introductory onboarding conversation</li><li>Explanation of assets and market risks</li><li>Review of fees and withdrawal conditions</li><li>No published return promise</li></ul><a class="btn ghost" href="#contact">Discuss this option</a></article>
+<article class="plan-card featured"><div class="plan-tag">Option 02 · Explore</div><h3>Balanced</h3><p class="plan-intro">For people who want to compare a broader range of market exposures.</p><span class="risk">Risk: varies by asset</span><ul><li>Compare eligible asset categories</li><li>Understand diversification limits</li><li>Review risk and time horizon</li><li>Terms confirmed before participation</li></ul><a class="btn" href="#contact">Discuss this option</a></article>
+<article class="plan-card"><div class="plan-tag">Option 03</div><h3>Active Markets</h3><p class="plan-intro">For experienced participants interested in active market monitoring.</p><span class="risk">Risk: elevated / variable</span><ul><li>Market-awareness discussion</li><li>Understand volatility and loss exposure</li><li>Confirm any service and execution scope</li><li>No trade execution implied by charts</li></ul><a class="btn ghost" href="#contact">Discuss this option</a></article>
+<article class="plan-card"><div class="plan-tag">Option 04</div><h3>Private Consultation</h3><p class="plan-intro">For people who need to discuss specific needs and eligibility.</p><span class="risk">Terms by assessment</span><ul><li>Discuss goals and questions privately</li><li>Clarify eligibility and documentation</li><li>Review applicable costs and conditions</li><li>No approval or outcome guaranteed</li></ul><a class="btn ghost" href="#contact">Request a discussion</a></article>
+</div><p class="plan-note">No minimum investment amounts, target returns, or payout schedules are displayed because verified product terms have not been supplied for publication. Do not send funds based only on this page.</p></div></section>
+<section class="market-section" id="markets"><div class="wrap"><div class="section-head"><div class="kicker">General market charts</div><h2>Follow the forex market landscape.</h2><p>Use the chart below to explore selected currency pairs and market movements. Market prices can move quickly; charts are informational and do not place orders or represent your account balance.</p></div><div class="market-layout"><aside class="market-explain"><h3>What you're viewing</h3><p>The chart is supplied by TradingView, a third-party market-data and charting provider. Availability, symbols, and data timing may depend on the provider and exchange.</p><ul><li>EUR/USD — euro against the US dollar</li><li>GBP/USD — British pound against the US dollar</li><li>USD/JPY — US dollar against the Japanese yen</li><li>XAU/USD — gold priced in US dollars</li></ul><p>Market data is not an instruction to buy or sell. Consider costs, leverage, and the possibility of losing capital before participating.</p></aside><div class="chart-card"><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><div class="tradingview-widget-copyright">Charts by <a href="https://www.tradingview.com/" rel="noopener noreferrer" target="_blank">TradingView</a></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+{"colorTheme":"dark","dateRange":"12M","showChart":true,"locale":"en","width":"100%","height":"100%","isTransparent":true,"showSymbolLogo":true,"showFloatingTooltip":true,"tabs":[{"title":"Forex","symbols":[{"s":"FX:EURUSD","d":"EUR/USD"},{"s":"FX:GBPUSD","d":"GBP/USD"},{"s":"FX:USDJPY","d":"USD/JPY"},{"s":"OANDA:XAUUSD","d":"Gold / USD"}]}],"support_host":"https://www.tradingview.com"}
+</script></div></div></div></div></section>
+<section id="process"><div class="wrap"><div class="section-head center"><div class="kicker">Getting started</div><h2>Take the next step at your own pace.</h2><p>Understand the process before you make a financial commitment.</p></div><div class="steps-grid"><article class="step"><div class="step-no">STEP 01</div><h3>Ask questions</h3><p>Contact the team to discuss the options, eligibility, documentation, fees, and risks that apply.</p></article><article class="step"><div class="step-no">STEP 02</div><h3>Review the terms</h3><p>Read the written product terms and verify the recipient, payment route, withdrawal conditions, and any applicable regulatory information independently.</p></article><article class="step"><div class="step-no">STEP 03</div><h3>Access your account</h3><p>Use the client portal to review recorded account information and submit requests. A request status alone is not proof of a payment or transfer.</p></article></div></div></section>
+<section class="testimonials" id="client-experience"><div class="wrap testimonials-inner"><div><div class="kicker">Client experience</div><h2 style="font-size:clamp(30px,4vw,42px)">Trust is earned through clear information.</h2><p style="color:var(--muted);font-size:14px">We want client feedback to be genuine, attributable only with permission, and representative of real experiences—not invented endorsements or promises of investment performance.</p><a class="btn ghost" href="#contact">Share feedback with our team</a></div><aside class="testimonial-note"><div class="quote-mark">“</div><strong>Real client testimonials belong here.</strong><p>We have left this section ready for verified client feedback. Once approved testimonials and publication permissions are supplied, they can be added with accurate wording and attribution. We will not fabricate reviews, names, returns, or client results.</p></aside></div></section>
+<section id="faq"><div class="wrap"><div class="section-head"><div class="kicker">Frequently asked questions</div><h2>Before you decide.</h2><p>Important basics for anyone exploring the platform.</p></div><div class="faq-grid"><article class="faq-item"><h3>Are returns guaranteed?</h3><p>No. Financial markets are uncertain and you may lose some or all of the capital you put at risk. No return is promised on this page.</p></article><article class="faq-item"><h3>What are the minimum amounts and fees?</h3><p>These have not been published here because verified product terms must be confirmed first. Ask the team for written details before proceeding.</p></article><article class="faq-item"><h3>Do charts execute trades?</h3><p>No. The market charts are informational widgets from a third party. They do not place trades or connect to your portfolio.</p></article><article class="faq-item"><h3>Does an approved deposit request mean funds arrived?</h3><p>Not by itself. A request status is an administrative record and is not independent proof of an external payment or completed transfer.</p></article><article class="faq-item"><h3>How do I access my account?</h3><p>Use Client sign in at the top of this page. Keep your password, private keys, and recovery phrases confidential.</p></article><article class="faq-item"><h3>How can I contact support?</h3><p>Use the secure contact form below. Do not send passwords, private keys, recovery phrases, or full payment credentials.</p></article></div></div></section>
+<section class="contact" id="contact"><div class="wrap contact-grid"><div class="contact-copy"><div class="kicker">Contact AlpsCoinChain</div><h2>Let's start with your questions.</h2><p>Contact us about the platform, onboarding, investment-option information, or account access. Please provide only the information needed to respond to your enquiry.</p><div class="contact-info"><div><strong>Support hours</strong><span>Monday–Friday · 08:00–18:00 UK time</span></div><div><strong>Client account access</strong><span>Existing clients can sign in to review their account and recorded requests.</span></div><div><strong>Security reminder</strong><span>Never send passwords, private keys, recovery phrases, or sensitive payment credentials.</span></div></div></div><form class="contact-form" id="contactForm"><div id="formStatus" class="form-status" role="status" aria-live="polite"></div><div class="form-grid"><div class="field"><label for="name">Full name</label><input id="name" name="name" autocomplete="name" maxlength="200" required></div><div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" required></div></div><div class="field"><label for="subject">What can we help with?</label><select id="subject" name="subject" required><option value="">Choose a topic</option><option>Investment option enquiry</option><option>Client account access</option><option>Deposit or withdrawal request</option><option>Identity verification</option><option>General question</option><option>Feedback or testimonial</option></select></div><div class="field"><label for="message">Your message</label><textarea id="message" name="message" maxlength="3000" required placeholder="Tell us how we can help…"></textarea></div><button class="btn" id="submitContact" type="submit">Send enquiry&nbsp; →</button><p class="privacy-note">Submitting this form sends your enquiry to the configured support inbox. Do not include confidential authentication or payment information.</p></form></div></section>
+</main>
+<footer class="footer"><div class="wrap"><div class="footer-main"><div class="footer-brand"><a class="brand" href="#home"><svg class="brand-mark" viewBox="0 0 64 64" role="img" aria-label="AlpsCoinChain logo" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="accLogoFoot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#72e5c0"/><stop offset="1" stop-color="#3287ff"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="18" fill="#0b1b30" stroke="#5f9bdb" stroke-opacity=".55"/><circle cx="43" cy="22" r="11" fill="none" stroke="url(#accLogoFoot)" stroke-width="2.5"/><path d="M10 45 24 25l8 11 6-8 15 17H10Z" fill="url(#accLogoFoot)" fill-opacity=".2" stroke="url(#accLogoFoot)" stroke-width="2.5" stroke-linejoin="round"/><path d="M18 45 28 32l5 7 4-5 10 11" fill="none" stroke="#d9f8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="brand-text">AlpsCoinChain<small>Investment Ventures</small></span></a><p>Market information, account tools, and client support—presented with clarity and an emphasis on informed decisions.</p></div><div class="footer-links"><a href="#about">About</a><a href="#plans">Investment options</a><a href="#markets">Markets</a><a href="#faq">FAQs</a><a href="#contact">Contact</a><a href="/login.html">Client sign in</a></div></div><div class="footer-bottom"><span>© 2026 AlpsCoinChain Investment Ventures. All rights reserved.</span><span class="risk-disclaimer">Risk notice: Digital assets and forex are volatile and may not be suitable for everyone. You may lose capital. This website is general information, not a personal recommendation. Verify applicable legal, regulatory, and product terms independently before investing.</span></div></div></footer>
 <script>
-    const SUPABASE_URL = 'https://uevofmlzpwrdidjnwxfd.supabase.co';
-
-    const SUPABASE_PUBLISHABLE_KEY =
-        'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
-
-    const supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
-    );
-
-    let mode = 'login';
-
-    const loginTab = document.getElementById('loginTab');
-    const signupTab = document.getElementById('signupTab');
-    const authForm = document.getElementById('authForm');
-    const confirmPasswordGroup =
-        document.getElementById('confirmPasswordGroup');
-    const confirmPassword =
-        document.getElementById('confirmPassword');
-    const forgotPassword =
-        document.getElementById('forgotPassword');
-    const submitButton =
-        document.getElementById('submitButton');
-    const message =
-        document.getElementById('message');
-
-    function showMessage(text, type) {
-        message.textContent = text;
-        message.className = 'message ' + type;
-    }
-
-    function clearMessage() {
-        message.textContent = '';
-        message.className = 'message';
-    }
-
-    function setMode(newMode) {
-        mode = newMode;
-        clearMessage();
-
-        if (mode === 'login') {
-            loginTab.classList.add('active');
-            signupTab.classList.remove('active');
-
-            confirmPasswordGroup.style.display = 'none';
-            confirmPassword.required = false;
-
-            forgotPassword.style.display = 'block';
-            submitButton.textContent = 'Sign In';
-        } else {
-            signupTab.classList.add('active');
-            loginTab.classList.remove('active');
-
-            confirmPasswordGroup.style.display = 'block';
-            confirmPassword.required = true;
-
-            forgotPassword.style.display = 'none';
-            submitButton.textContent = 'Create Account';
-        }
-    }
-
-    loginTab.addEventListener('click', () => {
-        setMode('login');
-    });
-
-    signupTab.addEventListener('click', () => {
-        setMode('signup');
-    });
-
-    authForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        clearMessage();
-
-        const email =
-            document.getElementById('email').value.trim();
-
-        const password =
-            document.getElementById('password').value;
-
-        submitButton.disabled = true;
-
-        try {
-            if (mode === 'signup') {
-
-                if (password !== confirmPassword.value) {
-                    showMessage(
-                        'The passwords do not match.',
-                        'error'
-                    );
-                    return;
-                }
-
-                const { data, error } =
-                    await supabaseClient.auth.signUp({
-                        email,
-                        password
-                    });
-
-                if (error) {
-                    throw error;
-                }
-
-                if (data.session) {
-                    window.location.href =
-                        'client-dashboard.html';
-                    return;
-                }
-
-                showMessage(
-                    'Account created. Please check your email to confirm your account before signing in.',
-                    'success'
-                );
-
-            } else {
-
-                const { data, error } =
-                    await supabaseClient.auth.signInWithPassword({
-                        email,
-                        password
-                    });
-
-                if (error) {
-                    throw error;
-                }
-
-                if (data.session) {
-                    window.location.href =
-                        'client-dashboard.html';
-                }
-            }
-
-        } catch (error) {
-            showMessage(
-                error.message || 'Unable to complete the request.',
-                'error'
-            );
-        } finally {
-            submitButton.disabled = false;
-        }
-    });
-
-    forgotPassword.addEventListener('click', async () => {
-
-        const email =
-            document.getElementById('email').value.trim();
-
-        if (!email) {
-            showMessage(
-                'Enter your email address first, then select Forgot your password.',
-                'error'
-            );
-            return;
-        }
-
-        try {
-            const redirectUrl =
-                window.location.origin + '/reset-password.html';
-
-            const { error } =
-                await supabaseClient.auth.resetPasswordForEmail(
-                    email,
-                    {
-                        redirectTo: redirectUrl
-                    }
-                );
-
-            if (error) {
-                throw error;
-            }
-
-            showMessage(
-                'Password reset instructions have been sent to your email.',
-                'success'
-            );
-
-        } catch (error) {
-            showMessage(
-                error.message || 'Unable to send the password reset email.',
-                'error'
-            );
-        }
-    });
+const menuToggle=document.getElementById('menuToggle');
+const navLinks=document.getElementById('navLinks');
+menuToggle.addEventListener('click',()=>{const open=navLinks.classList.toggle('open');menuToggle.setAttribute('aria-expanded',String(open));});
+navLinks.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{navLinks.classList.remove('open');menuToggle.setAttribute('aria-expanded','false');}));
+const contactForm=document.getElementById('contactForm');
+const formStatus=document.getElementById('formStatus');
+const submitContact=document.getElementById('submitContact');
+contactForm.addEventListener('submit',async event=>{
+ event.preventDefault();
+ formStatus.className='form-status';formStatus.textContent='';
+ submitContact.disabled=true;submitContact.textContent='Sending…';
+ try{
+  const data=Object.fromEntries(new FormData(contactForm).entries());
+  const response=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.success)throw new Error(result.message||'We could not send your enquiry. Please try again later.');
+  formStatus.className='form-status show ok';formStatus.textContent=result.message||'Your enquiry has been received.';contactForm.reset();
+ }catch(error){formStatus.className='form-status show err';formStatus.textContent=error.message||'We could not send your enquiry. Please try again later.';}
+ finally{submitContact.disabled=false;submitContact.textContent='Send enquiry →';}
+});
 </script>
-
 </body>
 </html>
