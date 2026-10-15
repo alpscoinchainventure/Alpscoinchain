@@ -11,7 +11,7 @@
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 12% 0%,rgba(36,111,190,.22),transparent 38%),radial-gradient(ellipse at 92% 18%,rgba(35,183,154,.12),transparent 32%),linear-gradient(145deg,#07111f 0%,#0a1728 52%,#07101d 100%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.65}
     header{background:rgba(5,14,26,.82);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);color:#fff;padding:22px 16px;box-shadow:0 12px 40px rgba(0,0,0,.15)}
-    .header-inner,main{width:min(1120px,100%);margin:0 auto}header h1{margin:0;font-size:clamp(21px,3vw,27px);letter-spacing:-.04em;font-weight:750}header p{margin:5px 0 0;color:#a9c6e8;font-size:14px;letter-spacing:.02em}main{padding:28px 16px 48px}
+    .header-inner,main{width:min(1120px,100%);margin:0 auto}header h1{margin:0;font-size:clamp(21px,3vw,27px);letter-spacing:-.04em;font-weight:750}header p{margin:5px 0 0;color:#a9c6e8;font-size:14px;letter-spacing:.02em}.brand-lockup{display:flex;align-items:center;gap:14px}.brand-mark{width:54px;height:54px;flex:0 0 54px;filter:drop-shadow(0 6px 14px rgba(47,131,255,.18))}.brand-copy{min-width:0}main{padding:28px 16px 48px}
     .notice{border:1px solid rgba(230,200,137,.35);background:linear-gradient(120deg,rgba(98,73,30,.22),rgba(37,34,28,.45));color:#f1dfb7;border-radius:14px;padding:15px 17px;margin-bottom:22px;box-shadow:inset 0 1px rgba(255,255,255,.03)}
     .welcome{margin-bottom:23px}.welcome h2{margin:0 0 5px;font-size:clamp(25px,4vw,34px);letter-spacing:-.04em}.muted{color:var(--muted)}
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}.card{background:linear-gradient(145deg,rgba(19,36,59,.94),rgba(12,25,43,.94));border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:0 18px 48px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.035);min-width:0;margin-bottom:18px}.grid .card{margin-bottom:0}.card h3{margin:0 0 14px;font-size:18px;letter-spacing:-.02em}.account-line{margin:10px 0;overflow-wrap:anywhere}.balance{font-size:clamp(21px,3vw,27px);font-weight:750;letter-spacing:-.035em;margin:12px 0;padding:14px 16px;border-radius:12px;background:rgba(4,13,25,.58);border:1px solid rgba(123,161,205,.13);overflow-wrap:anywhere;color:#e5f3ff}.status{display:inline-block;border-radius:20px;padding:4px 11px;background:rgba(36,166,119,.15);color:var(--success);font-size:12px;font-weight:750}
@@ -24,7 +24,7 @@
   </style>
 </head>
 <body>
-<header><div class="header-inner"><h1>AlpsCoinChain Investment</h1><p>Client account dashboard</p></div></header>
+<header><div class="header-inner brand-lockup"><svg class="brand-mark" viewBox="0 0 64 64" role="img" aria-label="AlpsCoinChain mountain and coin logo" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="accLogoGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#72e5c0"/><stop offset="1" stop-color="#3287ff"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="18" fill="#0b1b30" stroke="#5f9bdb" stroke-opacity=".55"/><circle cx="43" cy="22" r="11" fill="none" stroke="url(#accLogoGrad)" stroke-width="2.5"/><path d="M10 45 24 25l8 11 6-8 15 17H10Z" fill="url(#accLogoGrad)" fill-opacity=".2" stroke="url(#accLogoGrad)" stroke-width="2.5" stroke-linejoin="round"/><path d="M18 45 28 32l5 7 4-5 10 11" fill="none" stroke="#d9f8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="brand-copy"><h1>AlpsCoinChain Investment</h1><p>Client account dashboard</p></div></div></header>
 <main>
   <div class="notice"><strong>Financial account notice:</strong> Your portfolio displays entries recorded in the account ledger. A ledger entry alone does not prove an external payment was received. Deposit and withdrawal requests do not automatically move funds.</div>
   <section class="welcome"><h2>Welcome to your dashboard</h2><p class="muted">Review your account, recorded portfolio balances, transaction activity, and deposit or withdrawal requests.</p><p id="page-message" role="status" aria-live="polite">Checking your sign-in session…</p></section>
@@ -39,7 +39,7 @@
     </section>
 
     <section class="card portfolio-card"><h3>Portfolio overview</h3>
-      <p class="muted">Your confirmed-in-system ledger view · balances are loaded from your authorized account records.</p>
+      <p class="muted">Portfolio balances appear only when the ledger service provides an explicit verification status.</p>
       <div id="ledger-balance-list" aria-live="polite"><p class="balance">Loading…</p></div>
       <p id="ledger-balance-message" class="muted form-message" role="status" aria-live="polite">Checking your authorized ledger entries…</p>
       <div class="button-row">
@@ -109,19 +109,57 @@
 
   async function loadLedgerBalances(){
     if(!currentUser)return;
-    const refreshButton=document.getElementById("refresh-balances-button");refreshButton.disabled=true;ledgerBalanceList.replaceChildren();
-    const loading=document.createElement("p");loading.className="balance";loading.textContent="Loading…";ledgerBalanceList.appendChild(loading);ledgerBalanceMessage.textContent="Retrieving your recorded ledger balances…";
+    const refreshButton=document.getElementById("refresh-balances-button");
+    refreshButton.disabled=true;
+    ledgerBalanceList.replaceChildren();
+    const loading=document.createElement("p");loading.className="balance";loading.textContent="Checking ledger…";ledgerBalanceList.appendChild(loading);
+    ledgerBalanceMessage.textContent="Checking whether the ledger supplies explicitly verified balance records…";
     let timeoutId;
     try{
       const query=supabaseClient.rpc("get_my_ledger_balances");
       const timeout=new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error("The balance request timed out. Please try again.")),15000)});
-      const result=await Promise.race([query,timeout]);if(result.error)throw result.error;
-      const balances=Array.isArray(result.data)?result.data:[];ledgerBalanceList.replaceChildren();
-      if(balances.length===0){const empty=document.createElement("p");empty.className="balance";empty.textContent="No posted ledger entries";ledgerBalanceList.appendChild(empty);ledgerBalanceMessage.textContent="No ledger entries have been recorded for this account. This does not establish that funds are available elsewhere.";return}
-      for(const item of balances){const row=document.createElement("p");row.className="balance";const asset=String(item.asset||"");row.textContent=formatAmount(item.balance)+(asset?" "+asset:"");ledgerBalanceList.appendChild(row)}
-      ledgerBalanceMessage.textContent="Calculated from recorded ledger entries. This display does not independently verify external payments.";
-    }catch(error){console.error("Ledger balance loading failed:",error);ledgerBalanceList.replaceChildren();const unavailable=document.createElement("p");unavailable.className="balance";unavailable.textContent="Balance unavailable";ledgerBalanceList.appendChild(unavailable);ledgerBalanceMessage.textContent="We could not retrieve your ledger balances. Please try again later or contact support."}
-    finally{if(timeoutId)clearTimeout(timeoutId);refreshButton.disabled=false}
+      const result=await Promise.race([query,timeout]);
+      if(result.error)throw result.error;
+      const rows=Array.isArray(result.data)?result.data:[];
+      // Never present raw ledger totals as available funds. The RPC must explicitly
+      // return a verified flag and an available_balance field before an amount is shown.
+      const verifiedRows=rows.filter(item =>
+        item &&
+        (item.verified===true || item.is_verified===true) &&
+        item.available_balance!==undefined &&
+        item.available_balance!==null &&
+        String(item.asset||"").trim() &&
+        !["TEST","TES"].includes(String(item.asset).trim().toUpperCase())
+      );
+      ledgerBalanceList.replaceChildren();
+      if(verifiedRows.length===0){
+        const empty=document.createElement("p");empty.className="balance";empty.textContent="Balance pending verification";
+        ledgerBalanceList.appendChild(empty);
+        ledgerBalanceMessage.textContent="No explicitly verified, reconciled balance records are available yet. Unverified totals and TEST assets are intentionally not displayed as funds.";
+        return;
+      }
+      for(const item of verifiedRows){
+        const amount=Number(item.available_balance);
+        if(!Number.isFinite(amount))continue;
+        const row=document.createElement("p");row.className="balance";
+        row.textContent=formatAmount(amount)+" "+String(item.asset).trim().toUpperCase();
+        ledgerBalanceList.appendChild(row);
+      }
+      if(!ledgerBalanceList.children.length){
+        const empty=document.createElement("p");empty.className="balance";empty.textContent="Balance pending verification";ledgerBalanceList.appendChild(empty);
+        ledgerBalanceMessage.textContent="The ledger returned no usable verified balance amounts. Please contact support.";
+      }else{
+        ledgerBalanceMessage.textContent="Only balances explicitly marked verified by the ledger service are displayed here. External payment verification must still be completed through the appropriate records.";
+      }
+    }catch(error){
+      console.error("Ledger balance loading failed:",error);
+      ledgerBalanceList.replaceChildren();
+      const unavailable=document.createElement("p");unavailable.className="balance";unavailable.textContent="Balance unavailable";ledgerBalanceList.appendChild(unavailable);
+      ledgerBalanceMessage.textContent="We could not verify a balance from the ledger service. Please try again later or contact support.";
+    }finally{
+      if(timeoutId)clearTimeout(timeoutId);
+      refreshButton.disabled=false;
+    }
   }
 
   async function loadRequestHistory(){
