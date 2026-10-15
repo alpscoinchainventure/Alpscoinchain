@@ -82,6 +82,23 @@
     <p class="muted small">After a successful ledger post, the client's dashboard will calculate its current recorded balance from the ledger RPC. If a request times out, verify the ledger and audit records before retrying.</p>
   </section>
 
+  <section class="panel" aria-labelledby="walletHeading">
+    <h2 id="walletHeading">Deposit wallet addresses</h2>
+    <p class="muted">Add the official receiving address for each asset and network. Verify the address and network carefully before activating it. Never enter private keys or recovery phrases here.</p>
+    <form id="walletForm">
+      <div class="form-grid">
+        <div><label for="walletAsset">Asset code</label><input id="walletAsset" required minlength="2" maxlength="20" pattern="[A-Za-z0-9._-]{2,20}" placeholder="USDT" autocomplete="off"></div>
+        <div><label for="walletNetwork">Network</label><input id="walletNetwork" required minlength="2" maxlength="60" placeholder="e.g. TRON (TRC20)" autocomplete="off"></div>
+        <div style="grid-column:1/-1"><label for="walletAddress">Public deposit wallet address</label><input id="walletAddress" required minlength="8" maxlength="300" placeholder="Paste the receiving address" autocomplete="off"></div>
+        <div style="grid-column:1/-1"><label for="walletInstructions">Client instructions (optional)</label><textarea id="walletInstructions" maxlength="1000" placeholder="Minimum confirmations, memo/tag requirements, or other important instructions"></textarea></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px"><input id="walletActive" type="checkbox" checked style="width:auto;min-height:0"> Active and visible to clients</label>
+      <div class="button-row"><button id="saveWalletButton" class="primary" type="submit">Save deposit address</button><button id="resetWalletButton" type="reset">Clear form</button></div>
+    </form>
+    <div id="walletNotice" class="notice" role="status" aria-live="polite">Wallet address settings have not been loaded.</div>
+    <div class="table-wrap"><table><thead><tr><th>Asset</th><th>Network</th><th>Address</th><th>Status</th><th>Action</th></tr></thead><tbody id="walletRows"><tr><td colspan="5">Load wallet settings…</td></tr></tbody></table></div>
+  </section>
+
   <section class="panel">
     <h2>Fund request review</h2>
     <p class="muted">Review client deposit and withdrawal requests in the dedicated administrator request centre. Approving a request should only change funds when the administrator workflow explicitly performs an authorized ledger operation.</p>
@@ -167,6 +184,45 @@
     finally{ledgerSubmissionInProgress=false;button.disabled=false}
   }
 
+  async function loadWalletAddresses(){
+    const body=$("walletRows");body.replaceChildren();setNotice("walletNotice","Loading wallet address settings…");
+    try{
+      const {data,error}=await client.from("deposit_wallet_addresses").select("id,asset_code,network,wallet_address,is_active,updated_at").order("asset_code").order("network");
+      if(error)throw error;
+      if(!data||!data.length){const row=document.createElement("tr");const cell=document.createElement("td");cell.colSpan=5;cell.textContent="No deposit wallet addresses configured yet.";row.appendChild(cell);body.appendChild(row);setNotice("walletNotice","Add a verified receiving address for each asset/network you support.");return}
+      for(const item of data){const row=document.createElement("tr");
+        for(const value of [item.asset_code,item.network,item.wallet_address,item.is_active?"Active":"Inactive"]){const cell=document.createElement("td");cell.textContent=value||"—";row.appendChild(cell)}
+        const actionCell=document.createElement("td"),button=document.createElement("button");button.type="button";button.textContent="Edit";button.addEventListener("click",()=>{
+          $("walletAsset").value=item.asset_code;$("walletNetwork").value=item.network;$("walletAddress").value=item.wallet_address;$("walletActive").checked=Boolean(item.is_active);$("walletInstructions").value="";
+          $("walletForm").dataset.editId=item.id;$("walletForm").dataset.originalAsset=item.asset_code;$("walletForm").dataset.originalNetwork=item.network;$("walletNotice").textContent="Editing "+item.asset_code+" on "+item.network+". Save to update it.";
+          $("walletForm").scrollIntoView({behavior:"smooth",block:"center"});
+        });actionCell.appendChild(button);row.appendChild(actionCell);body.appendChild(row)
+      }
+      setNotice("walletNotice",data.length+" wallet address setting(s) loaded.");
+    }catch(error){console.error("Wallet address lookup failed:",error);setNotice("walletNotice","Wallet settings could not be loaded. Apply the deposit-wallet migration in Supabase, then refresh.","error")}
+  }
+
+  async function saveWalletAddress(event){
+    event.preventDefault();
+    const asset=$("walletAsset").value.trim().toUpperCase(),network=$("walletNetwork").value.trim(),address=$("walletAddress").value.trim(),instructions=$("walletInstructions").value.trim(),isActive=$("walletActive").checked;
+    if(!/^[A-Z0-9._-]{2,20}$/.test(asset)||network.length<2||address.length<8){setNotice("walletNotice","Enter a valid asset, network, and public wallet address.","error");return}
+    if(!window.confirm("Save this public receiving address for "+asset+" on "+network+"? Verify the network and address before continuing."))return;
+    const button=$("saveWalletButton");button.disabled=true;setNotice("walletNotice","Saving wallet address…");
+    try{
+      const payload={asset_code:asset,network,wallet_address:address,instructions,is_active:isActive,updated_by:dashboardUser.id,updated_at:new Date().toISOString()};
+      const originalAsset=$("walletForm").dataset.originalAsset,originalNetwork=$("walletForm").dataset.originalNetwork;
+      if(originalAsset&&originalNetwork&&(originalAsset!==asset||originalNetwork!==network)){
+        const {error:deleteError}=await client.from("deposit_wallet_addresses").delete().eq("asset_code",originalAsset).eq("network",originalNetwork);
+        if(deleteError)throw deleteError;
+      }
+      const {error}=await client.from("deposit_wallet_addresses").upsert(payload,{onConflict:"asset_code,network"});
+      if(error)throw error;
+      $("walletForm").reset();delete $("walletForm").dataset.editId;delete $("walletForm").dataset.originalAsset;delete $("walletForm").dataset.originalNetwork;
+      setNotice("walletNotice","Deposit wallet address saved. Clients can see it after refreshing the deposit page.","success");await loadWalletAddresses();
+    }catch(error){console.error("Saving wallet address failed:",error);setNotice("walletNotice","Could not save the address. Ensure the Supabase migration is applied and administrator policies are active.","error")}
+    finally{button.disabled=false}
+  }
+
   async function refreshDashboard(){
     setNotice("dashboardNotice","Refreshing administrator data…");const ok=await verifySession();if(!ok)return;await loadAccounts();setNotice("dashboardNotice","Administrator dashboard refreshed.","success")
   }
@@ -174,10 +230,10 @@
   $("signOutButton").addEventListener("click",async()=>{const button=$("signOutButton");button.disabled=true;try{const {error}=await client.auth.signOut();if(error)throw error;window.location.replace("/login")}catch(error){console.error(error);button.disabled=false;setNotice("sessionNotice","Could not sign out. Please try again.","error")}});
   $("refreshAccountsButton").addEventListener("click",loadAccounts);
   $("accountSearch").addEventListener("input",renderAccounts);
-  $("ledgerForm").addEventListener("submit",postLedgerEntry);
+  $("ledgerForm").addEventListener("submit",postLedgerEntry);\n  $("walletForm").addEventListener("submit",saveWalletAddress);\n  $("walletForm").addEventListener("reset",()=>{delete $("walletForm").dataset.editId;delete $("walletForm").dataset.originalAsset;delete $("walletForm").dataset.originalNetwork});
   $("refreshButton").addEventListener("click",refreshDashboard);
 
-  (async()=>{const ok=await verifySession();if(ok)await loadAccounts()})();
+  (async()=>{const ok=await verifySession();if(ok){await loadAccounts();await loadWalletAddresses()}})();
 })();
 </script>
 </body>
