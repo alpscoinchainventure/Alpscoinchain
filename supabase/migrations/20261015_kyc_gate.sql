@@ -203,4 +203,75 @@ create trigger fund_request_requires_approved_kyc
 before insert on public.fund_requests
 for each row execute function public.require_approved_kyc_for_fund_request();
 
+-- Controlled submission RPC lets clients resubmit rejected records without
+-- granting them permission to alter their own review status.
+create or replace function public.submit_kyc(
+  p_legal_name text,
+  p_date_of_birth date,
+  p_country text,
+  p_document_type text,
+  p_document_storage_path text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid := auth.uid();
+begin
+  if v_user_id is null then raise exception 'Sign-in required'; end if;
+  if nullif(trim(p_legal_name), '') is null or char_length(trim(p_legal_name)) > 160 then
+    raise exception 'Enter your full legal name';
+  end if;
+  if p_date_of_birth is null or p_date_of_birth >= current_date then
+    raise exception 'Enter a valid date of birth';
+  end if;
+  if nullif(trim(p_country), '') is null or char_length(trim(p_country)) > 100 then
+    raise exception 'Enter your country of residence';
+  end if;
+  if p_document_type not in ('passport','national_id','drivers_license') then
+    raise exception 'Unsupported identity document type';
+  end if;
+  if p_document_storage_path is null or p_document_storage_path not like v_user_id::text || '/%' then
+    raise exception 'Identity document must be stored in your private folder';
+  end if;
+  if not exists (
+    select 1 from public.profiles
+    where id = v_user_id and role = 'client' and account_status = 'active'
+  ) then
+    raise exception 'Active client account required';
+  end if;
+
+  insert into public.kyc_submissions (
+    user_id, legal_name, date_of_birth, country, document_type,
+    document_storage_path, status, review_note, reviewed_at, reviewed_by,
+    created_at, updated_at
+  ) values (
+    v_user_id, trim(p_legal_name), p_date_of_birth, trim(p_country),
+    p_document_type, p_document_storage_path, 'pending', null, null, null, now(), now()
+  )
+  on conflict (user_id) do update set
+    legal_name = excluded.legal_name,
+    date_of_birth = excluded.date_of_birth,
+    country = excluded.country,
+    document_type = excluded.document_type,
+    document_storage_path = excluded.document_storage_path,
+    status = 'pending',
+    review_note = null,
+    reviewed_at = null,
+    reviewed_by = null,
+    updated_at = now()
+  where public.kyc_submissions.status in ('pending','rejected');
+
+  if not found then
+    raise exception 'Your KYC record cannot be resubmitted in its current state';
+  end if;
+  return jsonb_build_object('success', true, 'status', 'pending');
+end;
+$$;
+
+revoke all on function public.submit_kyc(text,date,text,text,text) from public;
+grant execute on function public.submit_kyc(text,date,text,text,text) to authenticated;
+
 commit;
