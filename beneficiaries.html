@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b50">
+  <title>My Beneficiaries | AlpsCoinChain</title>
+
+  <style>
+    :root {
+      --navy: #102b50;
+      --blue: #2463eb;
+      --bg: #f3f6fb;
+      --text: #17253b;
+      --muted: #65748b;
+      --border: #e2e8f0;
+      --green: #137547;
+      --red: #b42318;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.6 Arial, Helvetica, sans-serif;
+    }
+
+    header {
+      background: linear-gradient(120deg, #0a1c35, var(--navy));
+      color: white;
+      padding: 22px 18px;
+    }
+
+    header > div, main {
+      max-width: 980px;
+      margin: auto;
+    }
+
+    h1 { margin: 0; font-size: 22px; }
+
+    header p {
+      margin: 4px 0 0;
+      color: #c8d6ea;
+      font-size: 13px;
+    }
+
+    main { padding: 24px 16px 44px; }
+
+    .notice {
+      background: #f0f5ff;
+      border: 1px solid #cbdcff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      color: #29466f;
+      font-size: 13px;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      box-shadow: 0 8px 28px rgba(16, 43, 80, .05);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .panel h2 {
+      font-size: 17px;
+      margin: 0;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    form {
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #ccd6e3;
+      border-radius: 9px;
+      font: inherit;
+      background: white;
+      color: var(--text);
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button, .link {
+      display: inline-block;
+      border: 0;
+      border-radius: 9px;
+      background: var(--blue);
+      color: white;
+      padding: 11px 15px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    button:disabled {
+      opacity: .65;
+      cursor: wait;
+    }
+
+    .secondary {
+      background: #edf2fa;
+      color: var(--navy);
+      border: 1px solid #dce5f1;
+    }
+
+    .danger {
+      background: #fff0ef;
+      color: var(--red);
+      border: 1px solid #ffd3cf;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    #message {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 9px;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    #message.show { display: block; }
+    #message.error { background: #fff0ef; color: var(--red); }
+    #message.success { background: #e8f7ee; color: var(--green); }
+
+    .beneficiary {
+      padding: 17px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .beneficiary:last-child { border-bottom: 0; }
+
+    .beneficiary strong {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .destination {
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .beneficiary-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .empty {
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 600px) {
+      .beneficiary { flex-direction: column; }
+      .beneficiary-actions { width: 100%; }
+      .beneficiary-actions button { flex: 1; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div>
+    <h1>AlpsCoinChain Investment</h1>
+    <p>My Beneficiaries · Client portal</p>
+  </div>
+</header>
+
+<main>
+  <div class="notice">
+    <strong>Security reminder:</strong>
+    Save only the beneficiary details required for your intended
+    requests. Never enter passwords, wallet recovery phrases, or
+    private keys. Saving a beneficiary does not transfer money or
+    authorize a withdrawal.
+  </div>
+
+  <div class="actions">
+    <a class="link secondary" href="/client-dashboard.html">
+      Back to dashboard
+    </a>
+
+    <a class="link secondary" href="/fund-requests.html">
+      Deposit &amp; withdrawal requests
+    </a>
+
+    <button class="secondary" id="refresh" type="button">
+      Refresh list
+    </button>
+  </div>
+
+  <div id="message" role="status" aria-live="polite"></div>
+
+  <section class="panel">
+    <h2 id="form-title">Add a beneficiary</h2>
+
+    <form id="beneficiary-form">
+      <label>
+        Beneficiary name
+        <input
+          name="beneficiary_name"
+          type="text"
+          minlength="2"
+          maxlength="100"
+          autocomplete="off"
+          required
+        >
+      </label>
+
+      <label>
+        Asset code
+        <input
+          name="asset"
+          type="text"
+          minlength="2"
+          maxlength="20"
+          placeholder="e.g. TEST"
+          autocomplete="off"
+          required
+        >
+      </label>
+
+      <label>
+        Destination or reference
+        <textarea
+          name="destination"
+          minlength="2"
+          maxlength="500"
+          placeholder="Enter a test destination or reference"
+          autocomplete="off"
+          required
+        ></textarea>
+      </label>
+
+      <p class="muted">
+        Double-check the destination before saving. This page stores
+        beneficiary details only; it does not verify a destination
+        or process transactions.
+      </p>
+
+      <div class="actions" style="margin:0">
+        <button id="save-button" type="submit">
+          Save beneficiary
+        </button>
+
+        <button
+          id="cancel-edit"
+          class="secondary hidden"
+          type="button"
+        >
+          Cancel edit
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Your saved beneficiaries</h2>
+
+    <div id="beneficiary-list">
+      <div class="empty">Checking your sign-in session…</div>
+    </div>
+  </section>
+
+  <p class="muted" style="text-align:center">
+    You can manage only beneficiaries associated with your account.
+    Database access policies enforce ownership.
+  </p>
+</main>
+
+<script type="module">
+  import { createClient } from
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+  const supabase = createClient(
+    "https://uevofmlzpwrdidjnwxfd.supabase.co",
+    "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB"
+  );
+
+  const $ = id => document.getElementById(id);
+
+  let currentUser = null;
+  let editingId = null;
+  let busy = false;
+
+  function showMessage(text, type = "success") {
+    const message = $("message");
+    message.textContent = text;
+    message.className = "show " + type;
+  }
+
+  function clearMessage() {
+    $("message").textContent = "";
+    $("message").className = "";
+  }
+
+  function setBusy(value) {
+    busy = value;
+    $("save-button").disabled = value;
+    $("refresh").disabled = value;
+    $("save-button").textContent = value
+      ? "Please wait…"
+      : editingId
+        ? "Update beneficiary"
+        : "Save beneficiary";
+  }
+
+  async function requireSession() {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) throw error;
+
+    if (!data.session) {
+      window.location.replace("/login");
+      return null;
+    }
+
+    return data.session.user;
+  }
+
+  function resetForm() {
+    editingId = null;
+    $("beneficiary-form").reset();
+    $("form-title").textContent = "Add a beneficiary";
+    $("save-button").textContent = "Save beneficiary";
+    $("cancel-edit").classList.add("hidden");
+  }
+
+  function createTextElement(tag, className, text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    element.textContent = text;
+    return element;
+  }
+
+  async function loadBeneficiaries() {
+    if (!currentUser) return;
+
+    $("refresh").disabled = true;
+
+    const list = $("beneficiary-list");
+    list.replaceChildren();
+
+    try {
+      const { data, error } = await supabase
+        .from("beneficiaries")
+        .select(
+          "id,beneficiary_name,destination,asset,created_at,updated_at"
+        )
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        list.appendChild(
+          createTextElement(
+            "div",
+            "empty",
+            "You have not saved any beneficiaries yet."
+          )
+        );
+        return;
+      }
+
+      for (const beneficiary of data) {
+        const card = document.createElement("article");
+        card.className = "beneficiary";
+
+        const details = document.createElement("div");
+
+        details.appendChild(
+          createTextElement(
+            "strong",
+            "",
+            beneficiary.beneficiary_name
+          )
+        );
+
+        details.appendChild(
+          createTextElement(
+            "div",
+            "muted",
+            "Asset: " + beneficiary.asset
+          )
+        );
+
+        details.appendChild(
+          createTextElement(
+            "div",
+            "destination",
+            beneficiary.destination
+          )
+        );
+
+        const actions = document.createElement("div");
+        actions.className = "beneficiary-actions";
+
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.className = "secondary";
+        editButton.textContent = "Edit";
+
+        editButton.addEventListener("click", () => {
+          if (busy) return;
+
+          editingId = beneficiary.id;
+
+          const form = $("beneficiary-form");
+          form.elements.beneficiary_name.value =
+            beneficiary.beneficiary_name;
+          form.elements.asset.value = beneficiary.asset;
+          form.elements.destination.value =
+            beneficiary.destination;
+
+          $("form-title").textContent = "Edit beneficiary";
+          $("save-button").textContent = "Update beneficiary";
+          $("cancel-edit").classList.remove("hidden");
+
+          clearMessage();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "danger";
+        deleteButton.textContent = "Delete";
+
+        deleteButton.addEventListener("click", async () => {
+          if (busy) return;
+
+          const confirmed = window.confirm(
+            "Delete this saved beneficiary? Existing requests will remain, " +
+            "but their beneficiary link may be cleared."
+          );
+
+          if (!confirmed) return;
+
+          await deleteBeneficiary(beneficiary.id);
+        });
+
+        actions.append(editButton, deleteButton);
+        card.append(details, actions);
+        list.appendChild(card);
+      }
+    } catch (error) {
+      console.error("Beneficiary lookup failed:", error);
+
+      list.replaceChildren(
+        createTextElement(
+          "div",
+          "empty",
+          "Could not load beneficiaries. Refresh and try again."
+        )
+      );
+
+      showMessage(
+        "Could not load your saved beneficiaries. Check your connection and try again.",
+        "error"
+      );
+    } finally {
+      $("refresh").disabled = busy;
+    }
+  }
+
+  async function deleteBeneficiary(id) {
+    setBusy(true);
+    clearMessage();
+
+    try {
+      const { data, error } = await supabase
+        .from("beneficiaries")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", currentUser.id)
+        .select("id");
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        throw new Error(
+          "The beneficiary was not deleted. Refresh the page and try again."
+        );
+      }
+
+      if (editingId === id) resetForm();
+
+      showMessage(
+        "Beneficiary deleted. No transaction or transfer was made."
+      );
+
+      await loadBeneficiaries();
+    } catch (error) {
+      console.error("Beneficiary deletion failed:", error);
+
+      showMessage(
+        error.message ||
+          "Could not delete this beneficiary. Please try again.",
+        "error"
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveBeneficiary(event) {
+    event.preventDefault();
+
+    if (busy || !currentUser) return;
+
+    clearMessage();
+
+    const form = $("beneficiary-form");
+    const fields = new FormData(form);
+
+    const beneficiaryName = String(
+      fields.get("beneficiary_name") || ""
+    ).trim();
+
+    const asset = String(fields.get("asset") || "")
+      .trim()
+      .toUpperCase();
+
+    const destination = String(
+      fields.get("destination") || ""
+    ).trim();
+
+    if (beneficiaryName.length < 2 ||
+        beneficiaryName.length > 100) {
+      showMessage(
+        "The beneficiary name must be between 2 and 100 characters.",
+        "error"
+      );
+      return;
+    }
+
+    if (!/^[A-Z0-9._-]{2,20}$/.test(asset)) {
+      showMessage(
+        "Use an asset code containing 2–20 letters, numbers, dots, underscores, or hyphens.",
+        "error"
+      );
+      return;
+    }
+
+    if (destination.length < 2 || destination.length > 500) {
+      showMessage(
+        "The destination must be between 2 and 500 characters.",
+        "error"
+      );
+      return;
+    }
+
+    setBusy(true);
+
+    try {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
+      if (sessionError) throw sessionError;
+
+      if (!sessionData.session ||
+          sessionData.session.user.id !== currentUser.id) {
+        throw new Error(
+          "Your sign-in session changed. Please sign in again."
+        );
+      }
+
+      const row = {
+        user_id: currentUser.id,
+        beneficiary_name: beneficiaryName,
+        asset,
+        destination
+      };
+
+      let result;
+
+      if (editingId) {
+        result = await supabase
+          .from("beneficiaries")
+          .update(row)
+          .eq("id", editingId)
+          .eq("user_id", currentUser.id)
+          .select("id");
+      } else {
+        result = await supabase
+          .from("beneficiaries")
+          .insert(row)
+          .select("id");
+      }
+
+      if (result.error) throw result.error;
+
+      if (!result.data || result.data.length === 0) {
+        throw new Error(
+          "The change was not saved. Check your account permissions and try again."
+        );
+      }
+
+      const wasEditing = Boolean(editingId);
+      resetForm();
+
+      showMessage(
+        wasEditing
+          ? "Beneficiary updated successfully."
+          : "Beneficiary saved successfully."
+      );
+
+      await loadBeneficiaries();
+    } catch (error) {
+      console.error("Beneficiary save failed:", error);
+
+      showMessage(
+        error.message ||
+          "Could not save the beneficiary. Please try again.",
+        "error"
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  $("beneficiary-form").addEventListener(
+    "submit",
+    saveBeneficiary
+  );
+
+  $("cancel-edit").addEventListener("click", () => {
+    if (busy) return;
+    resetForm();
+    clearMessage();
+  });
+
+  $("refresh").addEventListener("click", loadBeneficiaries);
+
+  try {
+    currentUser = await requireSession();
+
+    if (currentUser) {
+      await loadBeneficiaries();
+    }
+  } catch (error) {
+    console.error("Beneficiary page initialization failed:", error);
+
+    $("beneficiary-list").replaceChildren(
+      createTextElement(
+        "div",
+        "empty",
+        "Could not verify your session. Please sign in again."
+      )
+    );
+
+    showMessage(
+      "We could not verify your sign-in session.",
+      "error"
+    );
+  }
+</script>
+</body>
+  </html>
