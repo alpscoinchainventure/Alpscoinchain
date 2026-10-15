@@ -138,7 +138,7 @@
         const { data: profile, error: profileError } =
           await supabaseClient
             .from('profiles')
-            .select('role, account_status')
+            .select('role, account_status, kyc_status')
             .eq('id', data.user.id)
             .maybeSingle();
 
@@ -176,6 +176,10 @@
         }
 
         if (profile.role === 'client') {
+          if (profile.kyc_status !== 'approved') {
+            window.location.replace('/kyc.html');
+            return;
+          }
           window.location.replace('/client-dashboard.html');
           return;
         }
