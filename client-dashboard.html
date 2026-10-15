@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#102e68">
+  <title>Client Dashboard | AlpsCoinChain Investment</title>
+  <style>
+    :root{color-scheme:dark;--bg:#07111f;--panel:rgba(15,29,49,.88);--text:#edf5ff;--muted:#9fb1c8;--primary:#2b7fff;--primary-dark:#1555b8;--border:rgba(148,177,213,.18);--success:#69e0b0;--danger:#ff9d9d;--gold:#e6c889}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 12% 0%,rgba(36,111,190,.22),transparent 38%),radial-gradient(ellipse at 92% 18%,rgba(35,183,154,.12),transparent 32%),linear-gradient(145deg,#07111f 0%,#0a1728 52%,#07101d 100%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.65}
+    header{background:rgba(5,14,26,.82);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);color:#fff;padding:22px 16px;box-shadow:0 12px 40px rgba(0,0,0,.15)}
+    .header-inner,main{width:min(1120px,100%);margin:0 auto}header h1{margin:0;font-size:clamp(21px,3vw,27px);letter-spacing:-.04em;font-weight:750}header p{margin:5px 0 0;color:#a9c6e8;font-size:14px;letter-spacing:.02em}.brand-lockup{display:flex;align-items:center;gap:14px}.brand-mark{width:54px;height:54px;flex:0 0 54px;filter:drop-shadow(0 6px 14px rgba(47,131,255,.18))}.brand-copy{min-width:0}main{padding:28px 16px 48px}
+    .notice{border:1px solid rgba(230,200,137,.35);background:linear-gradient(120deg,rgba(98,73,30,.22),rgba(37,34,28,.45));color:#f1dfb7;border-radius:14px;padding:15px 17px;margin-bottom:22px;box-shadow:inset 0 1px rgba(255,255,255,.03)}
+    .welcome{margin-bottom:23px}.welcome h2{margin:0 0 5px;font-size:clamp(25px,4vw,34px);letter-spacing:-.04em}.muted{color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}.card{background:linear-gradient(145deg,rgba(19,36,59,.94),rgba(12,25,43,.94));border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:0 18px 48px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.035);min-width:0;margin-bottom:18px}.grid .card{margin-bottom:0}.card h3{margin:0 0 14px;font-size:18px;letter-spacing:-.02em}.account-line{margin:10px 0;overflow-wrap:anywhere}.balance{font-size:clamp(21px,3vw,27px);font-weight:750;letter-spacing:-.035em;margin:12px 0;padding:14px 16px;border-radius:12px;background:rgba(4,13,25,.58);border:1px solid rgba(123,161,205,.13);overflow-wrap:anywhere;color:#e5f3ff}.status{display:inline-block;border-radius:20px;padding:4px 11px;background:rgba(36,166,119,.15);color:var(--success);font-size:12px;font-weight:750}
+    #ledger-balance-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}#ledger-balance-list .asset-card{margin:0;min-height:116px;padding:16px;border-radius:14px;background:linear-gradient(145deg,rgba(5,17,31,.9),rgba(12,29,48,.88));border:1px solid rgba(123,161,205,.2);display:flex;flex-direction:column;gap:7px;overflow-wrap:anywhere}#ledger-balance-list .asset-head{display:flex;align-items:center;gap:10px}#ledger-balance-list .asset-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:50%;font-size:11px;font-weight:800;letter-spacing:-.03em;background:rgba(83,145,229,.16);border:1px solid rgba(123,161,205,.25);color:#cfe5ff}#ledger-balance-list .asset-name{font-weight:750;color:#edf5ff;line-height:1.2}#ledger-balance-list .asset-code{font-size:11px;color:var(--muted);letter-spacing:.08em}#ledger-balance-list .asset-amount{font-size:18px;font-weight:800;letter-spacing:-.03em;line-height:1.3;color:#e5f3ff;overflow-wrap:anywhere}#ledger-balance-list .asset-label{font-size:11px;color:var(--muted)}#ledger-balance-list .asset-pending{color:#e6c889;font-size:14px;font-weight:700}#ledger-balance-list .asset-verified{color:var(--success)}
+    .button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.button,button{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(92,157,255,.25);border-radius:10px;padding:11px 15px;background:linear-gradient(135deg,#2b7fff,#1b60cf);color:#fff;text-decoration:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;transition:transform .18s ease,filter .18s ease,background .18s ease}.button:hover,button:hover{filter:brightness(1.12);transform:translateY(-1px)}.button.secondary{background:rgba(137,170,210,.09);border-color:var(--border);color:#d8e8ff}.button.secondary:hover{background:rgba(137,170,210,.16)}button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+    .table-wrap{overflow-x:auto;width:100%;border:1px solid var(--border);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:620px;font-size:13px}th,td{text-align:left;padding:12px 11px;border-bottom:1px solid var(--border);overflow-wrap:anywhere}th{color:#a9bfd9;background:rgba(3,12,23,.45);font-weight:700}td{color:#e0eaf7}tr:last-child td{border-bottom:0}.empty{color:var(--muted);padding:15px 0}
+    label{display:block;margin:12px 0 5px;font-size:14px;font-weight:700;color:#c8d8eb}input,textarea{display:block;width:100%;border:1px solid var(--border);border-radius:10px;padding:12px 13px;font:inherit;background:rgba(3,12,23,.65);color:var(--text)}input:focus,textarea:focus{outline:2px solid rgba(43,127,255,.5);outline-offset:1px}textarea{min-height:110px;resize:vertical}.form-message{margin-top:12px;font-size:14px;overflow-wrap:anywhere}.success-message{color:var(--success)}.error-message{color:var(--danger)}footer{text-align:center;padding:22px 15px;color:#8398b4;font-size:12px;border-top:1px solid var(--border);background:rgba(4,12,22,.45)}[hidden]{display:none!important}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}main{padding:18px 12px 32px}.card{padding:17px}.welcome h2{font-size:25px}#ledger-balance-list{grid-template-columns:1fr}.button-row .button,.button-row button{flex:1 1 100%}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+<header><div class="header-inner brand-lockup"><svg class="brand-mark" viewBox="0 0 64 64" role="img" aria-label="AlpsCoinChain mountain and coin logo" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="accLogoGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#72e5c0"/><stop offset="1" stop-color="#3287ff"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="18" fill="#0b1b30" stroke="#5f9bdb" stroke-opacity=".55"/><circle cx="43" cy="22" r="11" fill="none" stroke="url(#accLogoGrad)" stroke-width="2.5"/><path d="M10 45 24 25l8 11 6-8 15 17H10Z" fill="url(#accLogoGrad)" fill-opacity=".2" stroke="url(#accLogoGrad)" stroke-width="2.5" stroke-linejoin="round"/><path d="M18 45 28 32l5 7 4-5 10 11" fill="none" stroke="#d9f8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="brand-copy"><h1>AlpsCoinChain Investment</h1><p>Client account dashboard</p></div></div></header>
+<main>
+  <section class="welcome"><h2>Welcome to your dashboard</h2><p class="muted">Review your account, recorded portfolio balances, transaction activity, and deposit or withdrawal requests.</p><p id="page-message" role="status" aria-live="polite">Checking your sign-in session…</p></section>
+
+  <div class="grid">
+    <section class="card"><h3>Account information</h3>
+      <p class="account-line"><strong>Email:</strong> <span id="account-email">Loading…</span></p>
+      <p class="account-line"><strong>Account ID:</strong> <span id="account-id">Loading…</span></p>
+      <p class="account-line"><strong>Account status:</strong> <span id="account-status">Checking…</span></p>
+      <p class="account-line"><strong>Account role:</strong> <span id="account-role">Checking…</span></p>
+      <div class="button-row"><a class="button secondary" href="/">Homepage</a><button type="button" id="sign-out-button">Sign out</button></div>
+    </section>
+
+    <section class="card portfolio-card"><h3>Portfolio overview</h3>
+      <p class="muted">Portfolio balances appear only when the ledger service provides an explicit verification status.</p>
+      <div id="ledger-balance-list" aria-live="polite"><p class="balance">Loading…</p></div>
+      <p id="ledger-balance-message" class="muted form-message" role="status" aria-live="polite">Checking your authorized ledger entries…</p>
+      <div class="button-row">
+        <button type="button" id="refresh-balances-button">Refresh balances</button>
+        <a class="button secondary" href="/fund-requests.html">Deposits &amp; Withdrawals</a>
+        <a class="button secondary" href="/beneficiaries.html">My Beneficiaries</a>
+      </div>
+    </section>
+  </div>
+
+  <section class="card"><h3>Deposit &amp; Withdrawal Request History</h3>
+    <p class="muted">These are recorded requests, not proof of payment or completed transfers. Reviewing a request does not automatically change your portfolio balance.</p>
+    <div class="button-row"><button type="button" id="refresh-requests-button">Refresh request history</button></div>
+    <p id="request-history-message" class="form-message" role="status" aria-live="polite">Request history has not been loaded yet.</p>
+    <div class="table-wrap"><table><thead><tr><th>Type</th><th>Amount</th><th>Asset</th><th>Status</th><th>Date</th><th>Reference</th></tr></thead><tbody id="request-history-rows"><tr><td colspan="6" class="empty">Sign in to load your request history.</td></tr></tbody></table></div>
+  </section>
+
+  <section class="card"><h3>Deposits and withdrawals</h3>
+    <p>Submit a deposit or withdrawal request and track its recorded status. Submitting a request does not transfer money or automatically change your ledger balance.</p>
+    <div class="button-row">
+      <a class="button" href="/fund-requests.html">Open request centre</a>
+      <a class="button secondary" href="/beneficiaries.html">Manage beneficiaries</a>
+      <a class="button secondary" href="/fund-request-admin.html" id="admin-requests-link" hidden>Admin request review</a>
+    </div>
+  </section>
+
+  <section class="card"><h3>Identity verification</h3>
+    <p class="muted">Submit your identity document securely for administrator review. You can check your verification status after submitting your document. Approval is subject to administrator review.</p>
+    <div class="button-row"><a class="button" href="/kyc.html">Open identity verification</a></div>
+  </section>
+
+  <section class="card"><h3>Contact support</h3>
+    <p class="muted">Send a message to the support team. Do not include passwords, private keys, recovery phrases, or sensitive payment details.</p>
+    <form id="support-form">
+      <label for="support-subject">Subject</label><input id="support-subject" name="subject" maxlength="120" required placeholder="How can we help?">
+      <label for="support-message">Message</label><textarea id="support-message" name="message" maxlength="3000" required placeholder="Write your message here…"></textarea>
+      <div class="button-row"><button type="submit" id="support-submit-button">Send message</button></div>
+      <p id="support-status" class="form-message" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+</main>
+<footer>AlpsCoinChain Investment Ventures · Client dashboard</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  "use strict";
+  const SUPABASE_URL="https://uevofmlzpwrdidjnwxfd.supabase.co";
+  const SUPABASE_KEY="sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
+  const pageMessage=document.getElementById("page-message"),requestHistoryMessage=document.getElementById("request-history-message"),requestHistoryRows=document.getElementById("request-history-rows"),supportStatus=document.getElementById("support-status"),ledgerBalanceList=document.getElementById("ledger-balance-list"),ledgerBalanceMessage=document.getElementById("ledger-balance-message");
+  let supabaseClient=null,currentUser=null;
+  function setText(id,value){const e=document.getElementById(id);if(e)e.textContent=value===null||value===undefined||value===""?"Not available":String(value)}
+  function showPageMessage(message){pageMessage.textContent=message}
+  function formatDate(value){if(!value)return"Not available";const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString()}
+  function addCell(row,value){const c=document.createElement("td");c.textContent=value===null||value===undefined||value===""?"—":String(value);row.appendChild(c)}
+  function showEmptyRows(tbody,message){tbody.replaceChildren();const row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=6;cell.className="empty";cell.textContent=message;row.appendChild(cell);tbody.appendChild(row)}
+  function formatAmount(value){const amount=Number(value);if(!Number.isFinite(amount))return"Unavailable";return amount.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:8})}
+
+  async function loadProfile(){
+    const result=await supabaseClient.from("profiles").select("role, account_status, kyc_status").eq("id",currentUser.id).maybeSingle();
+    if(result.error){console.error("Profile query failed:",result.error);setText("account-status","Could not load");setText("account-role","Could not load");showPageMessage("We could not verify your KYC status. Please refresh or contact support.");return false}
+    const profile=result.data;
+    if(!profile){setText("account-status","Not available");setText("account-role","Not available");showPageMessage("Your account profile could not be found. Please contact support.");return false}
+    setText("account-status",profile.account_status||"Not available");setText("account-role",profile.role||"Not available");
+    const isActiveAdmin=String(profile.role).toLowerCase()==="admin"&&String(profile.account_status).toLowerCase()==="active";
+    document.getElementById("admin-requests-link").hidden=!isActiveAdmin;
+    if(String(profile.role).toLowerCase()==="client" && String(profile.account_status).toLowerCase()==="active" && profile.kyc_status!=="approved"){
+      window.location.replace("/kyc.html");
+      return false;
+    }
+    return true;
+  }
+
+  async function loadLedgerBalances(){
+    if(!currentUser)return;
+    const refreshButton=document.getElementById("refresh-balances-button");
+    refreshButton.disabled=true;
+    ledgerBalanceList.replaceChildren();
+    const loading=document.createElement("p");loading.className="balance";loading.textContent="Checking ledger…";ledgerBalanceList.appendChild(loading);
+    ledgerBalanceMessage.textContent="Loading your asset portfolio and checking for verified ledger balances…";
+    let timeoutId;
+    const assetNames={
+      BTC:"Bitcoin",ETH:"Ethereum",USDT:"Tether",USDC:"USD Coin",
+      BNB:"BNB",SOL:"Solana",XRP:"XRP",LTC:"Litecoin",
+      DOGE:"Dogecoin",ADA:"Cardano",TRX:"TRON",TON:"Toncoin"
+    };
+    const defaultAssets=["BTC","ETH","USDT","USDC","BNB","SOL","XRP","LTC"];
+    try{
+      const query=supabaseClient.rpc("get_my_ledger_balances");
+      const timeout=new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error("The balance request timed out. Please try again.")),15000)});
+      const result=await Promise.race([query,timeout]);
+      if(result.error)throw result.error;
+      const rows=Array.isArray(result.data)?result.data:[];
+      const verifiedRows=rows.filter(item =>
+        item &&
+        (item.verified===true || item.is_verified===true) &&
+        item.available_balance!==undefined &&
+        item.available_balance!==null &&
+        String(item.asset||"").trim() &&
+        !["TEST","TES"].includes(String(item.asset).trim().toUpperCase()) &&
+        Number.isFinite(Number(item.available_balance))
+      );
+      const verifiedByAsset=new Map();
+      for(const item of verifiedRows){
+        const code=String(item.asset).trim().toUpperCase();
+        verifiedByAsset.set(code,item);
+      }
+      const assets=[...new Set([...defaultAssets,...verifiedByAsset.keys()])];
+      ledgerBalanceList.replaceChildren();
+      for(const code of assets){
+        const item=verifiedByAsset.get(code);
+        const card=document.createElement("article");card.className="asset-card";
+        const head=document.createElement("div");head.className="asset-head";
+        const icon=document.createElement("span");icon.className="asset-icon";icon.textContent=code.length>5?code.slice(0,4):code;icon.setAttribute("aria-hidden","true");
+        const identity=document.createElement("div");
+        const name=document.createElement("div");name.className="asset-name";name.textContent=assetNames[code]||code;
+        const ticker=document.createElement("div");ticker.className="asset-code";ticker.textContent=code;
+        identity.append(name,ticker);head.append(icon,identity);
+        const amount=document.createElement("div");
+        const label=document.createElement("div");label.className="asset-label";
+        if(item){
+          amount.className="asset-amount asset-verified";
+          amount.textContent=formatAmount(item.available_balance)+" "+code;
+          label.textContent="Verified ledger balance";
+        }else{
+          amount.className="asset-pending";
+          amount.textContent="Balance pending verification";
+          label.textContent="No verified balance recorded";
+        }
+        card.append(head,amount,label);ledgerBalanceList.appendChild(card);
+      }
+      ledgerBalanceMessage.textContent=verifiedByAsset.size
+        ? "Verified ledger amounts are shown per asset. Other assets remain pending until reconciled records are verified. A request or approval alone does not confirm that a payment was received."
+        : "Asset cards are ready, but no explicitly verified, reconciled balances are available yet. No amounts are being guessed or displayed as funds.";
+    }catch(error){
+      console.error("Ledger balance loading failed:",error);
+      ledgerBalanceList.replaceChildren();
+      for(const code of defaultAssets){
+        const card=document.createElement("article");card.className="asset-card";
+        const head=document.createElement("div");head.className="asset-head";
+        const icon=document.createElement("span");icon.className="asset-icon";icon.textContent=code;
+        const identity=document.createElement("div");
+        const name=document.createElement("div");name.className="asset-name";name.textContent=assetNames[code]||code;
+        const ticker=document.createElement("div");ticker.className="asset-code";ticker.textContent=code;
+        identity.append(name,ticker);head.append(icon,identity);
+        const amount=document.createElement("div");amount.className="asset-pending";amount.textContent="Balance unavailable";
+        const label=document.createElement("div");label.className="asset-label";label.textContent="Could not verify ledger";
+        card.append(head,amount,label);ledgerBalanceList.appendChild(card);
+      }
+      ledgerBalanceMessage.textContent="We could not verify balances from the ledger service. Please try again later. No balances are inferred from request history.";
+    }finally{
+      if(timeoutId)clearTimeout(timeoutId);
+      refreshButton.disabled=false;
+    }
+  }
+
+  async function loadRequestHistory(){
+    if(!currentUser)return;
+    const refreshButton=document.getElementById("refresh-requests-button");refreshButton.disabled=true;requestHistoryMessage.textContent="Loading request history…";showEmptyRows(requestHistoryRows,"Loading…");
+    let timeoutId;
+    try{
+      const query=supabaseClient.from("fund_requests").select("request_type, amount, asset, status, reference, created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(20);
+      const timeout=new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error("Request history timed out after 15 seconds. Please refresh and try again.")),15000)});
+      const result=await Promise.race([query,timeout]);
+      if(result.error){console.error("Request history query failed:",result.error);showEmptyRows(requestHistoryRows,"Request history could not be loaded.");requestHistoryMessage.textContent="Unable to load request history. Please try again later or contact support.";return}
+      const records=(result.data||[]).filter(item=>!["TEST","TES"].includes(String(item.asset||"").trim().toUpperCase())&&!String(item.reference||"").toUpperCase().includes("TEST"));
+      if(records.length===0){showEmptyRows(requestHistoryRows,"No deposit or withdrawal requests found.");requestHistoryMessage.textContent="No request records were found for this account.";return}
+      requestHistoryRows.replaceChildren();
+      for(const item of records){const row=document.createElement("tr");addCell(row,item.request_type);addCell(row,item.amount);addCell(row,item.asset);addCell(row,item.status);addCell(row,formatDate(item.created_at));addCell(row,item.reference);requestHistoryRows.appendChild(row)}
+      requestHistoryMessage.textContent=records.length+" request record(s) loaded. These are request statuses only; they do not prove payment or a completed transfer.";
+    }catch(error){console.error("Could not load request history:",error);showEmptyRows(requestHistoryRows,"Request history could not be loaded.");requestHistoryMessage.textContent=error.message||"The request history query failed. Please refresh and try again."}
+    finally{if(timeoutId)clearTimeout(timeoutId);refreshButton.disabled=false}
+  }
+
+  async function signOut(){const button=document.getElementById("sign-out-button");button.disabled=true;try{const result=await supabaseClient.auth.signOut();if(result.error)throw result.error;window.location.replace("/login")}catch(error){console.error("Sign-out failed:",error);button.disabled=false;showPageMessage("Could not sign out. Please try again.")}}
+
+  async function submitSupport(event){
+    event.preventDefault();const form=document.getElementById("support-form"),button=document.getElementById("support-submit-button");
+    if(!currentUser||!currentUser.email){supportStatus.textContent="Your sign-in session is unavailable. Please sign in again.";return}
+    const subject=document.getElementById("support-subject").value.trim(),message=document.getElementById("support-message").value.trim();
+    if(!subject||!message){supportStatus.textContent="Please complete both fields.";return}
+    if(subject.length>120||message.length>3000){supportStatus.textContent="Please check the subject and message lengths.";return}
+    const name=currentUser.user_metadata?.full_name||currentUser.user_metadata?.name||currentUser.email;button.disabled=true;supportStatus.textContent="Sending your message…";
+    try{
+      const response=await fetch("/api/contact",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,email:currentUser.email,subject,message})});
+      const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||data.message||"Support message could not be sent.");
+      supportStatus.textContent=data.message||"Your support message was submitted.";supportStatus.className="form-message success-message";form.reset();
+    }catch(error){console.error("Support message submission failed:",error);supportStatus.textContent=error.message||"Could not send the message. Please try again later.";supportStatus.className="form-message error-message"}
+    finally{button.disabled=false}
+  }
+
+  async function startDashboard(){
+    if(!window.supabase||!window.supabase.createClient){showPageMessage("The account service did not load. Check your internet connection and refresh.");return}
+    supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    try{
+      const result=await supabaseClient.auth.getSession();if(result.error)throw result.error;const session=result.data.session;if(!session||!session.user){window.location.replace("/login");return}
+      currentUser=session.user;setText("account-email",currentUser.email);setText("account-id",currentUser.id);showPageMessage("You are signed in.");const profileReady=await loadProfile();if(!profileReady)return;await Promise.all([loadLedgerBalances(),loadRequestHistory()]);
+    }catch(error){console.error("Dashboard initialization failed:",error);showPageMessage("We could not load your account. Please refresh or sign in again.")}
+  }
+
+  document.getElementById("sign-out-button").addEventListener("click",signOut);
+  document.getElementById("refresh-balances-button").addEventListener("click",loadLedgerBalances);
+  document.getElementById("refresh-requests-button").addEventListener("click",loadRequestHistory);
+  document.getElementById("support-form").addEventListener("submit",submitSupport);
+  startDashboard();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Identity Verification | AlpsCoinChain</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#07111f;--panel:#10223a;--line:#2a405b;--text:#edf5ff;--muted:#9fb1c8;--blue:#2f83ff;--green:#75e0b5;--gold:#f0d49b;--red:#ffaaaa}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:24px 14px;background:linear-gradient(145deg,#07111f,#0a1b30);font:16px/1.6 system-ui,sans-serif;color:var(--text)}main{max-width:720px;margin:0 auto}.card{padding:clamp(20px,4vw,32px);background:var(--panel);border:1px solid var(--line);border-radius:18px;margin-bottom:18px}h1{margin:0 0 6px;font-size:clamp(25px,4vw,34px)}h2{font-size:19px;margin-top:0}.muted{color:var(--muted)}.notice{padding:13px 15px;border:1px solid var(--line);border-radius:11px;margin:14px 0;overflow-wrap:anywhere}.notice.success{color:var(--green)}.notice.warning{color:var(--gold)}.notice.error{color:var(--red)}label{display:block;font-weight:700;margin:14px 0 6px;font-size:14px}input,select,button{width:100%;font:inherit;border-radius:10px}input,select{padding:12px 13px;background:#081526;border:1px solid var(--line);color:var(--text)}button{margin-top:18px;padding:13px 16px;background:var(--blue);color:white;border:0;font-weight:750;cursor:pointer}button:disabled{opacity:.55;cursor:wait}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.small{font-size:13px}.links{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}a{color:#a9caff;text-decoration:none}.hidden{display:none!important}#file{padding:10px}@media(max-width:520px){.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main>
+<section class="card">
+<h1>AlpsCoinChain</h1><p class="muted">Identity verification (KYC)</p>
+<div id="sessionNotice" class="notice" role="status" aria-live="polite">Checking your secure session…</div>
+<div id="statusCard" class="notice warning hidden"></div>
+<p class="muted">Your identity information is used for verification. Documents are stored in a private bucket and are not available through public links. Only your account and authorized reviewers can access them.</p>
+</section>
+<section id="formCard" class="card hidden">
+<h2>Submit your identity details</h2>
+<form id="kycForm">
+<label for="legalName">Full legal name (as shown on document)</label>
+<input id="legalName" name="legalName" autocomplete="name" minlength="2" maxlength="160" required>
+<div class="row">
+<div><label for="dob">Date of birth</label><input id="dob" name="dob" type="date" required></div>
+<div><label for="country">Country of residence</label><input id="country" name="country" autocomplete="country-name" maxlength="100" required></div>
+</div>
+<label for="documentType">Identity document type</label>
+<select id="documentType" name="documentType" required>
+<option value="">Choose document type</option><option value="passport">Passport</option><option value="international_id">International ID</option><option value="drivers_license">Driver's licence</option><option value="other">Other</option>
+</select>
+<label for="file">Upload a clear image or PDF of your document</label>
+<input id="file" name="file" type="file" accept="image/jpeg,image/png,application/pdf" required>
+<p class="muted small">Maximum 10 MB. Accepted formats: PDF, JPG, PNG. Do not upload passwords, wallet recovery phrases, private keys, or payment card details.</p>
+<button id="submitButton" type="submit">Submit KYC for review</button>
+</form>
+<div id="formNotice" class="notice hidden" role="status" aria-live="polite"></div>
+</section>
+<section class="card">
+<p class="muted small">You may sign out at any time. Until an administrator approves your KYC, funding requests and other restricted financial features remain unavailable.</p>
+<div class="links"><a href="/login.html">Return to sign in</a><a href="/client-dashboard.html">Client dashboard</a><button id="signOut" type="button" style="width:auto;margin:0;background:#263c57">Sign out</button></div>
+</section>
+</main>
+<script>
+(function(){
+'use strict';
+const URL='https://uevofmlzpwrdidjnwxfd.supabase.co';
+const KEY='sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+const db=window.supabase.createClient(URL,KEY);
+const $=id=>document.getElementById(id);
+let user=null, existing=null;
+function notice(id,text,type=''){const el=$(id);el.textContent=text;el.className='notice'+(type?' '+type:'');el.classList.remove('hidden')}
+function showForm(){ $('formCard').classList.remove('hidden') }
+async function init(){
+ try{
+  const {data,error}=await db.auth.getSession();if(error)throw error;
+  if(!data.session){window.location.replace('/login.html');return}
+  user=data.session.user;
+  const {data:profile,error:profileError}=await db.from('profiles').select('role,account_status,kyc_status').eq('id',user.id).maybeSingle();
+  if(profileError)throw profileError;
+  if(!profile){throw new Error('Your account profile could not be found. Please contact support.')}
+  if(profile.role==='admin'){window.location.replace('/admin-dashboard.html');return}
+  if(profile.account_status!=='active'){throw new Error('Your account is not active. Please contact support.')}
+  const {data:record,error:recordError}=await db.from('kyc_submissions').select('legal_name,date_of_birth,country,document_type,document_storage_path,status,review_note,submitted_at').eq('user_id',user.id).maybeSingle();
+  if(recordError)throw recordError;
+  existing=record;
+  if(record && record.status==='approved'){
+   notice('sessionNotice','Your identity verification is approved.','success');
+   notice('statusCard','KYC approved. Restricted account features may now be available.','success');
+   return;
+  }
+  if(record && record.status!=='rejected'){
+   notice('sessionNotice','Your KYC submission is awaiting administrator review.','warning');
+   notice('statusCard','Status: Pending review. You cannot submit funding requests until approval. Submitted on '+new Date(record.submitted_at).toLocaleString()+'.','warning');
+   return;
+  }
+  notice('sessionNotice',record?'Your previous KYC submission was rejected. Review the note and submit corrected details.':'Your email is verified, but your identity is not yet verified. Complete the form below.','warning');
+  if(record){
+   $('legalName').value=record.legal_name||'';
+   $('dob').value=record.date_of_birth||'';
+   $('country').value=record.country||'';
+   $('documentType').value=record.document_type||'';
+   if(record.review_note)notice('statusCard','KYC rejected: '+record.review_note,'error');
+  } else {notice('statusCard','KYC status: Not submitted. Please complete all required fields.','warning')}
+  showForm();
+ }catch(e){console.error('KYC initialization failed',e);notice('sessionNotice',e.message||'Unable to verify your account. Please refresh or contact support.','error')}
+}
+$('kycForm').addEventListener('submit',async event=>{
+ event.preventDefault();if(!user)return;
+ const file=$('file').files[0],button=$('submitButton');
+ if(!file){notice('formNotice','Please choose your identity document.','error');return}
+ const allowed=['application/pdf','image/jpeg','image/png'];
+ if(!allowed.includes(file.type)||file.size>10*1024*1024){notice('formNotice','Choose a PDF, JPG, or PNG file no larger than 10 MB.','error');return}
+ const dob=$('dob').value;
+ if(!dob||new Date(dob)>=new Date(new Date().toISOString().slice(0,10))){notice('formNotice','Enter a valid date of birth in the past.','error');return}
+ button.disabled=true;button.textContent='Submitting securely…';
+ try{
+  const ext=({ 'application/pdf':'pdf','image/jpeg':'jpg','image/png':'png'})[file.type];
+  const path=user.id+'/'+crypto.randomUUID()+'.'+ext;
+  const upload=await db.storage.from('kyc-documents').upload(path,file,{upsert:false,contentType:file.type});
+  if(upload.error)throw upload.error;
+  const save=await db.rpc('submit_kyc',{
+   p_legal_name:$('legalName').value.trim(),
+   p_date_of_birth:dob,
+   p_country:$('country').value.trim(),
+   p_document_type:$('documentType').value,
+   p_document_storage_path:path
+  });
+  if(save.error)throw save.error;
+  notice('formNotice','Your KYC details and document were submitted securely. Your status remains pending until an administrator completes the review.','success');
+  notice('sessionNotice','KYC submitted — awaiting administrator review.','warning');
+  $('formCard').classList.add('hidden');
+  notice('statusCard','KYC pending review. You cannot submit funding requests until approval.','warning');
+ }catch(e){console.error('KYC submission failed',e);notice('formNotice','Submission failed: '+(e.message||'Please try again or contact support.'),'error')}
+ finally{button.disabled=false;button.textContent='Submit KYC for review'}
+});
+$('signOut').addEventListener('click',async()=>{const {error}=await db.auth.signOut();if(error){notice('sessionNotice','Sign out failed. Please try again.','error');return}window.location.replace('/login.html')});
+init();
+})();
+</script></body></html>
