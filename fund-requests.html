@@ -24,15 +24,15 @@
 <header>
   <div>
     <h1>AlpsCoinChain Investment</h1>
-    <p>Deposit and withdrawal request tracking · Test environment</p>
+    <p>Deposit and withdrawal request tracking</p>
   </div>
 </header>
 
 <main>
   <div class="notice">
-    <strong>Test environment only.</strong>
-    This page records requests for review. It does not move money,
-    confirm deposits, execute withdrawals, or calculate a balance.
+    <strong>Important:</strong>
+    This page records requests for review. It does not itself move money,
+    confirm deposits, execute withdrawals, or change your balance.
     Never enter passwords, recovery phrases, or private keys.
   </div>
 
@@ -62,7 +62,7 @@
           Asset code
           <input name="asset" type="text"
             minlength="2" maxlength="20"
-            placeholder="e.g. TEST" required>
+            placeholder="e.g. USDT" required>
         </label>
 
         <p class="muted">
@@ -94,13 +94,13 @@
         <label>
           Destination or reference
           <input name="destination" type="text"
-            maxlength="500" placeholder="Test destination only"
+            maxlength="500" placeholder="Wallet address or destination reference"
             required>
         </label>
 
         <p class="muted">
           A request is not a promise or confirmation of payout.
-          Do not use this page for a real transfer.
+          Check destination details carefully before submitting.
         </p>
 
         <button type="submit">Submit withdrawal request</button>
@@ -192,7 +192,12 @@
 
       if (error) throw error;
 
-      if (!data || data.length === 0) {
+      const visibleRequests = (data || []).filter(request =>
+        !["TEST", "TES"].includes(String(request.asset || "").trim().toUpperCase()) &&
+        !String(request.reference || "").toUpperCase().includes("TEST")
+      );
+
+      if (visibleRequests.length === 0) {
         const empty = document.createElement("div");
         empty.className = "empty";
         empty.textContent = "You have not submitted any requests yet.";
@@ -200,7 +205,7 @@
         return;
       }
 
-      for (const request of data) {
+      for (const request of visibleRequests) {
         const item = document.createElement("article");
         item.className = "request";
 
@@ -289,7 +294,7 @@
 
     if (type === "withdrawal" && !destination) {
       showMessage(
-        "Enter a test destination or reference for the request.",
+        "Enter a destination or reference for the withdrawal request.",
         "error"
       );
       return;
@@ -311,6 +316,7 @@
         request_type: type,
         amount,
         asset,
+        reference: "AC-REQ-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 10).toUpperCase(),
         status: "pending"
       };
 
@@ -326,7 +332,7 @@
 
       showMessage(
         "Your " + type +
-        " request was saved as pending. This is tracking only; no money has moved."
+        " request was saved as pending for review. No transfer has been executed automatically."
       );
 
       form.reset();
