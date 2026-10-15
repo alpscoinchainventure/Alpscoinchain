@@ -206,26 +206,6 @@ app.get('/fund-request-admin.html', (req, res) => {
 // Serve static files without automatically serving index.html.
 app.use(express.static(__dirname, { index: false }));
 
-// Temporary diagnostic route.
-app.get('/dashboard-test', (req, res) => {
-  res.set('Cache-Control', 'no-store');
-
-  res.status(200).type('html').send(
-    '<!DOCTYPE html>' +
-    '<html lang="en">' +
-    '<head>' +
-    '<meta charset="UTF-8">' +
-    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-    '<title>Dashboard Test</title>' +
-    '</head>' +
-    '<body style="font-family:Arial,sans-serif;padding:30px;color:#142b4a">' +
-    '<h1>AlpsCoinChain Test Page Works</h1>' +
-    '<p>The server is returning HTML correctly.</p>' +
-    '</body>' +
-    '</html>'
-  );
-});
-
 /*
  * Support contact endpoint.
  * 1. Send the support request to the support inbox.
