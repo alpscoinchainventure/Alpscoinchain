@@ -188,6 +188,7 @@
       color: var(--text);
       background: #24334b;
       cursor: pointer;
+      min-height: 42px;
     }
 
     button:hover {
@@ -275,12 +276,6 @@
       min-width: 0;
     }
 
-    .balance-value {
-      font-size: 21px;
-      font-weight: bold;
-      overflow-wrap: anywhere;
-    }
-
     footer {
       margin-top: 25px;
       text-align: center;
@@ -313,6 +308,10 @@
 
       .panel {
         padding: 14px;
+      }
+
+      .search-row input {
+        flex: 1 1 100%;
       }
     }
   </style>
@@ -358,9 +357,9 @@
 
     <div class="notice">
       <strong>Financial operations notice:</strong>
-      Record counts and request statuses are not proof of payment.
-      Ledger entries change the recorded accounting balance, but do not
-      independently verify an external payment or transfer.
+      These counts and request statuses are not proof of payment.
+      Ledger entries update recorded accounting balances only. They do not
+      independently verify external payments or transfer money.
     </div>
 
     <!-- CLIENT ACCOUNTS -->
@@ -369,7 +368,7 @@
 
       <p class="muted small">
         Account records are loaded through the administrator profile function.
-        The database must enforce administrator authorization.
+        The database must independently enforce administrator authorization.
       </p>
 
       <div class="search-row">
@@ -398,7 +397,6 @@
               <th>Account status</th>
             </tr>
           </thead>
-
           <tbody id="accountRows"></tbody>
         </table>
       </div>
@@ -411,23 +409,20 @@
       <div class="notice">
         <strong>Important:</strong>
         Use this section only for authorized accounting corrections or
-        transactions that have been independently verified. A ledger entry
-        is not proof that funds were received. Never credit an account based
-        solely on a client's claim or an unverified payment screenshot.
+        independently verified transactions. Never credit an account solely
+        on the basis of an unverified payment screenshot or client claim.
       </div>
 
       <p class="muted small">
         Credits and debits are submitted to the Supabase
-        admin_post_ledger_entry function. The database must enforce active
-        administrator permissions, reference uniqueness, input validation,
-        and overdraft prevention.
+        admin_post_ledger_entry function. The database enforces administrator
+        authorization, reference uniqueness, input validation, and overdraft prevention.
       </p>
 
       <form id="ledgerForm">
         <div class="form-grid">
           <div>
             <label for="ledgerClient">Client account</label>
-
             <select id="ledgerClient" required>
               <option value="">Load accounts first</option>
             </select>
@@ -435,7 +430,6 @@
 
           <div>
             <label for="ledgerType">Entry type</label>
-
             <select id="ledgerType" required>
               <option value="credit">Credit</option>
               <option value="debit">Debit</option>
@@ -444,7 +438,6 @@
 
           <div>
             <label for="ledgerAmount">Amount</label>
-
             <input
               id="ledgerAmount"
               type="number"
@@ -459,7 +452,6 @@
 
           <div>
             <label for="ledgerAsset">Asset symbol</label>
-
             <input
               id="ledgerAsset"
               type="text"
@@ -474,7 +466,6 @@
 
           <div>
             <label for="ledgerReference">Unique reference</label>
-
             <input
               id="ledgerReference"
               type="text"
@@ -488,7 +479,6 @@
 
           <div>
             <label for="ledgerDescription">Reason or description</label>
-
             <input
               id="ledgerDescription"
               type="text"
@@ -515,9 +505,9 @@
       </div>
 
       <p class="muted small">
-        Every successful entry should be recorded in the ledger and audit log
-        by the database function. If a request times out or its result is
-        unclear, check the ledger before retrying with a new reference.
+        Successful entries should be recorded in the ledger and audit log by
+        the database function. If a request times out or the result is unclear,
+        verify the ledger and audit record before retrying.
       </p>
     </section>
 
@@ -576,7 +566,6 @@
               <th>Actions</th>
             </tr>
           </thead>
-
           <tbody id="depositReviewRows"></tbody>
         </table>
       </div>
@@ -589,44 +578,32 @@
       <div class="management-grid">
         <div class="management-item">
           <strong>Client accounts</strong>
-          <span class="muted small">
-            Search visible profile IDs and roles.
-          </span>
+          <span class="muted small">Search visible profile IDs and roles.</span>
         </div>
 
         <div class="management-item">
           <strong>Ledger</strong>
-          <span class="muted small">
-            Submit authorized credits and debits through the database function.
-          </span>
+          <span class="muted small">Submit authorized credits and debits through the database function.</span>
         </div>
 
         <div class="management-item">
           <strong>Deposits</strong>
-          <span class="muted small">
-            Test deposit review is available above. It does not credit balances.
-          </span>
+          <span class="muted small">Test deposit review is available above. It does not credit balances.</span>
         </div>
 
         <div class="management-item">
           <strong>Withdrawals</strong>
-          <span class="muted small">
-            Withdrawal processing is not enabled in this version.
-          </span>
+          <span class="muted small">Withdrawal processing is not enabled in this version.</span>
         </div>
 
         <div class="management-item">
           <strong>Transactions</strong>
-          <span class="muted small">
-            Review the visible test transaction records below.
-          </span>
+          <span class="muted small">Review the visible test transaction records below.</span>
         </div>
 
         <div class="management-item">
           <strong>Security and audit</strong>
-          <span class="muted small">
-            Database policies and audit records must remain authoritative.
-          </span>
+          <span class="muted small">Database policies and audit records must remain authoritative.</span>
         </div>
       </div>
     </section>
@@ -635,9 +612,7 @@
     <section class="panel">
       <h2>Recent test transactions</h2>
 
-      <p class="muted small">
-        Up to 10 test transaction records visible to this account.
-      </p>
+      <p class="muted small">Up to 10 test transaction records visible to this account.</p>
 
       <div class="table-wrap">
         <table>
@@ -651,7 +626,6 @@
               <th>Status</th>
             </tr>
           </thead>
-
           <tbody id="transactionRows"></tbody>
         </table>
       </div>
@@ -690,10 +664,12 @@
       let dashboardUser = null;
       let reviewInProgress = false;
       let ledgerSubmissionInProgress = false;
+      let dashboardRefreshInProgress = false;
+      let profileLoadInProgress = false;
+      let depositLoadInProgress = false;
 
       function setNotice(id, message, type = '') {
         const element = $(id);
-
         element.textContent = message;
         element.className = 'notice' + (type ? ' ' + type : '');
       }
@@ -702,9 +678,7 @@
         const cell = document.createElement('td');
 
         cell.textContent =
-          value === null ||
-          value === undefined ||
-          value === ''
+          value === null || value === undefined || value === ''
             ? '—'
             : String(value);
 
@@ -721,6 +695,10 @@
           : date.toLocaleString();
       }
 
+      function normalizeId(value) {
+        return String(value || '').toLowerCase();
+      }
+
       function renderAccounts() {
         const query = $('accountSearch').value.trim().toLowerCase();
         const body = $('accountRows');
@@ -729,7 +707,7 @@
 
         const filtered = visibleProfiles.filter((profile) => {
           return (
-            String(profile.id || '').toLowerCase().includes(query) ||
+            normalizeId(profile.id).includes(query) ||
             String(profile.role || '').toLowerCase().includes(query) ||
             String(profile.account_status || '').toLowerCase().includes(query)
           );
@@ -751,10 +729,8 @@
 
         for (const profile of clientProfiles) {
           const option = document.createElement('option');
-
           option.value = profile.id;
           option.textContent = profile.id;
-
           clientSelect.appendChild(option);
         }
 
@@ -782,7 +758,10 @@
 
           addCell(row, profile.id);
           addCell(row, profile.role || 'Unspecified');
-          addCell(row, profile.account_status || 'Not returned by profile function');
+          addCell(
+            row,
+            profile.account_status || 'Not returned by profile function'
+          );
 
           body.appendChild(row);
         }
@@ -790,12 +769,15 @@
         setNotice(
           'accountsNotice',
           'Showing ' + filtered.length + ' of ' +
-          visibleProfiles.length +
-          ' visible profiles. Confirm that the profile function returns all required account fields.'
+          visibleProfiles.length + ' visible profiles.'
         );
       }
 
       async function loadAccounts() {
+        if (profileLoadInProgress) return;
+
+        profileLoadInProgress = true;
+
         const button = $('refreshAccountsButton');
         button.disabled = true;
 
@@ -805,10 +787,6 @@
           const { data, error } = await client.rpc('admin_list_profiles');
 
           if (error) {
-            visibleProfiles = [];
-            $('accountRows').replaceChildren();
-            renderAccounts();
-
             setNotice(
               'accountsNotice',
               'Profiles could not be loaded. Check the admin_list_profiles function and its permissions.',
@@ -819,18 +797,32 @@
             return;
           }
 
-          visibleProfiles = Array.isArray(data) ? data : [];
+          if (!Array.isArray(data)) {
+            setNotice(
+              'accountsNotice',
+              'The profile function returned an unexpected response.',
+              'error'
+            );
+            return;
+          }
+
+          visibleProfiles = data.filter((profile) => {
+            return (
+              profile &&
+              typeof profile.id === 'string' &&
+              typeof profile.role === 'string'
+            );
+          });
 
           renderAccounts();
 
           if (!visibleProfiles.length) {
             setNotice(
               'accountsNotice',
-              'The profile function returned no accounts. Confirm its output and permissions.',
+              'The profile function returned no usable account records.',
               'warning'
             );
           }
-
         } catch (error) {
           setNotice(
             'accountsNotice',
@@ -839,8 +831,8 @@
           );
 
           console.error(error);
-
         } finally {
+          profileLoadInProgress = false;
           button.disabled = false;
         }
       }
@@ -854,24 +846,24 @@
 
         const results = await Promise.all(
           definitions.map(async ({ table, target }) => {
-            const { count, error } = await client
-              .from(table)
-              .select('*', { count: 'exact', head: true });
+            try {
+              const { count, error } = await client
+                .from(table)
+                .select('*', { count: 'exact', head: true });
 
-            if (error) {
+              if (error) {
+                $(target).textContent = '—';
+                console.error('Count query failed for ' + table + ':', error);
+                return table + ': unavailable';
+              }
+
+              $(target).textContent = String(count ?? 0);
+              return null;
+            } catch (error) {
               $(target).textContent = '—';
-
-              console.error(
-                'Count query failed for ' + table + ':',
-                error
-              );
-
+              console.error('Count query exception for ' + table + ':', error);
               return table + ': unavailable';
             }
-
-            $(target).textContent = String(count ?? 0);
-
-            return null;
           })
         );
 
@@ -881,27 +873,27 @@
           setNotice(
             'dashboardNotice',
             'Some test counts could not be loaded: ' +
-            errors.join('; ') +
-            '. Check table names and database policies.',
+            errors.join('; ') + '. Check table names and database policies.',
             'error'
           );
-        } else {
-          setNotice(
-            'dashboardNotice',
-            'Test-record counts refreshed. These are not financial balances.'
-          );
+
+          return false;
         }
+
+        setNotice(
+          'dashboardNotice',
+          'Test-record counts refreshed. These are not financial balances.',
+          'success'
+        );
+
+        return true;
       }
 
       async function loadTransactions() {
         const body = $('transactionRows');
-
         body.replaceChildren();
 
-        setNotice(
-          'transactionsNotice',
-          'Loading test transactions…'
-        );
+        setNotice('transactionsNotice', 'Loading test transactions…');
 
         try {
           const { data, error } = await client
@@ -918,17 +910,16 @@
             );
 
             console.error('Transaction query failed:', error);
-
-            return;
+            return false;
           }
 
-          if (!data || data.length === 0) {
+          if (!Array.isArray(data) || data.length === 0) {
             setNotice(
               'transactionsNotice',
               'No test transaction records are visible to this account.'
             );
 
-            return;
+            return true;
           }
 
           for (const transaction of data) {
@@ -947,9 +938,11 @@
           setNotice(
             'transactionsNotice',
             'Showing ' + data.length +
-            ' visible test transaction record(s).'
+            ' visible test transaction record(s).',
+            'success'
           );
 
+          return true;
         } catch (error) {
           setNotice(
             'transactionsNotice',
@@ -958,10 +951,15 @@
           );
 
           console.error(error);
+          return false;
         }
       }
 
       async function loadPendingTestDeposits() {
+        if (depositLoadInProgress) return;
+
+        depositLoadInProgress = true;
+
         const button = $('refreshDepositsButton');
         const body = $('depositReviewRows');
 
@@ -976,9 +974,7 @@
         try {
           const { data, error } = await client
             .from('test_deposits')
-            .select(
-              'id, user_id, amount, asset, status, reference, created_at'
-            )
+            .select('id, user_id, amount, asset, status, reference, created_at')
             .eq('status', 'pending')
             .order('created_at', { ascending: false })
             .limit(50);
@@ -990,21 +986,17 @@
               'error'
             );
 
-            console.error(
-              'Pending test deposit query failed:',
-              error
-            );
-
-            return;
+            console.error('Pending test deposit query failed:', error);
+            return false;
           }
 
-          if (!data || data.length === 0) {
+          if (!Array.isArray(data) || data.length === 0) {
             setNotice(
               'depositReviewNotice',
               'No pending test deposit requests are visible.'
             );
 
-            return;
+            return true;
           }
 
           for (const deposit of data) {
@@ -1019,11 +1011,9 @@
 
             const actionCell = document.createElement('td');
             const actions = document.createElement('div');
-
             actions.className = 'action-buttons';
 
             const approveButton = document.createElement('button');
-
             approveButton.type = 'button';
             approveButton.className = 'primary';
             approveButton.textContent = 'Approve TEST';
@@ -1033,7 +1023,6 @@
             });
 
             const rejectButton = document.createElement('button');
-
             rejectButton.type = 'button';
             rejectButton.className = 'danger-button';
             rejectButton.textContent = 'Reject TEST';
@@ -1054,6 +1043,7 @@
             ' pending TEST request(s). Reviews do not change client balances.'
           );
 
+          return true;
         } catch (error) {
           setNotice(
             'depositReviewNotice',
@@ -1062,9 +1052,10 @@
           );
 
           console.error(error);
-
+          return false;
         } finally {
-          button.disabled = false;
+          depositLoadInProgress = false;
+          button.disabled = reviewInProgress;
         }
       }
 
@@ -1072,12 +1063,7 @@
         if (reviewInProgress) return;
 
         if (decision !== 'approved' && decision !== 'rejected') {
-          setNotice(
-            'depositReviewNotice',
-            'Invalid review decision.',
-            'error'
-          );
-
+          setNotice('depositReviewNotice', 'Invalid review decision.', 'error');
           return;
         }
 
@@ -1098,7 +1084,6 @@
               'A reason is required to reject a request.',
               'error'
             );
-
             return;
           }
         } else {
@@ -1120,10 +1105,9 @@
             button.disabled = true;
           });
 
-        setNotice(
-          'depositReviewNotice',
-          'Submitting review to Supabase…'
-        );
+        setNotice('depositReviewNotice', 'Submitting review to Supabase…');
+
+        let reviewConfirmed = false;
 
         try {
           const { data, error } = await client.rpc(
@@ -1138,13 +1122,12 @@
           if (error) {
             setNotice(
               'depositReviewNotice',
-              'Review failed: ' + error.message +
-              '. Refresh the request list before trying again.',
+              'Review was not confirmed: ' + error.message +
+              '. Refresh the list and check the request status before retrying.',
               'error'
             );
 
             console.error('Test deposit review failed:', error);
-
             return;
           }
 
@@ -1152,8 +1135,8 @@
             !data ||
             data.success !== true ||
             data.balance_credited !== false ||
-            data.request_id !== depositId ||
-            data.status !== decision
+            normalizeId(data.request_id) !== normalizeId(depositId) ||
+            String(data.status || '').toLowerCase() !== decision
           ) {
             setNotice(
               'depositReviewNotice',
@@ -1161,39 +1144,35 @@
               'error'
             );
 
-            console.error(
-              'Unexpected test deposit review response:',
-              data
-            );
-
+            console.error('Unexpected test deposit review response:', data);
             return;
           }
 
+          reviewConfirmed = true;
+
           setNotice(
             'depositReviewNotice',
-            'Test request ' + data.status +
-            ' successfully. No client balance was changed.',
+            'TEST request ' + decision +
+            ' confirmed by Supabase. No client balance was changed.',
             'success'
           );
-
-          await Promise.all([
-            loadPendingTestDeposits(),
-            loadCounts()
-          ]);
-
         } catch (error) {
           setNotice(
             'depositReviewNotice',
-            'An unexpected error occurred during review. Refresh the list and check the request status before retrying.',
+            'The result of the review is uncertain. Refresh the request list and check its status before retrying.',
             'error'
           );
 
           console.error(error);
-
         } finally {
           reviewInProgress = false;
-          $('refreshDepositsButton').disabled = false;
           $('refreshButton').disabled = false;
+          $('refreshDepositsButton').disabled = false;
+        }
+
+        if (reviewConfirmed) {
+          await loadPendingTestDeposits();
+          await loadCounts();
         }
       }
 
@@ -1211,22 +1190,12 @@
         const description = $('ledgerDescription').value.trim();
 
         if (!clientId) {
-          setNotice(
-            'ledgerNotice',
-            'Select a client account before submitting.',
-            'error'
-          );
-
+          setNotice('ledgerNotice', 'Select a client account before submitting.', 'error');
           return;
         }
 
         if (entryType !== 'credit' && entryType !== 'debit') {
-          setNotice(
-            'ledgerNotice',
-            'Select a valid entry type.',
-            'error'
-          );
-
+          setNotice('ledgerNotice', 'Select a valid entry type.', 'error');
           return;
         }
 
@@ -1235,12 +1204,7 @@
           !Number.isFinite(amount) ||
           amount <= 0
         ) {
-          setNotice(
-            'ledgerNotice',
-            'Enter a valid amount greater than zero.',
-            'error'
-          );
-
+          setNotice('ledgerNotice', 'Enter a valid amount greater than zero.', 'error');
           return;
         }
 
@@ -1250,7 +1214,6 @@
             'The asset symbol must contain 2–12 letters or numbers.',
             'error'
           );
-
           return;
         }
 
@@ -1260,7 +1223,6 @@
             'The reference must contain between 3 and 120 characters.',
             'error'
           );
-
           return;
         }
 
@@ -1270,7 +1232,6 @@
             'Enter a reason of no more than 1,000 characters.',
             'error'
           );
-
           return;
         }
 
@@ -1280,14 +1241,14 @@
 
         if (
           !selectedProfile ||
-          String(selectedProfile.role || '').toLowerCase() !== 'client'
+          String(selectedProfile.role || '').toLowerCase() !== 'client' ||
+          String(selectedProfile.account_status || '').toLowerCase() !== 'active'
         ) {
           setNotice(
             'ledgerNotice',
-            'The selected account is not confirmed as a client in the loaded profile list.',
+            'Select an active client account from the refreshed profile list.',
             'error'
           );
-
           return;
         }
 
@@ -1328,46 +1289,49 @@
           if (error) {
             setNotice(
               'ledgerNotice',
-              'The ledger function returned an error: ' +
-              error.message +
+              'The ledger entry was not confirmed: ' + error.message +
               '. Check the ledger and audit records before retrying.',
               'error'
             );
 
             console.error('Ledger entry submission failed:', error);
-
             return;
           }
 
-          if (data && data.success === false) {
+          const responseMatches =
+            data &&
+            data.success === true &&
+            normalizeId(data.user_id) === normalizeId(clientId) &&
+            String(data.entry_type || '').toLowerCase() === entryType &&
+            Number(data.amount) === amount &&
+            String(data.asset || '').toUpperCase() === asset &&
+            String(data.reference || '') === reference &&
+            typeof data.entry_id === 'string' &&
+            data.entry_id.length > 0;
+
+          if (!responseMatches) {
             setNotice(
               'ledgerNotice',
-              data.message ||
-              data.error ||
-              'The database did not confirm the ledger operation.',
+              'The database response did not contain all expected confirmation fields. Check the ledger and audit records before retrying.',
               'error'
             );
 
-            console.error(
-              'Ledger operation was not successful:',
-              data
-            );
-
+            console.error('Unexpected ledger response:', data);
             return;
           }
 
           setNotice(
             'ledgerNotice',
-            'The database call completed without returning an error. Verify the ledger entry and audit record before treating this operation as confirmed.',
+            'Ledger entry confirmed. Entry ID: ' + data.entry_id +
+            '. This updates the recorded accounting ledger only; it does not verify or transfer external funds.',
             'success'
           );
 
           /*
-           * Deliberately do not automatically retry or submit another entry.
-           * A unique reference is used to prevent duplicate ledger postings.
+           * Reset only after the database returns a matching success response.
+           * Never automatically repeat an uncertain financial operation.
            */
           $('ledgerForm').reset();
-
         } catch (error) {
           setNotice(
             'ledgerNotice',
@@ -1376,7 +1340,6 @@
           );
 
           console.error('Ledger submission exception:', error);
-
         } finally {
           ledgerSubmissionInProgress = false;
           button.disabled = false;
@@ -1384,6 +1347,9 @@
       }
 
       async function refreshDashboard() {
+        if (dashboardRefreshInProgress) return;
+
+        dashboardRefreshInProgress = true;
         $('refreshButton').disabled = true;
 
         try {
@@ -1393,7 +1359,6 @@
             loadTransactions(),
             loadPendingTestDeposits()
           ]);
-
         } catch (error) {
           setNotice(
             'dashboardNotice',
@@ -1402,17 +1367,36 @@
           );
 
           console.error(error);
-
         } finally {
+          dashboardRefreshInProgress = false;
           $('refreshButton').disabled = false;
         }
       }
 
+      async function signOut() {
+        const button = $('signOutButton');
+        button.disabled = true;
+
+        try {
+          const { error } = await client.auth.signOut();
+
+          if (error) throw error;
+
+          window.location.replace('/login');
+        } catch (error) {
+          setNotice(
+            'sessionNotice',
+            'Sign-out failed. Please try again.',
+            'error'
+          );
+
+          console.error(error);
+          button.disabled = false;
+        }
+      }
+
       async function init() {
-        setNotice(
-          'sessionNotice',
-          'Verifying administrator session…'
-        );
+        setNotice('sessionNotice', 'Verifying administrator session…');
 
         if (
           !window.supabase ||
@@ -1462,18 +1446,14 @@
               'error'
             );
 
-            console.error(
-              'Administrator role check failed:',
-              profileError
-            );
-
+            console.error('Administrator role check failed:', profileError);
             return;
           }
 
           if (
             !profile ||
-            String(profile.role).toLowerCase() !== 'admin' ||
-            String(profile.account_status).toLowerCase() !== 'active'
+            String(profile.role || '').toLowerCase() !== 'admin' ||
+            String(profile.account_status || '').toLowerCase() !== 'active'
           ) {
             setNotice(
               'sessionNotice',
@@ -1483,7 +1463,6 @@
 
             await client.auth.signOut();
             window.location.replace('/login');
-
             return;
           }
 
@@ -1497,70 +1476,21 @@
             'success'
           );
 
-          $('refreshButton').addEventListener(
-            'click',
-            refreshDashboard
-          );
-
-          $('refreshAccountsButton').addEventListener(
-            'click',
-            loadAccounts
-          );
-
+          $('refreshButton').addEventListener('click', refreshDashboard);
+          $('refreshAccountsButton').addEventListener('click', loadAccounts);
           $('refreshDepositsButton').addEventListener(
             'click',
             loadPendingTestDeposits
           );
+          $('accountSearch').addEventListener('input', renderAccounts);
+          $('ledgerForm').addEventListener('submit', submitLedgerEntry);
+          $('signOutButton').addEventListener('click', signOut);
 
-          $('accountSearch').addEventListener(
-            'input',
-            renderAccounts
-          );
-
-          $('ledgerForm').addEventListener(
-            'submit',
-            submitLedgerEntry
-          );
-
-          $('resetLedgerButton').addEventListener(
-            'click',
-            () => {
-              setNotice(
-                'ledgerNotice',
-                'The ledger form has been cleared.'
-              );
-            }
-          );
-
-          $('signOutButton').addEventListener(
-            'click',
-            async () => {
-              $('signOutButton').disabled = true;
-
-              try {
-                const { error: signOutError } =
-                  await client.auth.signOut();
-
-                if (signOutError) throw signOutError;
-
-                window.location.replace('/login');
-
-              } catch (error) {
-                setNotice(
-                  'sessionNotice',
-                  'Sign-out failed. Please try again.',
-                  'error'
-                );
-
-                console.error(error);
-
-                $('signOutButton').disabled = false;
-              }
-            }
-          );
+          $('resetLedgerButton').addEventListener('click', () => {
+            setNotice('ledgerNotice', 'The ledger form has been cleared.');
+          });
 
           await refreshDashboard();
-
         } catch (error) {
           setNotice(
             'sessionNotice',
