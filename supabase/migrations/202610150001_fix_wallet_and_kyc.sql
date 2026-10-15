@@ -75,4 +75,8 @@ create policy "Owners and admins can read KYC documents"
     )
   );
 
+-- Ensure authenticated browser clients have table privileges; RLS still controls each row.
+grant select, insert, update, delete on public.deposit_wallet_addresses to authenticated;
+grant select, insert, update on public.kyc_submissions to authenticated;
+
 notify pgrst, 'reload schema';
