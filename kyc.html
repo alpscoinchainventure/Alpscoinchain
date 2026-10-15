@@ -29,11 +29,11 @@
 </div>
 <label for="documentType">Identity document type</label>
 <select id="documentType" name="documentType" required>
-<option value="">Choose document type</option><option value="passport">Passport</option><option value="national_id">National identity card</option><option value="drivers_license">Driver's licence</option>
+<option value="">Choose document type</option><option value="passport">Passport</option><option value="international_id">International ID</option><option value="drivers_license">Driver's licence</option><option value="other">Other</option>
 </select>
 <label for="file">Upload a clear image or PDF of your document</label>
-<input id="file" name="file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required>
-<p class="muted small">Maximum 10 MB. Accepted formats: PDF, JPG, PNG, WebP. Do not upload passwords, wallet recovery phrases, private keys, or payment card details.</p>
+<input id="file" name="file" type="file" accept="image/jpeg,image/png,application/pdf" required>
+<p class="muted small">Maximum 10 MB. Accepted formats: PDF, JPG, PNG. Do not upload passwords, wallet recovery phrases, private keys, or payment card details.</p>
 <button id="submitButton" type="submit">Submit KYC for review</button>
 </form>
 <div id="formNotice" class="notice hidden" role="status" aria-live="polite"></div>
@@ -63,7 +63,7 @@ async function init(){
   if(!profile){throw new Error('Your account profile could not be found. Please contact support.')}
   if(profile.role==='admin'){window.location.replace('/admin-dashboard.html');return}
   if(profile.account_status!=='active'){throw new Error('Your account is not active. Please contact support.')}
-  const {data:record,error:recordError}=await db.from('kyc_submissions').select('legal_name,date_of_birth,country,document_type,document_storage_path,status,review_note,created_at').eq('user_id',user.id).maybeSingle();
+  const {data:record,error:recordError}=await db.from('kyc_submissions').select('legal_name,date_of_birth,country,document_type,document_storage_path,status,review_note,submitted_at').eq('user_id',user.id).maybeSingle();
   if(recordError)throw recordError;
   existing=record;
   if(record && record.status==='approved'){
@@ -73,7 +73,7 @@ async function init(){
   }
   if(record && record.status!=='rejected'){
    notice('sessionNotice','Your KYC submission is awaiting administrator review.','warning');
-   notice('statusCard','Status: Pending review. You cannot submit funding requests until approval. Submitted on '+new Date(record.created_at).toLocaleString()+'.','warning');
+   notice('statusCard','Status: Pending review. You cannot submit funding requests until approval. Submitted on '+new Date(record.submitted_at).toLocaleString()+'.','warning');
    return;
   }
   notice('sessionNotice',record?'Your previous KYC submission was rejected. Review the note and submit corrected details.':'Your email is verified, but your identity is not yet verified. Complete the form below.','warning');
@@ -91,15 +91,15 @@ $('kycForm').addEventListener('submit',async event=>{
  event.preventDefault();if(!user)return;
  const file=$('file').files[0],button=$('submitButton');
  if(!file){notice('formNotice','Please choose your identity document.','error');return}
- const allowed=['application/pdf','image/jpeg','image/png','image/webp'];
- if(!allowed.includes(file.type)||file.size>10*1024*1024){notice('formNotice','Choose a PDF, JPG, PNG, or WebP file no larger than 10 MB.','error');return}
+ const allowed=['application/pdf','image/jpeg','image/png'];
+ if(!allowed.includes(file.type)||file.size>10*1024*1024){notice('formNotice','Choose a PDF, JPG, or PNG file no larger than 10 MB.','error');return}
  const dob=$('dob').value;
  if(!dob||new Date(dob)>=new Date(new Date().toISOString().slice(0,10))){notice('formNotice','Enter a valid date of birth in the past.','error');return}
  button.disabled=true;button.textContent='Submitting securely…';
  try{
-  const ext=({ 'application/pdf':'pdf','image/jpeg':'jpg','image/png':'png','image/webp':'webp'})[file.type];
+  const ext=({ 'application/pdf':'pdf','image/jpeg':'jpg','image/png':'png'})[file.type];
   const path=user.id+'/'+crypto.randomUUID()+'.'+ext;
-  const upload=await db.storage.from('kyc-private').upload(path,file,{upsert:false,contentType:file.type});
+  const upload=await db.storage.from('kyc-documents').upload(path,file,{upsert:false,contentType:file.type});
   if(upload.error)throw upload.error;
   const save=await db.rpc('submit_kyc',{
    p_legal_name:$('legalName').value.trim(),
