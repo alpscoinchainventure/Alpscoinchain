@@ -498,8 +498,14 @@
     currentUser = await getSessionUser();
 
     if (currentUser) {
-      await loadBeneficiaries();
-      await loadRequests();
+      // Load the administrator-configured receiving addresses before the client
+      // selects a network. Without this call, depositWallets stays empty even
+      // when an active BTC wallet exists in the database.
+      await Promise.all([
+        loadDepositWallets(),
+        loadBeneficiaries(),
+        loadRequests()
+      ]);
     }
   } catch (error) {
     console.error("Request page initialization failed:", error);
