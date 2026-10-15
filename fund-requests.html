@@ -156,7 +156,21 @@
       return null;
     }
 
-    return data.session.user;
+    const user = data.session.user;
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role,account_status,kyc_status")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profileError) throw profileError;
+    if (!profile || profile.account_status !== "active") {
+      throw new Error("An active account is required. Please contact support.");
+    }
+    if (profile.role === "client" && profile.kyc_status !== "approved") {
+      window.location.replace("/kyc.html");
+      return null;
+    }
+    return user;
   }
 
   async function loadRequests() {
