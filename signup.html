@@ -144,7 +144,7 @@
 
     <p class="links">
       Already have an account?
-      <a href="login.html">Sign in</a>
+      <a href="/login.html">Sign in</a>
     </p>
   </main>
 
@@ -166,7 +166,7 @@
 
     document.getElementById("backButton").addEventListener(
       "click", function () {
-        window.location.href = "login.html";
+        window.location.href = "/login.html";
       }
     );
 
@@ -211,7 +211,7 @@
             options: {
               data: { full_name: fullName },
               emailRedirectTo:
-                window.location.origin + "/auth-callback.html"
+                window.location.origin + "/login.html"
             }
           });
 
