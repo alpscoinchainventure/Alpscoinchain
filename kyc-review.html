@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>KYC Review | AlpsCoinChain</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#07111f;--panel:#10223a;--line:#2a405b;--text:#edf5ff;--muted:#9fb1c8;--blue:#2f83ff;--green:#75e0b5;--red:#ffaaaa;--gold:#f0d49b}*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#07111f,#0a1b30);color:var(--text);font:15px/1.6 system-ui,sans-serif;padding:20px 12px}main{max-width:1100px;margin:auto}header,.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}h1{margin:0 0 5px;font-size:clamp(24px,4vw,32px)}h2{font-size:19px;margin:0 0 12px}.muted{color:var(--muted)}.notice{padding:12px;border:1px solid var(--line);border-radius:10px;margin:12px 0;overflow-wrap:anywhere}.notice.error{color:var(--red)}.notice.success{color:var(--green)}.notice.warning{color:var(--gold)}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}button,a.button{font:inherit;border-radius:9px;padding:10px 14px;border:1px solid var(--line);background:#263c57;color:var(--text);cursor:pointer;text-decoration:none}button.primary{background:#17694f;border-color:#248566}button.reject{background:#512a32;border-color:#8d4650}button:disabled{opacity:.55;cursor:wait}.entry{border:1px solid var(--line);border-radius:13px;padding:17px;margin:12px 0;background:#0a192a}.entry-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px}.field{overflow-wrap:anywhere}.field strong{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.field span{overflow-wrap:anywhere}textarea{display:block;width:100%;min-height:70px;margin-top:12px;padding:10px;background:#071526;border:1px solid var(--line);border-radius:9px;color:var(--text);font:inherit}.status{display:inline-block;border-radius:20px;padding:3px 10px;color:var(--gold);background:#40351e;font-size:12px;font-weight:750}.status.approved{color:var(--green);background:#123b31}.status.rejected{color:var(--red);background:#43232a}.small{font-size:12px}@media(max-width:600px){.entry-grid{grid-template-columns:1fr}header,.panel{padding:15px}}
+</style></head><body><main>
+<header><h1>KYC Review Centre</h1><p class="muted">Review identity submissions. Approvals update the account KYC status; funding requests remain blocked until approval.</p><div id="sessionNotice" class="notice">Verifying administrator access…</div><div class="toolbar"><a class="button" href="/admin-dashboard.html">Admin dashboard</a><button id="refresh" type="button">Refresh submissions</button><button id="signOut" type="button">Sign out</button></div></header>
+<section class="panel"><h2>Identity submissions</h2><p class="muted small">Documents are private. The review link is short-lived. Review identity documents only for authorized verification and follow your retention policy.</p><div id="listNotice" class="notice">Loading submissions…</div><div id="entries"></div></section>
+</main>
+<script>
+(function(){
+'use strict';
+const db=window.supabase.createClient('https://uevofmlzpwrdidjnwxfd.supabase.co','sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB');
+const $=id=>document.getElementById(id);let admin=false,busy=false;
+function notice(id,text,type=''){const el=$(id);el.textContent=text;el.className='notice'+(type?' '+type)}
+function field(label,value){const box=document.createElement('div');box.className='field';const strong=document.createElement('strong');strong.textContent=label;const span=document.createElement('span');span.textContent=value||'—';box.append(strong,span);return box}
+function button(text,cls,fn){const b=document.createElement('button');b.type='button';b.textContent=text;if(cls)b.className=cls;b.addEventListener('click',fn);return b}
+async function load(){
+ if(!admin)return;busy=true;$('refresh').disabled=true;notice('listNotice','Loading KYC submissions…');$('entries').replaceChildren();
+ try{
+  const {data,error}=await db.from('kyc_submissions').select('user_id,legal_name,date_of_birth,country,document_type,document_storage_path,status,review_note,created_at,reviewed_at').order('created_at',{ascending:false}).limit(200);
+  if(error)throw error;
+  if(!data||!data.length){notice('listNotice','No KYC submissions found.');return}
+  notice('listNotice',data.length+' submission(s) loaded.');
+  for(const rec of data){
+   const card=document.createElement('article');card.className='entry';
+   const top=document.createElement('div');top.style.display='flex';top.style.justifyContent='space-between';top.style.gap='10px';top.style.flexWrap='wrap';
+   const title=document.createElement('h2');title.textContent=rec.legal_name;title.style.margin='0';
+   const status=document.createElement('span');status.className='status '+rec.status;status.textContent=rec.status;
+   top.append(title,status);
+   const grid=document.createElement('div');grid.className='entry-grid';
+   grid.append(field('Account ID',rec.user_id),field('Date of birth',rec.date_of_birth),field('Country',rec.country),field('Document type',rec.document_type),field('Submitted',new Date(rec.created_at).toLocaleString()),field('Last review',rec.reviewed_at?new Date(rec.reviewed_at).toLocaleString():'Not reviewed'),field('Review note',rec.review_note));
+   card.append(top,grid);
+   const actions=document.createElement('div');actions.className='toolbar';
+   actions.appendChild(button('Open private document','',async()=>{
+    const {data:link,error}=await db.storage.from('kyc-private').createSignedUrl(rec.document_storage_path,60);
+    if(error||!link?.signedUrl){notice('listNotice','Could not create a secure document link. Check private bucket policies.','error');return}
+    window.open(link.signedUrl,'_blank','noopener,noreferrer');
+   }));
+   if(rec.status!=='approved'){
+    const note=document.createElement('textarea');note.maxLength=1000;note.placeholder='Optional review note; required when rejecting';note.setAttribute('aria-label','Review note for '+rec.legal_name);card.appendChild(note);
+    actions.appendChild(button('Approve KYC','primary',()=>review(rec.user_id,'approved',note.value)));
+    actions.appendChild(button('Reject KYC','reject',()=>review(rec.user_id,'rejected',note.value)));
+   }
+   card.appendChild(actions);$('entries').appendChild(card);
+  }
+ }catch(e){console.error('KYC list failed',e);notice('listNotice','Unable to load KYC submissions. '+(e.message||''),'error')}
+ finally{busy=false;$('refresh').disabled=false}
+}
+async function review(userId,decision,note){
+ if(!admin||busy)return;
+ if(decision==='rejected'&&!note.trim()){notice('listNotice','A reason is required when rejecting a KYC submission.','error');return}
+ const label=decision==='approved'?'approve this identity submission':'reject this identity submission';
+ if(!confirm('Are you sure you want to '+label+'?'))return;
+ busy=true;
+ try{
+  const {error}=await db.rpc('admin_review_kyc',{p_user_id:userId,p_decision:decision,p_review_note:note.trim()||null});
+  if(error)throw error;
+  notice('listNotice','KYC '+decision+' successfully. The client profile status has been updated.','success');
+  await load();
+ }catch(e){console.error('KYC review failed',e);notice('listNotice','Review could not be saved. '+(e.message||''),'error')}
+ finally{busy=false}
+}
+async function init(){
+ try{
+  const {data,error}=await db.auth.getSession();if(error)throw error;
+  if(!data.session){window.location.replace('/login.html');return}
+  const {data:profile,error:pe}=await db.from('profiles').select('role,account_status').eq('id',data.session.user.id).maybeSingle();
+  if(pe)throw pe;
+  if(!profile||profile.role!=='admin'||profile.account_status!=='active'){notice('sessionNotice','Access denied. An active administrator account is required.','error');return}
+  admin=true;notice('sessionNotice','Active administrator session verified.','success');await load();
+ }catch(e){console.error(e);notice('sessionNotice','Could not verify administrator access. '+(e.message||''),'error')}
+}
+$('refresh').addEventListener('click',load);
+$('signOut').addEventListener('click',async()=>{await db.auth.signOut();window.location.replace('/login.html')});
+init();
+})();
+</script></body></html>
