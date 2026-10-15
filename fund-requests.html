@@ -160,7 +160,8 @@
 
   const $ = id => document.getElementById(id);
   let currentUser = null;
-  let beneficiaries = [];\n  let depositWallets = [];
+  let beneficiaries = [];
+  let depositWallets = [];
 
   function showMessage(text, type = "success") {
     $("message").textContent = text;
@@ -213,25 +214,48 @@
     const warning = document.createElement("p"); warning.className = "muted"; warning.textContent = "Verify the address and network carefully. This page cannot detect a blockchain payment by itself."; panel.appendChild(warning);
   }
 
+  const SUPPORTED_ASSETS = ["BTC", "ETH", "USDT", "USDC", "BNB", "SOL", "XRP", "LTC"];
+
   async function loadDepositWallets() {
     const select = $("deposit-asset");
+    select.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select asset";
+    select.appendChild(placeholder);
+
+    // Keep asset choices available even before the administrator has configured
+    // receiving addresses. Network selection and submission remain fail-closed.
+    for (const asset of SUPPORTED_ASSETS) {
+      const option = document.createElement("option");
+      option.value = asset;
+      option.textContent = asset;
+      select.appendChild(option);
+    }
+
     try {
       const { data, error } = await supabase.from("deposit_wallet_addresses")
-        .select("asset_code,network,wallet_address,instructions,is_active").eq("is_active", true).order("asset_code").order("network");
+        .select("asset_code,network,wallet_address,instructions,is_active")
+        .eq("is_active", true).order("asset_code").order("network");
       if (error) throw error;
       depositWallets = Array.isArray(data) ? data : [];
-      select.replaceChildren();
-      const placeholder = document.createElement("option"); placeholder.value = "";
-      placeholder.textContent = depositWallets.length ? "Select asset" : "No deposit assets available"; select.appendChild(placeholder);
+      // Include any additional asset codes configured by the administrator.
       for (const asset of [...new Set(depositWallets.map(item => item.asset_code))]) {
-        const option = document.createElement("option"); option.value = asset; option.textContent = asset; select.appendChild(option);
+        if (![...select.options].some(option => option.value === asset)) {
+          const option = document.createElement("option");
+          option.value = asset;
+          option.textContent = asset;
+          select.appendChild(option);
+        }
       }
-      renderDepositNetworks(); renderDepositWallet();
+      renderDepositNetworks();
+      renderDepositWallet();
     } catch (error) {
       console.error("Deposit wallet lookup failed:", error);
-      select.replaceChildren(); const option = document.createElement("option"); option.value = ""; option.textContent = "Deposit addresses unavailable"; select.appendChild(option);
-      $("deposit-network").disabled = true;
-      $("deposit-wallet-panel").textContent = "Deposit address settings are unavailable. Contact support and do not send funds until an official address is displayed.";
+      depositWallets = [];
+      renderDepositNetworks();
+      $("deposit-wallet-panel").textContent =
+        "Asset choices are available, but deposit addresses could not be loaded. Contact support and do not send funds until an official address is displayed.";
     }
   }
 
@@ -360,7 +384,8 @@
     const button = form.querySelector('button[type="submit"]');
     const fields = new FormData(form);
     const amount = Number(fields.get("amount"));
-    const asset = String(fields.get("asset") || "").trim().toUpperCase();\n    const network = type === "deposit" ? String(fields.get("network") || "").trim() : "";
+    const asset = String(fields.get("asset") || "").trim().toUpperCase();
+    const network = type === "deposit" ? String(fields.get("network") || "").trim() : "";
 
     if (!Number.isFinite(amount) || amount <= 0 || amount >= 1000000000000) {
       showMessage("Enter a valid amount greater than zero.", "error");
@@ -438,7 +463,10 @@
     }
   }
 
-  $("deposit-asset").addEventListener("change", renderDepositNetworks);\n  $("deposit-network").addEventListener("change", renderDepositWallet);\n\n  $("deposit-form").addEventListener("submit", event =>
+  $("deposit-asset").addEventListener("change", renderDepositNetworks);
+  $("deposit-network").addEventListener("change", renderDepositWallet);
+
+  $("deposit-form").addEventListener("submit", event =>
     submitRequest(event, "deposit")
   );
 
