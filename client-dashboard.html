@@ -38,7 +38,7 @@
     </section>
 
     <section class="card portfolio-card"><h3>Portfolio overview</h3>
-      <p class="muted">Portfolio balances appear only when the ledger service provides an explicit verification status.</p>
+      <p class="muted">Your recorded balance is shown per asset. Unconfirmed deposits are not included until an administrator verifies receipt and records the credit.</p>
       <div id="ledger-balance-list" aria-live="polite"><p class="balance">Loading…</p></div>
       <p id="ledger-balance-message" class="muted form-message" role="status" aria-live="polite">Checking your authorized ledger entries…</p>
       <div class="button-row">
@@ -163,9 +163,16 @@
           amount.textContent=formatAmount(item.available_balance)+" "+code;
           label.textContent="Verified ledger balance";
         }else{
-          amount.className="asset-pending";
-          amount.textContent="Balance pending verification";
-          label.textContent="No verified balance recorded";
+          const hasUnverifiedEntry=rows.some(entry=>entry&&String(entry.asset||"").trim().toUpperCase()===code);
+          if(hasUnverifiedEntry){
+            amount.className="asset-pending";
+            amount.textContent="Pending verification";
+            label.textContent="Unverified ledger entry exists";
+          }else{
+            amount.className="asset-amount";
+            amount.textContent="0.00 "+code;
+            label.textContent="Current recorded balance";
+          }
         }
         card.append(head,amount,label);ledgerBalanceList.appendChild(card);
       }
