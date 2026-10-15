@@ -101,10 +101,13 @@ $('kycForm').addEventListener('submit',async event=>{
   const path=user.id+'/'+crypto.randomUUID()+'.'+ext;
   const upload=await db.storage.from('kyc-private').upload(path,file,{upsert:false,contentType:file.type});
   if(upload.error)throw upload.error;
-  const payload={user_id:user.id,legal_name:$('legalName').value.trim(),date_of_birth:dob,country:$('country').value.trim(),document_type:$('documentType').value,document_storage_path:path,updated_at:new Date().toISOString()};
-  const save=existing
-   ? await db.from('kyc_submissions').update(payload).eq('user_id',user.id)
-   : await db.from('kyc_submissions').insert(payload);
+  const save=await db.rpc('submit_kyc',{
+   p_legal_name:$('legalName').value.trim(),
+   p_date_of_birth:dob,
+   p_country:$('country').value.trim(),
+   p_document_type:$('documentType').value,
+   p_document_storage_path:path
+  });
   if(save.error)throw save.error;
   notice('formNotice','Your KYC details and document were submitted securely. Your status remains pending until an administrator completes the review.','success');
   notice('sessionNotice','KYC submitted — awaiting administrator review.','warning');
