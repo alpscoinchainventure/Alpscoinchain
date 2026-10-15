@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#102e68">
+  <title>Identity Verification | AlpsCoinChain</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --navy: #102e68;
+      --blue: #173f8a;
+      --background: #f3f6fb;
+      --border: #e2e8f0;
+      --muted: #667085;
+      --success: #18794e;
+      --danger: #b42318;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      color: #172033;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.55;
+    }
+
+    header {
+      background: var(--navy);
+      color: white;
+      padding: 22px 16px;
+    }
+
+    header div,
+    main {
+      width: min(850px, 100%);
+      margin: 0 auto;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    header p {
+      margin: 4px 0 0;
+      color: #dbe7ff;
+      font-size: 14px;
+    }
+
+    main {
+      padding: 22px 16px 40px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 3px 12px rgba(16, 24, 40, 0.04);
+    }
+
+    h2 {
+      font-size: 21px;
+      margin: 0 0 10px;
+    }
+
+    h3 {
+      font-size: 17px;
+      margin: 0 0 8px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .notice {
+      background: #fff8e5;
+      border: 1px solid #f0d48a;
+      color: #684b00;
+      padding: 12px;
+      border-radius: 9px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      font-size: 14px;
+      margin: 14px 0 6px;
+    }
+
+    select,
+    input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: white;
+      font: inherit;
+    }
+
+    button,
+    .button {
+      display: inline-block;
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 15px;
+      background: var(--blue);
+      color: white;
+      text-decoration: none;
+      font: 700 14px Arial, sans-serif;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .button.secondary {
+      background: #e9eef8;
+      color: var(--navy);
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .message {
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .error {
+      color: var(--danger);
+    }
+
+    .success {
+      color: var(--success);
+    }
+
+    .status {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: #e9eef8;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 16px;
+    }
+
+    @media (max-width: 600px) {
+      main {
+        padding: 14px 12px 28px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div>
+      <h1>AlpsCoinChain Investment</h1>
+      <p>Identity verification</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="notice">
+      <strong>Privacy notice:</strong>
+      Identity documents contain sensitive personal information.
+      Only submit a document when you understand why it is requested.
+      Files are stored in a private bucket. Never submit passwords,
+      private keys, or recovery phrases.
+    </div>
+
+    <section class="card">
+      <h2>Verification status</h2>
+
+      <p id="session-message"
+         class="muted"
+         role="status"
+         aria-live="polite">
+        Checking your sign-in session…
+      </p>
+
+      <p id="current-status" hidden>
+        Status: <span class="status" id="status-value"></span>
+      </p>
+
+      <p id="submission-details" class="muted"></p>
+
+      <p id="rejection-reason"
+         class="message error"
+         hidden></p>
+    </section>
+
+    <section class="card" id="form-card" hidden>
+      <h2>Submit identity document</h2>
+
+      <p class="muted">
+        Accepted formats: PDF, JPG/JPEG, or PNG.
+        Maximum file size: 10 MB.
+      </p>
+
+      <form id="kyc-form">
+        <label for="document-type">Document type</label>
+
+        <select id="document-type" required>
+          <option value="">Choose a document type</option>
+          <option value="passport">Passport</option>
+          <option value="national_id">National ID</option>
+          <option value="drivers_license">Driver's licence</option>
+          <option value="other">Other accepted document</option>
+        </select>
+
+        <label for="document-file">Choose document file</label>
+
+        <input
+          id="document-file"
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+          required
+        >
+
+        <div class="row">
+          <button id="submit-button" type="submit">
+            Upload for review
+          </button>
+        </div>
+
+        <p id="form-message"
+           class="message"
+           role="status"
+           aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <h3>What happens next?</h3>
+
+      <p class="muted">
+        Your submission will be marked pending review.
+        An approval records an identity-verification decision;
+        it does not prove funds are available or complete a
+        financial transaction.
+      </p>
+
+      <div class="row">
+        <a class="button secondary" href="/client-dashboard.html">
+          Back to dashboard
+        </a>
+
+        <button type="button" id="sign-out-button">
+          Sign out
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    AlpsCoinChain Investment Ventures · Keep your account credentials private.
+  </footer>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const SUPABASE_URL =
+        "https://uevofmlzpwrdidjnwxfd.supabase.co";
+
+      const SUPABASE_KEY =
+        "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
+
+      const MAX_BYTES = 10 * 1024 * 1024;
+
+      const ALLOWED_TYPES = new Set([
+        "application/pdf",
+        "image/jpeg",
+        "image/png"
+      ]);
+
+      const supabaseClient =
+        window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_KEY
+        );
+
+      const $ = id => document.getElementById(id);
+
+      let currentUser = null;
+
+      function showMessage(id, text, kind = "") {
+        const element = $(id);
+        element.textContent = text;
+        element.className = "message " + kind;
+      }
+
+      function statusLabel(status) {
+        const labels = {
+          pending_review: "Pending review",
+          approved: "Approved",
+          rejected: "Rejected"
+        };
+
+        return labels[status] || "Not available";
+      }
+
+      async function loadVerificationStatus() {
+        const sessionResult =
+          await supabaseClient.auth.getSession();
+
+        if (
+          sessionResult.error ||
+          !sessionResult.data.session
+        ) {
+          window.location.replace("/login.html");
+          return;
+        }
+
+        currentUser = sessionResult.data.session.user;
+
+        $("session-message").textContent =
+          "Signed in as " +
+          (currentUser.email || "your account") +
+          ".";
+
+        const result = await supabaseClient
+          .from("kyc_submissions")
+          .select(
+            "id, document_type, status, rejection_reason, submitted_at"
+          )
+          .eq("user_id", currentUser.id)
+          .maybeSingle();
+
+        if (result.error) {
+          console.error(
+            "Could not load KYC status:",
+            result.error
+          );
+
+          $("session-message").textContent =
+            "Could not load your verification status. " +
+            "Please refresh or contact support.";
+
+          return;
+        }
+
+        const submission = result.data;
+
+        if (!submission) {
+          $("session-message").textContent =
+            "No identity-verification submission was found.";
+
+          $("form-card").hidden = false;
+          return;
+        }
+
+        $("current-status").hidden = false;
+
+        $("status-value").textContent =
+          statusLabel(submission.status);
+
+        $("submission-details").textContent =
+          "Document type: " +
+          submission.document_type.replaceAll("_", " ") +
+          " · Submitted: " +
+          new Date(submission.submitted_at).toLocaleString();
+
+        if (
+          submission.status === "rejected" &&
+          submission.rejection_reason
+        ) {
+          $("rejection-reason").hidden = false;
+
+          $("rejection-reason").textContent =
+            "Reviewer feedback: " +
+            submission.rejection_reason;
+        }
+
+        if (submission.status === "approved") {
+          $("session-message").textContent =
+            "Your submission is marked approved.";
+        } else if (submission.status === "rejected") {
+          $("session-message").textContent =
+            "Your submission was rejected. " +
+            "Please contact support for next steps.";
+        } else {
+          $("session-message").textContent =
+            "Your document has been submitted and is awaiting review.";
+        }
+
+        $("form-card").hidden = true;
+      }
+
+      $("kyc-form").addEventListener(
+        "submit",
+        async event => {
+          event.preventDefault();
+
+          if (!currentUser) {
+            showMessage(
+              "form-message",
+              "Your session is unavailable. Please sign in again.",
+              "error"
+            );
+            return;
+          }
+
+          const documentType =
+            $("document-type").value;
+
+          const file =
+            $("document-file").files[0];
+
+          if (!documentType || !file) {
+            showMessage(
+              "form-message",
+              "Choose a document type and file.",
+              "error"
+            );
+            return;
+          }
+
+          if (!ALLOWED_TYPES.has(file.type)) {
+            showMessage(
+              "form-message",
+              "Unsupported file type. Choose PDF, JPEG, or PNG.",
+              "error"
+            );
+            return;
+          }
+
+          if (
+            file.size <= 0 ||
+            file.size > MAX_BYTES
+          ) {
+            showMessage(
+              "form-message",
+              "The file must be larger than 0 bytes and no more than 10 MB.",
+              "error"
+            );
+            return;
+          }
+
+          const button = $("submit-button");
+          button.disabled = true;
+
+          showMessage(
+            "form-message",
+            "Uploading your document privately…"
+          );
+
+          const extension = {
+            "application/pdf": "pdf",
+            "image/jpeg": "jpg",
+            "image/png": "png"
+          }[file.type];
+
+          const storagePath =
+            currentUser.id +
+            "/" +
+            crypto.randomUUID() +
+            "." +
+            extension;
+
+          let uploadSucceeded = false;
+
+          try {
+            const uploadResult =
+              await supabaseClient
+                .storage
+                .from("kyc-documents")
+                .upload(storagePath, file, {
+                  contentType: file.type,
+                  upsert: false
+                });
+
+            if (uploadResult.error) {
+              throw uploadResult.error;
+            }
+
+            uploadSucceeded = true;
+
+            const insertResult =
+              await supabaseClient
+                .from("kyc_submissions")
+                .insert({
+                  user_id: currentUser.id,
+                  document_type: documentType,
+                  storage_path: storagePath,
+                  status: "pending_review"
+                });
+
+            if (insertResult.error) {
+              console.error(
+                "Could not save KYC submission:",
+                insertResult.error
+              );
+
+              showMessage(
+                "form-message",
+                "The file uploaded, but its submission record could not be saved. Contact support before retrying.",
+                "error"
+              );
+
+              return;
+            }
+
+            showMessage(
+              "form-message",
+              "Your submission was received and is pending review.",
+              "success"
+            );
+
+            $("form-card").hidden = true;
+
+            await loadVerificationStatus();
+
+          } catch (error) {
+            console.error(
+              "KYC upload failed:",
+              error
+            );
+
+            showMessage(
+              "form-message",
+              error.message ||
+              "Upload failed. Please try again or contact support.",
+              "error"
+            );
+
+          } finally {
+            button.disabled = false;
+
+            if (uploadSucceeded) {
+              $("document-file").value = "";
+            }
+          }
+        }
+      );
+
+      $("sign-out-button").addEventListener(
+        "click",
+        async () => {
+          const result =
+            await supabaseClient.auth.signOut();
+
+          if (result.error) {
+            alert(
+              "Sign-out failed. Please try again."
+            );
+            return;
+          }
+
+          window.location.replace("/login.html");
+        }
+      );
+
+      loadVerificationStatus().catch(error => {
+        console.error(
+          "KYC page initialization failed:",
+          error
+        );
+
+        $("session-message").textContent =
+          "Could not initialize verification. " +
+          "Please refresh or contact support.";
+      });
+    })();
+  </script>
+</body>
+</html>
