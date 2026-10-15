@@ -223,11 +223,10 @@
     </p>
 
     <div class="notice warning">
-      <strong>TEST MODE ONLY.</strong>
-      Reviewing, approving, or rejecting a request changes its record only.
-      It does not transfer funds, validate a wallet, or change any balance.
-      A ledger entry must be handled separately through the authorized
-      accounting process.
+      <strong>Important:</strong>
+      Reviewing a request does not itself transfer funds, validate a wallet,
+      or change a balance. Only independently verified transactions should
+      be recorded through the authorized accounting process.
     </div>
 
     <div id="sessionNotice" class="notice" role="status">
@@ -576,13 +575,13 @@
 
       const messages = {
         under_review:
-          'Mark this TEST request as under review? No money will move.',
+          'Mark this request as under review? No money will move.',
 
         approved:
-          'Approve this TEST request record? No funds will transfer and no balance will change.',
+          'Approve this request record? This does not transfer funds or change a balance.',
 
         rejected:
-          'Reject this TEST request record using the note provided? No funds will move.'
+          'Reject this request using the note provided? No money will move.'
       };
 
       if (!confirm(messages[status])) {
