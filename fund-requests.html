@@ -96,11 +96,14 @@
           <input name="amount" type="number" min="0.00000001"
             max="999999999999" step="any" required>
         </label>
-        <label>Asset code
-          <input name="asset" type="text" minlength="2" maxlength="20"
-            placeholder="e.g. USDT" required>
+        <label>Asset
+          <select name="asset" id="deposit-asset" required><option value="">Loading supported assets…</option></select>
         </label>
-        <p class="muted">This creates a pending request only. It does not verify receipt of funds.</p>
+        <label>Network
+          <select name="network" id="deposit-network" required disabled><option value="">Select an asset first</option></select>
+        </label>
+        <div id="deposit-wallet-panel" class="notice" aria-live="polite">Select an asset and network to view the official deposit address.</div>
+        <p class="muted">Send only the selected asset on the exact network shown. Deposits are credited only after receipt is verified and an authorized administrator posts the ledger credit. Never send to a different network.</p>
         <button type="submit">Submit deposit request</button>
       </form>
     </section>
@@ -157,7 +160,7 @@
 
   const $ = id => document.getElementById(id);
   let currentUser = null;
-  let beneficiaries = [];
+  let beneficiaries = [];\n  let depositWallets = [];
 
   function showMessage(text, type = "success") {
     $("message").textContent = text;
@@ -177,6 +180,59 @@
       return null;
     }
     return data.session.user;
+  }
+
+  function renderDepositNetworks() {
+    const asset = $("deposit-asset").value, select = $("deposit-network"), panel = $("deposit-wallet-panel");
+    select.replaceChildren();
+    const matching = depositWallets.filter(wallet => wallet.asset_code === asset && wallet.is_active);
+    if (!asset || !matching.length) {
+      select.disabled = true;
+      const option = document.createElement("option"); option.value = "";
+      option.textContent = asset ? "No active network configured" : "Select an asset first"; select.appendChild(option);
+      panel.textContent = asset ? "No official address is configured for this asset. Contact support before sending funds." : "Select an asset and network to view the official deposit address.";
+      return;
+    }
+    select.disabled = false;
+    const placeholder = document.createElement("option"); placeholder.value = ""; placeholder.textContent = "Select network"; select.appendChild(placeholder);
+    for (const wallet of matching) { const option = document.createElement("option"); option.value = wallet.network; option.textContent = wallet.network; select.appendChild(option); }
+    panel.textContent = "Select a network to view its deposit address.";
+  }
+
+  function renderDepositWallet() {
+    const asset = $("deposit-asset").value, network = $("deposit-network").value, panel = $("deposit-wallet-panel");
+    const wallet = depositWallets.find(item => item.asset_code === asset && item.network === network && item.is_active);
+    panel.replaceChildren();
+    if (!wallet) { panel.textContent = "No active address is configured. Do not send funds; contact support."; return; }
+    const title = document.createElement("strong"); title.textContent = "Official deposit address · " + wallet.asset_code + " · " + wallet.network;
+    const address = document.createElement("div"); address.style.cssText = "overflow-wrap:anywhere;word-break:break-word;margin:8px 0;font-weight:700"; address.textContent = wallet.wallet_address;
+    const copy = document.createElement("button"); copy.type = "button"; copy.className = "secondary"; copy.textContent = "Copy address";
+    copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(wallet.wallet_address); copy.textContent = "Copied"; } catch { copy.textContent = "Copy unavailable — select address to copy"; } });
+    panel.append(title, address, copy);
+    if (wallet.instructions) { const note = document.createElement("p"); note.className = "muted"; note.textContent = wallet.instructions; panel.appendChild(note); }
+    const warning = document.createElement("p"); warning.className = "muted"; warning.textContent = "Verify the address and network carefully. This page cannot detect a blockchain payment by itself."; panel.appendChild(warning);
+  }
+
+  async function loadDepositWallets() {
+    const select = $("deposit-asset");
+    try {
+      const { data, error } = await supabase.from("deposit_wallet_addresses")
+        .select("asset_code,network,wallet_address,instructions,is_active").eq("is_active", true).order("asset_code").order("network");
+      if (error) throw error;
+      depositWallets = Array.isArray(data) ? data : [];
+      select.replaceChildren();
+      const placeholder = document.createElement("option"); placeholder.value = "";
+      placeholder.textContent = depositWallets.length ? "Select asset" : "No deposit assets available"; select.appendChild(placeholder);
+      for (const asset of [...new Set(depositWallets.map(item => item.asset_code))]) {
+        const option = document.createElement("option"); option.value = asset; option.textContent = asset; select.appendChild(option);
+      }
+      renderDepositNetworks(); renderDepositWallet();
+    } catch (error) {
+      console.error("Deposit wallet lookup failed:", error);
+      select.replaceChildren(); const option = document.createElement("option"); option.value = ""; option.textContent = "Deposit addresses unavailable"; select.appendChild(option);
+      $("deposit-network").disabled = true;
+      $("deposit-wallet-panel").textContent = "Deposit address settings are unavailable. Contact support and do not send funds until an official address is displayed.";
+    }
   }
 
   async function loadBeneficiaries() {
@@ -304,7 +360,7 @@
     const button = form.querySelector('button[type="submit"]');
     const fields = new FormData(form);
     const amount = Number(fields.get("amount"));
-    const asset = String(fields.get("asset") || "").trim().toUpperCase();
+    const asset = String(fields.get("asset") || "").trim().toUpperCase();\n    const network = type === "deposit" ? String(fields.get("network") || "").trim() : "";
 
     if (!Number.isFinite(amount) || amount <= 0 || amount >= 1000000000000) {
       showMessage("Enter a valid amount greater than zero.", "error");
@@ -382,7 +438,7 @@
     }
   }
 
-  $("deposit-form").addEventListener("submit", event =>
+  $("deposit-asset").addEventListener("change", renderDepositNetworks);\n  $("deposit-network").addEventListener("change", renderDepositWallet);\n\n  $("deposit-form").addEventListener("submit", event =>
     submitRequest(event, "deposit")
   );
 
