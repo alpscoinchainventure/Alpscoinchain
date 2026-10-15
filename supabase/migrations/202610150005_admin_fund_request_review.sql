@@ -1,7 +1,9 @@
 -- Admin account listing and deposit/withdrawal request review.
 -- Review decisions never move money or create ledger credits.
 
-create or replace function public.admin_list_profiles()
+drop function if exists public.admin_list_profiles();
+
+create function public.admin_list_profiles()
 returns table (id uuid, role text, account_status text)
 language plpgsql
 security definer
