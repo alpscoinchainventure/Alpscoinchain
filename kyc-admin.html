@@ -121,9 +121,7 @@
       cursor: not-allowed;
     }
 
-    input,
-    select,
-    textarea {
+    select {
       display: block;
       width: 100%;
       padding: 11px;
@@ -133,11 +131,6 @@
       background: #0b1220;
       color: var(--text);
       font: inherit;
-    }
-
-    textarea {
-      min-height: 95px;
-      resize: vertical;
     }
 
     label {
@@ -200,12 +193,6 @@
       font-size: 13px;
     }
 
-    hr {
-      border: 0;
-      border-top: 1px solid var(--border);
-      margin: 18px 0;
-    }
-
     @media (max-width: 600px) {
       body {
         padding: 12px;
@@ -256,7 +243,12 @@
       it does not move funds or guarantee financial eligibility.
     </div>
 
-    <section id="message" class="message info" role="status" aria-live="polite">
+    <section
+      id="message"
+      class="message info"
+      role="status"
+      aria-live="polite"
+    >
       Checking administrator access...
     </section>
 
@@ -306,9 +298,7 @@
           Only authorized administrators should access this page.
         </p>
 
-        <div id="submissionList">
-          Loading submissions...
-        </div>
+        <div id="submissionList">Loading submissions...</div>
       </section>
 
       <section class="card">
@@ -354,7 +344,6 @@
       const submissionListEl = document.getElementById("submissionList");
       const statusFilterEl = document.getElementById("statusFilter");
 
-      let currentUser = null;
       let submissions = [];
       let busy = false;
 
@@ -362,10 +351,6 @@
         messageEl.textContent = text;
         messageEl.className = "message " + type;
         messageEl.classList.remove("hidden");
-      }
-
-      function hideMessage() {
-        messageEl.classList.add("hidden");
       }
 
       function makeElement(tag, text, className) {
@@ -405,11 +390,6 @@
         return labels[value] || "Unrecognized document type";
       }
 
-      function shortId(value) {
-        if (!value) return "Unavailable";
-        return value;
-      }
-
       function statusBadge(status) {
         return makeElement(
           "span",
@@ -419,30 +399,24 @@
       }
 
       function setButtonsDisabled(disabled) {
-        document.querySelectorAll("button").forEach((button) => {
+        document.querySelectorAll("button").forEach(button => {
           button.disabled = disabled;
         });
       }
 
       async function verifyAdministrator() {
-        const { data: sessionData, error: sessionError } =
-          await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
 
-        if (sessionError) {
-          throw sessionError;
-        }
+        if (error) throw error;
 
-        const user = sessionData.session?.user;
+        const user = data.session?.user;
 
         if (!user) {
-          currentUser = null;
           adminAreaEl.classList.add("hidden");
           loginRequiredEl.classList.remove("hidden");
           showMessage("Please sign in to continue.", "info");
           return false;
         }
-
-        currentUser = user;
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
@@ -450,9 +424,7 @@
           .eq("id", user.id)
           .maybeSingle();
 
-        if (profileError) {
-          throw profileError;
-        }
+        if (profileError) throw profileError;
 
         if (
           !profile ||
@@ -473,11 +445,6 @@
         loginRequiredEl.classList.add("hidden");
         adminAreaEl.classList.remove("hidden");
 
-        showMessage(
-          "Administrator access confirmed. Loading submissions...",
-          "success"
-        );
-
         return true;
       }
 
@@ -490,9 +457,7 @@
         try {
           const allowed = await verifyAdministrator();
 
-          if (!allowed) {
-            return;
-          }
+          if (!allowed) return;
 
           const { data, error } = await supabase
             .from("kyc_submissions")
@@ -501,27 +466,10 @@
             )
             .order("submitted_at", { ascending: false });
 
-          if (error) {
-            throw error;
-          }
+          if (error) throw error;
 
           submissions = data || [];
-
-          document.getElementById("pendingCount").textContent =
-            submissions.filter(
-              item => item.status === "pending_review"
-            ).length;
-
-          document.getElementById("approvedCount").textContent =
-            submissions.filter(
-              item => item.status === "approved"
-            ).length;
-
-          document.getElementById("rejectedCount").textContent =
-            submissions.filter(
-              item => item.status === "rejected"
-            ).length;
-
+          updateCounts();
           renderSubmissions();
 
           showMessage(
@@ -532,7 +480,7 @@
           console.error("KYC loading error:", error);
 
           showMessage(
-            "Unable to load submissions. Check administrator permissions and the Supabase configuration.",
+            "Unable to load submissions. Check administrator permissions and Supabase configuration.",
             "error"
           );
         } finally {
@@ -541,44 +489,44 @@
         }
       }
 
+      function updateCounts() {
+        document.getElementById("pendingCount").textContent =
+          submissions.filter(item => item.status === "pending_review").length;
+
+        document.getElementById("approvedCount").textContent =
+          submissions.filter(item => item.status === "approved").length;
+
+        document.getElementById("rejectedCount").textContent =
+          submissions.filter(item => item.status === "rejected").length;
+      }
+
       function renderSubmissions() {
         submissionListEl.replaceChildren();
 
         const filter = statusFilterEl.value;
 
-        const visible = submissions.filter((item) => {
-          return filter === "all" || item.status === filter;
-        });
+        const visible = submissions.filter(item =>
+          filter === "all" || item.status === filter
+        );
 
         if (visible.length === 0) {
           submissionListEl.appendChild(
-            makeElement(
-              "p",
-              "No submissions found for this filter.",
-              "muted"
-            )
+            makeElement("p", "No submissions found for this filter.", "muted")
           );
-
           return;
         }
 
-        visible.forEach((item) => {
+        visible.forEach(item => {
           const card = makeElement("article", null, "submission");
 
-          const heading = makeElement("h3", "Identity submission");
-          card.appendChild(heading);
+          card.appendChild(makeElement("h3", "Identity submission"));
 
           const statusLine = makeElement("p", "Status: ");
           statusLine.appendChild(statusBadge(item.status));
           card.appendChild(statusLine);
 
-          card.appendChild(
-            makeElement("p", "Submission ID: " + item.id)
-          );
-
-          card.appendChild(
-            makeElement("p", "Client ID: " + shortId(item.user_id))
-          );
+          card.appendChild(makeElement("p", "Submission ID: " + item.id));
+          card.appendChild(makeElement("p", "Client ID: " + item.user_id));
 
           card.appendChild(
             makeElement(
@@ -588,71 +536,42 @@
           );
 
           card.appendChild(
-            makeElement(
-              "p",
-              "Submitted: " + formatDate(item.submitted_at)
-            )
+            makeElement("p", "Submitted: " + formatDate(item.submitted_at))
           );
 
           if (item.reviewed_at) {
             card.appendChild(
-              makeElement(
-                "p",
-                "Reviewed: " + formatDate(item.reviewed_at)
-              )
+              makeElement("p", "Reviewed: " + formatDate(item.reviewed_at))
             );
           }
 
           if (item.status === "rejected" && item.rejection_reason) {
             card.appendChild(
-              makeElement(
-                "p",
-                "Rejection reason: " + item.rejection_reason
-              )
+              makeElement("p", "Rejection reason: " + item.rejection_reason)
             );
           }
 
           const actions = makeElement("div", null, "actions");
 
-          const viewButton = makeElement(
-            "button",
-            "Open Document"
-          );
-
+          const viewButton = makeElement("button", "Open Document");
           viewButton.type = "button";
-
-          viewButton.addEventListener("click", () => {
-            openDocument(item, viewButton);
-          });
-
+          viewButton.addEventListener("click", () => openDocument(item, viewButton));
           actions.appendChild(viewButton);
 
           if (item.status === "pending_review") {
-            const approveButton = makeElement(
-              "button",
-              "Approve"
-            );
-
+            const approveButton = makeElement("button", "Approve");
             approveButton.type = "button";
-
-            approveButton.addEventListener("click", () => {
-              reviewSubmission(item, "approved");
-            });
-
+            approveButton.addEventListener("click", () =>
+              reviewSubmission(item, "approved")
+            );
             actions.appendChild(approveButton);
 
-            const rejectButton = makeElement(
-              "button",
-              "Reject"
-            );
-
+            const rejectButton = makeElement("button", "Reject");
             rejectButton.type = "button";
             rejectButton.className = "danger";
-
-            rejectButton.addEventListener("click", () => {
-              reviewSubmission(item, "rejected");
-            });
-
+            rejectButton.addEventListener("click", () =>
+              reviewSubmission(item, "rejected")
+            );
             actions.appendChild(rejectButton);
           }
 
@@ -665,10 +584,7 @@
         if (busy) return;
 
         if (!item.storage_path) {
-          showMessage(
-            "This submission has no stored document path.",
-            "error"
-          );
+          showMessage("This submission has no stored document path.", "error");
           return;
         }
 
@@ -680,18 +596,11 @@
 
           if (!allowed) return;
 
-          /*
-           * A short-lived signed URL is created only after the administrator
-           * has been checked. Supabase Storage policies must also authorize
-           * access. Do not publish or share the generated URL.
-           */
           const { data, error } = await supabase.storage
             .from("kyc-documents")
             .createSignedUrl(item.storage_path, 60);
 
-          if (error) {
-            throw error;
-          }
+          if (error) throw error;
 
           if (!data?.signedUrl) {
             throw new Error("No document URL was returned.");
@@ -705,7 +614,7 @@
 
           if (!opened) {
             showMessage(
-              "The browser blocked the document window. Allow pop-ups for this site and try again.",
+              "The browser blocked the document window. Allow pop-ups and try again.",
               "error"
             );
           } else {
@@ -731,24 +640,19 @@
         if (busy) return;
 
         if (item.status !== "pending_review") {
-          showMessage(
-            "Only pending submissions can be reviewed.",
-            "error"
-          );
+          showMessage("Only pending submissions can be reviewed.", "error");
           return;
         }
 
         let rejectionReason = null;
 
         if (decision === "approved") {
-          const confirmed = window.confirm(
+          if (!window.confirm(
             "Confirm that you reviewed this document and want to approve this identity submission?"
-          );
-
-          if (!confirmed) return;
+          )) return;
         } else {
           rejectionReason = window.prompt(
-            "Enter a clear reason for rejecting this submission (3–1000 characters):"
+            "Enter a clear rejection reason (3–1000 characters):"
           );
 
           if (rejectionReason === null) return;
@@ -766,11 +670,9 @@
             return;
           }
 
-          const confirmed = window.confirm(
-            "Confirm rejection of this identity submission?"
-          );
-
-          if (!confirmed) return;
+          if (!window.confirm("Confirm rejection of this identity submission?")) {
+            return;
+          }
         }
 
         busy = true;
@@ -787,27 +689,35 @@
             p_rejection_reason: rejectionReason
           });
 
-          if (error) {
-            throw error;
-          }
-
-          showMessage(
-            "Review saved. The database recorded the " +
-              decision +
-              " decision.",
-            "success"
-          );
+          if (error) throw error;
 
           /*
-           * Reload after the review function completes. The RPC is responsible
-           * for changing status and recording the audit entry.
+           * The database has confirmed success. Update the displayed state
+           * directly instead of calling loadSubmissions while busy is true.
            */
-          await loadSubmissions();
+          submissions = submissions.map(submission =>
+            submission.id === item.id
+              ? {
+                  ...submission,
+                  status: decision,
+                  rejection_reason: rejectionReason,
+                  reviewed_at: new Date().toISOString()
+                }
+              : submission
+          );
+
+          updateCounts();
+          renderSubmissions();
+
+          showMessage(
+            "Review saved. The database recorded the " + decision + " decision.",
+            "success"
+          );
         } catch (error) {
           console.error("KYC review error:", error);
 
           showMessage(
-            "The review could not be saved. Verify the admin_review_kyc function, its permissions, and the audit-table configuration.",
+            "The review could not be saved. Check the admin_review_kyc function, permissions, and audit-table configuration.",
             "error"
           );
         } finally {
@@ -828,17 +738,14 @@
           const { error } = await supabase.auth.signOut();
 
           if (error) {
-            showMessage(
-              "Unable to sign out. Please try again.",
-              "error"
-            );
+            showMessage("Unable to sign out. Please try again.", "error");
             return;
           }
 
           window.location.replace("/login.html");
         });
 
-      supabase.auth.onAuthStateChange((event) => {
+      supabase.auth.onAuthStateChange(event => {
         if (event === "SIGNED_OUT") {
           window.location.replace("/login.html");
         }
