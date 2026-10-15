@@ -398,9 +398,33 @@ app.post('/api/trade', async (req, res) => {
   }
 });
 
+// Canonical and compatibility routes used by existing client-side navigation.
+// Keep both /login and /login.html working so expired sessions return to login,
+// rather than falling through to the public homepage.
+app.get('/login', (req, res) => {
+  res.redirect(302, '/login.html');
+});
+
 // Login page.
 app.get('/login.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+// Friendly aliases for common account routes.
+app.get('/signup', (req, res) => {
+  res.redirect(302, '/signup.html');
+});
+
+app.get('/reset-password', (req, res) => {
+  res.redirect(302, '/reset-password.html');
+});
+
+app.get('/client-dashboard', (req, res) => {
+  res.redirect(302, '/client-dashboard.html');
+});
+
+app.get('/admin-dashboard', (req, res) => {
+  res.redirect(302, '/admin-dashboard.html');
 });
 
 // Password-reset page.
