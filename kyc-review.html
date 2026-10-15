@@ -17,7 +17,7 @@ function button(text,cls,fn){const b=document.createElement('button');b.type='bu
 async function load(){
  if(!admin)return;busy=true;$('refresh').disabled=true;notice('listNotice','Loading KYC submissions…');$('entries').replaceChildren();
  try{
-  const {data,error}=await db.from('kyc_submissions').select('user_id,legal_name,date_of_birth,country,document_type,document_storage_path,status,review_note,created_at,reviewed_at').order('created_at',{ascending:false}).limit(200);
+  const {data,error}=await db.from('kyc_submissions').select('id,user_id,legal_name,date_of_birth,country,document_type,document_storage_path,status,review_note,submitted_at,reviewed_at').order('submitted_at',{ascending:false}).limit(200);
   if(error)throw error;
   if(!data||!data.length){notice('listNotice','No KYC submissions found.');return}
   notice('listNotice',data.length+' submission(s) loaded.');
@@ -28,32 +28,32 @@ async function load(){
    const status=document.createElement('span');status.className='status '+rec.status;status.textContent=rec.status;
    top.append(title,status);
    const grid=document.createElement('div');grid.className='entry-grid';
-   grid.append(field('Account ID',rec.user_id),field('Date of birth',rec.date_of_birth),field('Country',rec.country),field('Document type',rec.document_type),field('Submitted',new Date(rec.created_at).toLocaleString()),field('Last review',rec.reviewed_at?new Date(rec.reviewed_at).toLocaleString():'Not reviewed'),field('Review note',rec.review_note));
+   grid.append(field('Account ID',rec.user_id),field('Date of birth',rec.date_of_birth),field('Country',rec.country),field('Document type',({'international_id':'International ID','drivers_license':"Driver's Licence",'national_id':'Legacy National ID','passport':'Passport','other':'Other'})[rec.document_type]||rec.document_type),field('Submitted',new Date(rec.submitted_at).toLocaleString()),field('Last review',rec.reviewed_at?new Date(rec.reviewed_at).toLocaleString():'Not reviewed'),field('Review note',rec.review_note));
    card.append(top,grid);
    const actions=document.createElement('div');actions.className='toolbar';
    actions.appendChild(button('Open private document','',async()=>{
-    const {data:link,error}=await db.storage.from('kyc-private').createSignedUrl(rec.document_storage_path,60);
+    const {data:link,error}=await db.storage.from('kyc-documents').createSignedUrl(rec.document_storage_path,60);
     if(error||!link?.signedUrl){notice('listNotice','Could not create a secure document link. Check private bucket policies.','error');return}
     window.open(link.signedUrl,'_blank','noopener,noreferrer');
    }));
-   if(rec.status!=='approved'){
+   if(rec.status==='pending_review'){
     const note=document.createElement('textarea');note.maxLength=1000;note.placeholder='Optional review note; required when rejecting';note.setAttribute('aria-label','Review note for '+rec.legal_name);card.appendChild(note);
-    actions.appendChild(button('Approve KYC','primary',()=>review(rec.user_id,'approved',note.value)));
-    actions.appendChild(button('Reject KYC','reject',()=>review(rec.user_id,'rejected',note.value)));
+    actions.appendChild(button('Approve KYC','primary',()=>review(rec.id,'approved',note.value)));
+    actions.appendChild(button('Reject KYC','reject',()=>review(rec.id,'rejected',note.value)));
    }
    card.appendChild(actions);$('entries').appendChild(card);
   }
  }catch(e){console.error('KYC list failed',e);notice('listNotice','Unable to load KYC submissions. '+(e.message||''),'error')}
  finally{busy=false;$('refresh').disabled=false}
 }
-async function review(userId,decision,note){
+async function review(submissionId,decision,note){
  if(!admin||busy)return;
  if(decision==='rejected'&&!note.trim()){notice('listNotice','A reason is required when rejecting a KYC submission.','error');return}
  const label=decision==='approved'?'approve this identity submission':'reject this identity submission';
  if(!confirm('Are you sure you want to '+label+'?'))return;
  busy=true;
  try{
-  const {error}=await db.rpc('admin_review_kyc',{p_user_id:userId,p_decision:decision,p_review_note:note.trim()||null});
+  const {error}=await db.rpc('admin_review_kyc',{p_submission_id:submissionId,p_decision:decision,p_rejection_reason:note.trim()||null});
   if(error)throw error;
   notice('listNotice','KYC '+decision+' successfully. The client profile status has been updated.','success');
   await load();
