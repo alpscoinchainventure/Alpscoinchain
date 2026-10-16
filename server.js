@@ -432,6 +432,11 @@ app.get('/reset-password.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'reset-password.html'));
 });
 
+// Short, consistent administrator entry point.
+app.get('/admin', (req, res) => {
+  res.redirect(302, '/admin-dashboard.html');
+});
+
 // Main website.
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
