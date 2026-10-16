@@ -88,11 +88,11 @@ BEGIN
             IF v_note IS NULL OR length(v_note) < 8 THEN
                 RAISE EXCEPTION 'Enter the independently verified deposit transaction hash or ID before approving';
             END IF;
-            v_description := 'Deposit approved after administrator verification. Transaction hash/ID: ' || v_note;
+            v_description := left('Deposit approved after administrator verification. Transaction hash/ID: ' || v_note, 1000);
         ELSE
             v_description := 'Withdrawal approved; available balance debited. This ledger entry does not confirm that the payout was sent.';
             IF v_note IS NOT NULL THEN
-                v_description := v_description || ' Review note: ' || v_note;
+                v_description := left(v_description || ' Review note: ' || v_note, 1000);
             END IF;
         END IF;
 
