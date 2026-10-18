@@ -307,6 +307,20 @@
         "image/png"
       ]);
 
+      function detectedFileType(file) {
+        const mime = (file.type || "").toLowerCase();
+        if (ALLOWED_TYPES.has(mime)) return mime;
+
+        const extension = (file.name.split(".").pop() || "").toLowerCase();
+        const byExtension = {
+          pdf: "application/pdf",
+          jpg: "image/jpeg",
+          jpeg: "image/jpeg",
+          png: "image/png"
+        };
+        return byExtension[extension] || mime;
+      }
+
       const supabaseClient =
         window.supabase.createClient(
           SUPABASE_URL,
@@ -358,6 +372,8 @@
             "id, document_type, status, rejection_reason, submitted_at"
           )
           .eq("user_id", currentUser.id)
+          .order("submitted_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (result.error) {
@@ -408,16 +424,17 @@
         if (submission.status === "approved") {
           $("session-message").textContent =
             "Your submission is marked approved.";
+          $("form-card").hidden = true;
         } else if (submission.status === "rejected") {
           $("session-message").textContent =
-            "Your submission was rejected. " +
-            "Please contact support for next steps.";
+            "Your previous submission was rejected. Review the feedback above, then upload a corrected document.";
+          $("form-card").hidden = false;
+          $("submit-button").textContent = "Resubmit document for review";
         } else {
           $("session-message").textContent =
             "Your document has been submitted and is awaiting review.";
+          $("form-card").hidden = true;
         }
-
-        $("form-card").hidden = true;
       }
 
       $("kyc-form").addEventListener(
@@ -449,7 +466,9 @@
             return;
           }
 
-          if (!ALLOWED_TYPES.has(file.type)) {
+          const fileType = detectedFileType(file);
+
+          if (!ALLOWED_TYPES.has(fileType)) {
             showMessage(
               "form-message",
               "Unsupported file type. Choose PDF, JPEG, or PNG.",
@@ -482,7 +501,7 @@
             "application/pdf": "pdf",
             "image/jpeg": "jpg",
             "image/png": "png"
-          }[file.type];
+          }[fileType];
 
           const storagePath =
             currentUser.id +
@@ -499,7 +518,7 @@
                 .storage
                 .from("kyc-documents")
                 .upload(storagePath, file, {
-                  contentType: file.type,
+                  contentType: fileType,
                   upsert: false
                 });
 
@@ -517,7 +536,9 @@
                   document_type: documentType,
                   storage_path: storagePath,
                   status: "pending_review"
-                });
+                })
+                .select("id")
+                .single();
 
             if (insertResult.error) {
               console.error(
@@ -525,9 +546,20 @@
                 insertResult.error
               );
 
+              // Avoid leaving an unreferenced identity document in storage.
+              const cleanupResult = await supabaseClient
+                .storage
+                .from("kyc-documents")
+                .remove([storagePath]);
+
+              if (cleanupResult.error) {
+                console.error("Could not clean up unregistered KYC file:", cleanupResult.error);
+              }
+
               showMessage(
                 "form-message",
-                "The file uploaded, but its submission record could not be saved. Contact support before retrying.",
+                "The file uploaded, but the application record could not be saved. Please try again. Details: " +
+                  insertResult.error.message,
                 "error"
               );
 
