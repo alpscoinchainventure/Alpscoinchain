@@ -8,7 +8,7 @@ create table if not exists public.admin_kyc_status_audit (
   admin_id uuid not null references public.profiles(id) on delete restrict,
   submission_id uuid null references public.kyc_submissions(id) on delete set null,
   previous_status text,
-  new_status text not null check (new_status in ('pending', 'approved', 'rejected')),
+  new_status text not null check (new_status in ('pending', 'submitted', 'approved', 'rejected')),
   reason text not null check (char_length(reason) between 3 and 1000),
   documents_verified_externally boolean not null default false,
   created_at timestamptz not null default now()
@@ -92,9 +92,17 @@ begin
       message = 'An active administrator account is required.';
   end if;
 
-  if p_status is null or p_status not in ('pending', 'approved', 'rejected') then
+  if p_status is null or p_status not in ('pending', 'submitted', 'approved', 'rejected') then
     raise exception using errcode = '22023',
-      message = 'KYC status must be pending, approved, or rejected.';
+      message = 'KYC status must be pending, submitted, approved, or rejected.';
+  end if;
+
+  if p_status = 'submitted' and not exists (
+    select 1 from public.kyc_submissions s
+    where s.user_id = p_client_id and s.status = 'pending_review'
+  ) then
+    raise exception using errcode = '22023',
+      message = 'A client can only be marked submitted when a pending KYC application exists.';
   end if;
 
   if v_reason is null or pg_catalog.char_length(v_reason) < 3
