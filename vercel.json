@@ -1,10 +1,26 @@
 {
   "version": 2,
   "builds": [
-    { "src": "server.js", "use": "@vercel/node" }
+    {
+      "src": "server.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "index.html",
+          "login.html",
+          "client-dashboard.html",
+          "reset-password.html",
+          "**/*.html",
+          "**/*.css",
+          "**/*.js",
+          "assets/**",
+          "images/**"
+        ]
+      }
+    }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "server.js" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    { "src": "/(.*)", "dest": "server.js" }
   ]
 }
