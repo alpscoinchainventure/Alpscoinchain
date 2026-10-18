@@ -40,7 +40,7 @@ begin
       message = 'Decision must be approved or rejected.';
   end if;
 
-  v_reason := pg_catalog.nullif(pg_catalog.btrim(p_rejection_reason), '');
+  v_reason := nullif(pg_catalog.btrim(p_rejection_reason), '');
 
   if p_decision = 'rejected'
      and (v_reason is null
