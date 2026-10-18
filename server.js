@@ -203,6 +203,22 @@ app.get('/fund-request-admin.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'fund-request-admin.html'));
 });
 
+// Always revalidate HTML pages. This prevents older cached account pages from
+// leaving stale UI (such as obsolete loading placeholders) after deployments.
+// Static assets may still use normal caching; only HTML documents are affected.
+app.use((req, res, next) => {
+  if (req.path === '/' || req.path.toLowerCase().endsWith('.html') ||
+      ['/login', '/signup', '/reset-password', '/client-dashboard',
+       '/admin-dashboard', '/admin'].includes(req.path)) {
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0'
+    });
+  }
+  next();
+});
+
 // Serve static files without automatically serving index.html.
 app.use(express.static(__dirname, { index: false }));
 
