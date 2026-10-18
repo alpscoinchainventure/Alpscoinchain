@@ -29,6 +29,7 @@ create policy "Active admins read manual KYC status audit"
         and lower(coalesce(p.account_status, '')) = 'active'
     )
   );
+grant select on public.admin_kyc_status_audit to authenticated;
 
 create or replace function public.admin_list_client_kyc_status()
 returns table (
