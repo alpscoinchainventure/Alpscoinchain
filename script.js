@@ -21,7 +21,7 @@ function loadPortfolioState() {
 
         const parsed = JSON.parse(savedState);
         return {
-            balances: { ...defaultState.balances, ...(parsed.balances || {}) },
+            balances: { ...defaultState.balances }, // Never trust locally stored balances as real funds.
             pendingWithdrawals: Array.isArray(parsed.pendingWithdrawals) ? parsed.pendingWithdrawals : [],
             pendingPayments: Array.isArray(parsed.pendingPayments) ? parsed.pendingPayments : [],
             tradeHoldings: parsed.tradeHoldings || {},
