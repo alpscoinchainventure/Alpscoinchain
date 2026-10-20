@@ -1010,3 +1010,28 @@ footer {
         grid-template-columns: 1fr;
     }
 }
+
+/* Funds wallet actions: keep every primary action visible on narrow screens. */
+html { scroll-behavior: smooth; }
+body { overflow-x: hidden; }
+.nav-container { width: 100%; min-width: 0; }
+.nav-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.6rem; }
+.nav-actions button { white-space: nowrap; }
+.vault-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.tab-btn { min-height: 44px; }
+.funds-safety-note, .method-note {
+    color: var(--text-secondary);
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+    line-height: 1.55;
+    font-size: 0.9rem;
+}
+.method-note { margin: 0; }
+@media (max-width: 768px) {
+    .nav-actions { width: 100%; justify-content: center; }
+    .nav-actions button { flex: 1 1 42%; min-width: 0; }
+    .vault-tabs .tab-btn { flex: 1 1 42%; padding: 0.8rem 0.5rem; }
+    .vault-form { padding: 1.25rem; }
+}
