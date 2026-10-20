@@ -1,8 +1,8 @@
 const defaultState = {
     balances: {
-        USDT: 4250,
-        ETH: 2.85,
-        BTC: 0.42
+        USDT: 0,
+        ETH: 0,
+        BTC: 0
     },
     pendingWithdrawals: [],
     pendingPayments: [],
@@ -447,6 +447,8 @@ async function submitTrade(event) {
 document.addEventListener('DOMContentLoaded', function() {
     updateAmountPreview();
     updateWithdrawPreview();
+    updateDepositMethod();
+    updateWithdrawMethod();
     updateBalanceDisplay();
     renderPendingRequests();
     renderTradingPanel();
