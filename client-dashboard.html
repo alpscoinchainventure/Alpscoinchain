@@ -328,6 +328,11 @@
         <h3>Account information</h3>
 
         <p class="account-line">
+          <strong>Name:</strong>
+          <span id="account-full-name">Loading…</span>
+        </p>
+
+        <p class="account-line">
           <strong>Email:</strong>
           <span id="account-email">Loading…</span>
         </p>
@@ -348,7 +353,9 @@
         </p>
 
         <div class="button-row">
-          <a class="button secondary" href="/">Homepage</a>\n          <button type="button" id="sign-out-button">Sign out</button>
+          <button type="button" id="edit-profile-button" class="button">Edit profile</button>
+          <a class="button secondary" href="/">Homepage</a>
+          <button type="button" id="sign-out-button">Sign out</button>
         </div>
       </section>
 
@@ -383,6 +390,20 @@
         </div>
       </section>
     </div>
+
+    <section class="card" id="profile-edit-card" hidden>
+      <h3>Edit profile</h3>
+      <p class="muted">Update your name and basic profile details. Your sign-in email and account permissions cannot be changed here.</p>
+      <form id="profile-edit-form">
+        <label for="profile-full-name">Full name</label>
+        <input id="profile-full-name" name="full_name" type="text" maxlength="120" autocomplete="name" required>
+        <div class="button-row">
+          <button type="submit" id="save-profile-button">Save changes</button>
+          <button type="button" id="cancel-profile-edit-button" class="button secondary">Cancel</button>
+        </div>
+        <p id="profile-edit-message" class="form-message" role="status" aria-live="polite"></p>
+      </form>
+    </section>
 
     <section class="card" id="ledger-history-card">
       <h3>Transaction History</h3>
@@ -619,7 +640,7 @@
       async function loadProfile() {
         const result = await supabaseClient
           .from("profiles")
-          .select("role, account_status")
+          .select("full_name, role, account_status")
           .eq("id", currentUser.id)
           .maybeSingle();
 
@@ -638,6 +659,9 @@
           return;
         }
 
+        setText("account-full-name", profile.full_name || currentUser.user_metadata?.full_name || "Not set");
+        document.getElementById("profile-full-name").value =
+          profile.full_name || currentUser.user_metadata?.full_name || "";
         setText("account-status", profile.account_status || "Not available");
         setText("account-role", profile.role || "Not available");
 
@@ -865,6 +889,73 @@
         }
       }
 
+      function openProfileEditor() {
+        const card = document.getElementById("profile-edit-card");
+        const message = document.getElementById("profile-edit-message");
+        message.textContent = "";
+        message.className = "form-message";
+        card.hidden = false;
+        document.getElementById("profile-full-name").focus();
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function closeProfileEditor() {
+        document.getElementById("profile-edit-card").hidden = true;
+        document.getElementById("profile-edit-message").textContent = "";
+      }
+
+      async function saveProfile(event) {
+        event.preventDefault();
+        const input = document.getElementById("profile-full-name");
+        const button = document.getElementById("save-profile-button");
+        const message = document.getElementById("profile-edit-message");
+        const fullName = input.value.trim();
+
+        if (!currentUser) {
+          message.textContent = "Your sign-in session has expired. Please sign in again.";
+          message.className = "form-message error-message";
+          return;
+        }
+        if (!fullName || fullName.length > 120) {
+          message.textContent = "Enter a name between 1 and 120 characters.";
+          message.className = "form-message error-message";
+          input.focus();
+          return;
+        }
+
+        button.disabled = true;
+        message.textContent = "Saving your profile…";
+        message.className = "form-message";
+
+        try {
+          // Only the authenticated user's own full_name field is submitted.
+          // Role, account status, KYC, email, and financial data are never editable here.
+          const result = await supabaseClient
+            .from("profiles")
+            .update({ full_name: fullName })
+            .eq("id", currentUser.id)
+            .select("full_name")
+            .maybeSingle();
+
+          if (result.error) throw result.error;
+          if (!result.data) {
+            throw new Error("Profile was not updated. Check your profile update permission and try again.");
+          }
+
+          setText("account-full-name", result.data.full_name || fullName);
+          message.textContent = "Profile updated successfully.";
+          message.className = "form-message success-message";
+          window.setTimeout(closeProfileEditor, 1200);
+        } catch (error) {
+          console.error("Profile update failed:", error);
+          message.textContent = error.message ||
+            "We could not save your profile. Please try again.";
+          message.className = "form-message error-message";
+        } finally {
+          button.disabled = false;
+        }
+      }
+
       async function signOut() {
         const button = document.getElementById("sign-out-button");
         button.disabled = true;
@@ -1036,6 +1127,18 @@
           );
         }
       }
+
+      document
+        .getElementById("edit-profile-button")
+        .addEventListener("click", openProfileEditor);
+
+      document
+        .getElementById("cancel-profile-edit-button")
+        .addEventListener("click", closeProfileEditor);
+
+      document
+        .getElementById("profile-edit-form")
+        .addEventListener("submit", saveProfile);
 
       document
         .getElementById("sign-out-button")
