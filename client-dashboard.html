@@ -342,6 +342,93 @@
     }
     footer { color: #8499b4; }
     
+  
+    /* Refreshed public client dashboard visual system; application logic unchanged. */
+    :root {
+      color-scheme: dark;
+      --bg: #071321;
+      --card: #0d1d30;
+      --text: #edf5ff;
+      --muted: #9fb2ca;
+      --primary: #327df0;
+      --primary-dark: #174da7;
+      --border: rgba(155, 188, 229, .19);
+      --success: #61d7a4;
+      --warning: #f2c96d;
+      --danger: #ff8d98;
+    }
+    body {
+      background:
+        radial-gradient(ellipse at 10% 0%, rgba(40, 112, 207, .18), transparent 35%),
+        radial-gradient(ellipse at 90% 18%, rgba(34, 166, 150, .10), transparent 28%),
+        var(--bg);
+      color: var(--text);
+      font-family: "DM Sans", "Segoe UI", Arial, sans-serif;
+    }
+    header {
+      background: rgba(5, 15, 28, .94);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 10px 36px rgba(0,0,0,.18);
+    }
+    header h1 { letter-spacing: -.035em; }
+    header p { color: #aec6e4; }
+    main { padding-top: 30px; }
+    .welcome h2 { color: #f4f8ff; letter-spacing: -.035em; }
+    .muted, .empty { color: var(--muted); }
+    .notice {
+      background: rgba(242, 201, 109, .09);
+      border-color: rgba(242, 201, 109, .35);
+      color: #f7dda0;
+    }
+    .card {
+      background: linear-gradient(145deg, rgba(16, 37, 60, .98), rgba(10, 26, 44, .98));
+      border-color: var(--border);
+      border-radius: 16px;
+      box-shadow: 0 14px 35px rgba(0,0,0,.16), inset 0 1px rgba(255,255,255,.025);
+    }
+    .card h3 { color: #f0f6ff; letter-spacing: -.02em; }
+    .balance { color: #f4f8ff; }
+    .status {
+      background: rgba(97, 215, 164, .12);
+      color: #83e6b8;
+      border: 1px solid rgba(97, 215, 164, .25);
+    }
+    .button, button {
+      border-radius: 10px;
+      background: linear-gradient(135deg, #398bff, #245fc4);
+      box-shadow: 0 7px 18px rgba(28, 99, 211, .15);
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .button:hover, button:hover { background: linear-gradient(135deg, #55a0ff, #2d70dc); transform: translateY(-1px); }
+    .button.secondary {
+      background: rgba(255,255,255,.055);
+      color: #e2edfb;
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+    .button.secondary:hover { background: rgba(255,255,255,.1); }
+    input, textarea {
+      background: #071728;
+      color: #edf5ff;
+      border-color: rgba(155, 188, 229, .25);
+      border-radius: 10px;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: 2px solid rgba(73, 148, 255, .65);
+      outline-offset: 1px;
+    }
+    table { color: #e4eefb; }
+    th { color: #a8bdd7; background: rgba(255,255,255,.045); }
+    th, td { border-bottom-color: var(--border); }
+    a { text-underline-offset: 3px; }
+    footer { color: #8ea5c0; }
+    @media (max-width: 700px) {
+      header { padding: 20px 14px; }
+      header h1 { font-size: 22px; }
+      .welcome h2 { font-size: 23px; }
+      .balance { font-size: 21px; }
+    }
+
   </style>
 </head>
 
