@@ -226,6 +226,83 @@ app.get('/fund-request-admin.html', (req, res) => {
 app.use(express.static(__dirname, { index: false }));
 
 /*
+ * Public market-data proxy. This endpoint exposes only public CoinGecko data.
+ * Asset IDs and chart ranges are allowlisted to avoid arbitrary upstream requests.
+ */
+app.get('/api/market', async (req, res) => {
+  const assetIds = new Set([
+    'bitcoin', 'ethereum', 'tether', 'usd-coin',
+    'binancecoin', 'solana', 'litecoin', 'ripple'
+  ]);
+  const assetId = String(req.query.id || '');
+  const type = String(req.query.type || '');
+
+  if (!assetIds.has(assetId) || !['price', 'chart'].includes(type)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Unsupported market-data request.'
+    });
+  }
+
+  const upstreamUrl = new URL(
+    type === 'price'
+      ? 'https://api.coingecko.com/api/v3/simple/price'
+      : 'https://api.coingecko.com/api/v3/coins/' +
+        encodeURIComponent(assetId) + '/market_chart'
+  );
+
+  if (type === 'price') {
+    upstreamUrl.searchParams.set('ids', assetId);
+    upstreamUrl.searchParams.set('vs_currencies', 'usd');
+    upstreamUrl.searchParams.set('include_24hr_change', 'true');
+  } else {
+    const days = String(req.query.days || '1');
+    if (!['1', '7', '30'].includes(days)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Unsupported chart range.'
+      });
+    }
+    upstreamUrl.searchParams.set('vs_currency', 'usd');
+    upstreamUrl.searchParams.set('days', days);
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const upstream = await fetch(upstreamUrl, {
+      headers: { accept: 'application/json' },
+      signal: controller.signal
+    });
+
+    if (!upstream.ok) {
+      const status = upstream.status === 429 ? 429 : 502;
+      return res.status(status).json({
+        success: false,
+        message: upstream.status === 429
+          ? 'Market data is temporarily rate-limited. Please wait and retry.'
+          : 'The public market-data provider is temporarily unavailable.'
+      });
+    }
+
+    const data = await upstream.json();
+    res.set('Cache-Control', 'public, max-age=20, stale-while-revalidate=40');
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error('Public market-data request failed:', error);
+    return res.status(502).json({
+      success: false,
+      message: error.name === 'AbortError'
+        ? 'The market-data provider took too long to respond.'
+        : 'Could not reach the public market-data provider.'
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+});
+
+/*
  * Support contact endpoint.
  * 1. Send the support request to the support inbox.
  * 2. Set Reply-To to the customer's email.

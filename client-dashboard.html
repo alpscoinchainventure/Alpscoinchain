@@ -202,6 +202,49 @@
     .success-message { color: var(--success); }
     .error-message { color: var(--danger); }
 
+    .market-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .market-toolbar .field { flex: 1 1 170px; min-width: 0; }
+    .market-toolbar label { margin-top: 0; }
+    .market-toolbar select {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #0b1b2d;
+      color: var(--text);
+      font: inherit;
+    }
+    .market-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .market-stat {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      background: rgba(255,255,255,.025);
+    }
+    .market-stat .label { color: var(--muted); font-size: 12px; }
+    .market-stat .value { font-size: clamp(17px, 3vw, 23px); font-weight: 700; overflow-wrap: anywhere; }
+    .market-up { color: #75e4d0; }
+    .market-down { color: #ff9a9a; }
+    .market-chart-wrap { position: relative; width: 100%; min-height: 240px; }
+    #market-chart { display: block; width: 100%; height: 260px; }
+    .market-source { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+    @media (max-width: 520px) {
+      .market-stats { grid-template-columns: 1fr; }
+      #market-chart { height: 220px; }
+    }
+
     footer {
       text-align: center;
       padding: 20px 15px;
@@ -328,6 +371,11 @@
         <h3>Account information</h3>
 
         <p class="account-line">
+          <strong>Name:</strong>
+          <span id="account-full-name">Loading…</span>
+        </p>
+
+        <p class="account-line">
           <strong>Email:</strong>
           <span id="account-email">Loading…</span>
         </p>
@@ -348,7 +396,9 @@
         </p>
 
         <div class="button-row">
-          <a class="button secondary" href="/">Homepage</a>\n          <button type="button" id="sign-out-button">Sign out</button>
+          <button type="button" id="edit-profile-button" class="button">Edit profile</button>
+          <a class="button secondary" href="/">Homepage</a>
+          <button type="button" id="sign-out-button">Sign out</button>
         </div>
       </section>
 
@@ -383,6 +433,70 @@
         </div>
       </section>
     </div>
+
+    <section class="card" id="profile-edit-card" hidden>
+      <h3>Edit profile</h3>
+      <p class="muted">Update your name and basic profile details. Your sign-in email and account permissions cannot be changed here.</p>
+      <form id="profile-edit-form">
+        <label for="profile-full-name">Full name</label>
+        <input id="profile-full-name" name="full_name" type="text" maxlength="120" autocomplete="name" required>
+        <div class="button-row">
+          <button type="submit" id="save-profile-button">Save changes</button>
+          <button type="button" id="cancel-profile-edit-button" class="button secondary">Cancel</button>
+        </div>
+        <p id="profile-edit-message" class="form-message" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="card" id="market-watch-card">
+      <h3>Live Crypto Market Watch</h3>
+      <p class="muted">View public market prices and the recent price trend. These market prices are independent of your recorded portfolio balance and are not investment advice.</p>
+      <div class="market-toolbar">
+        <div class="field">
+          <label for="market-asset">Asset</label>
+          <select id="market-asset">
+            <option value="bitcoin">Bitcoin (BTC)</option>
+            <option value="ethereum">Ethereum (ETH)</option>
+            <option value="tether">Tether (USDT)</option>
+            <option value="usd-coin">USD Coin (USDC)</option>
+            <option value="binancecoin">BNB (BNB)</option>
+            <option value="solana">Solana (SOL)</option>
+            <option value="litecoin">Litecoin (LTC)</option>
+            <option value="ripple">XRP (XRP)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="market-range">Chart range</label>
+          <select id="market-range">
+            <option value="1">Last 24 hours</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+          </select>
+        </div>
+        <button type="button" id="refresh-market-button">Refresh market data</button>
+      </div>
+      <div class="market-stats" aria-live="polite">
+        <div class="market-stat"><div class="label">Latest public price (USD)</div><div class="value" id="market-current-price">Loading…</div></div>
+        <div class="market-stat"><div class="label">24-hour change</div><div class="value" id="market-24h-change">Loading…</div></div>
+        <div class="market-stat"><div class="label">Chart period change</div><div class="value" id="market-period-change">Loading…</div></div>
+      </div>
+      <div class="market-chart-wrap">
+        <canvas id="market-chart" role="img" aria-label="Selected cryptocurrency price history chart">Price chart loads from public market data.</canvas>
+      </div>
+      <p id="market-status" class="form-message" role="status" aria-live="polite">Waiting for public market data…</p>
+      <p class="market-source">Source: CoinGecko public market API. Prices can be delayed, and public API rate limits or network issues may temporarily prevent updates. This chart is informational only.</p>
+    </section>
+
+    <section class="card" id="ledger-history-card">
+      <h3>Transaction History</h3>
+      <p class="muted">Posted ledger transactions that affect your recorded balances. This history refreshes automatically when new ledger entries are recorded. Pending requests appear separately below.</p>
+      <div class="button-row"><button type="button" id="refresh-ledger-history-button">Refresh transaction history</button></div>
+      <p id="ledger-history-message" class="form-message" role="status" aria-live="polite">Transaction history has not been loaded yet.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Type</th><th>Amount</th><th>Asset</th><th>Description</th><th>Reference</th><th>Date</th></tr></thead>
+        <tbody id="ledger-history-rows"><tr><td colspan="6" class="empty">Sign in to load your transaction history.</td></tr></tbody>
+      </table></div>
+    </section>
 
     <section class="card">
       <h3>Deposit &amp; Withdrawal Request History</h3>
@@ -533,6 +647,23 @@
         "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB";
 
       const pageMessage = document.getElementById("page-message");
+      const marketAssetSelect = document.getElementById("market-asset");
+      const marketRangeSelect = document.getElementById("market-range");
+      const marketCanvas = document.getElementById("market-chart");
+      const marketStatus = document.getElementById("market-status");
+      const marketIds = {
+        bitcoin: "BTC",
+        ethereum: "ETH",
+        tether: "USDT",
+        "usd-coin": "USDC",
+        binancecoin: "BNB",
+        solana: "SOL",
+        litecoin: "LTC",
+        ripple: "XRP"
+      };
+      let marketChartPoints = [];
+      let marketResizeObserver = null;
+      let marketRefreshTimer = null;
       const requestHistoryMessage =
         document.getElementById("request-history-message");
       const requestHistoryRows =
@@ -608,7 +739,7 @@
       async function loadProfile() {
         const result = await supabaseClient
           .from("profiles")
-          .select("role, account_status")
+          .select("full_name, role, account_status")
           .eq("id", currentUser.id)
           .maybeSingle();
 
@@ -627,6 +758,9 @@
           return;
         }
 
+        setText("account-full-name", profile.full_name || currentUser.user_metadata?.full_name || "Not set");
+        document.getElementById("profile-full-name").value =
+          profile.full_name || currentUser.user_metadata?.full_name || "";
         setText("account-status", profile.account_status || "Not available");
         setText("account-role", profile.role || "Not available");
 
@@ -708,6 +842,52 @@
         } finally {
           if (timeoutId) clearTimeout(timeoutId);
           refreshButton.disabled = false;
+        }
+      }
+
+      async function loadLedgerHistory() {
+        if (!currentUser) return;
+        const button = document.getElementById("refresh-ledger-history-button");
+        const tbody = document.getElementById("ledger-history-rows");
+        const message = document.getElementById("ledger-history-message");
+        button.disabled = true;
+        message.textContent = "Loading posted transactions…";
+        showEmptyRows(tbody, "Loading…");
+        try {
+          const result = await supabaseClient
+            .from("ledger_entries")
+            .select("entry_type, amount, asset, reference, description, created_at")
+            .eq("user_id", currentUser.id)
+            .order("created_at", { ascending: false })
+            .limit(100);
+          if (result.error) throw result.error;
+          const records = (result.data || []).filter(item =>
+            !["TEST", "TES"].includes(String(item?.asset || "").trim().toUpperCase()) &&
+            !String(item?.reference || "").toUpperCase().includes("TEST")
+          );
+          tbody.replaceChildren();
+          if (!records.length) {
+            showEmptyRows(tbody, "No posted ledger transactions found.");
+            message.textContent = "No posted ledger transactions were found for this account.";
+            return;
+          }
+          for (const item of records) {
+            const row = document.createElement("tr");
+            addCell(row, item.entry_type);
+            addCell(row, formatAmount(item.amount));
+            addCell(row, String(item.asset || "").toUpperCase());
+            addCell(row, item.description || "—");
+            addCell(row, item.reference || "—");
+            addCell(row, formatDate(item.created_at));
+            tbody.appendChild(row);
+          }
+          message.textContent = records.length + " posted transaction(s) loaded. Latest 100 entries shown.";
+        } catch (error) {
+          console.error("Ledger transaction history query failed:", error);
+          showEmptyRows(tbody, "Transaction history could not be loaded.");
+          message.textContent = "Unable to load posted transactions. Check ledger_entries read access and its Row Level Security policies.";
+        } finally {
+          button.disabled = false;
         }
       }
 
@@ -805,6 +985,208 @@
         } finally {
           if (timeoutId) clearTimeout(timeoutId);
           refreshButton.disabled = false;
+        }
+      }
+
+      function formatMarketPrice(value) {
+        if (!Number.isFinite(value)) return "Unavailable";
+        return new Intl.NumberFormat("en-US", {
+          style: "currency", currency: "USD",
+          minimumFractionDigits: value >= 1 ? 2 : 4,
+          maximumFractionDigits: value >= 1 ? 2 : 8
+        }).format(value);
+      }
+
+      function setMarketMetric(id, value, direction) {
+        const node = document.getElementById(id);
+        node.textContent = value;
+        node.classList.remove("market-up", "market-down");
+        if (direction === "up") node.classList.add("market-up");
+        if (direction === "down") node.classList.add("market-down");
+      }
+
+      function drawMarketChart(points) {
+        if (!marketCanvas || !points || points.length < 2) return;
+        const rect = marketCanvas.getBoundingClientRect();
+        const cssWidth = Math.max(280, rect.width || 600);
+        const cssHeight = Math.max(200, rect.height || 260);
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        marketCanvas.width = Math.round(cssWidth * dpr);
+        marketCanvas.height = Math.round(cssHeight * dpr);
+        const ctx = marketCanvas.getContext("2d");
+        if (!ctx) return;
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+        const values = points.map(point => point[1]).filter(Number.isFinite);
+        if (values.length < 2) return;
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const spread = max - min || Math.max(Math.abs(max) * 0.01, 0.000001);
+        const low = min - spread * 0.12;
+        const high = max + spread * 0.12;
+        const pad = { top: 14, right: 14, bottom: 30, left: 14 };
+        const plotWidth = cssWidth - pad.left - pad.right;
+        const plotHeight = cssHeight - pad.top - pad.bottom;
+        const x = index => pad.left + (index / (points.length - 1)) * plotWidth;
+        const y = value => pad.top + ((high - value) / (high - low)) * plotHeight;
+
+        ctx.font = "11px Arial, sans-serif";
+        ctx.strokeStyle = "rgba(163,180,202,.2)";
+        ctx.fillStyle = "#a3b4ca";
+        ctx.lineWidth = 1;
+        for (let step = 0; step <= 4; step++) {
+          const gy = pad.top + (plotHeight * step / 4);
+          ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(cssWidth - pad.right, gy); ctx.stroke();
+          const labelValue = high - ((high - low) * step / 4);
+          const label = labelValue.toLocaleString("en-US", { maximumSignificantDigits: 5 });
+          ctx.fillText(label, pad.left + 3, Math.max(11, gy - 4));
+        }
+
+        ctx.beginPath();
+        points.forEach((point, index) => {
+          if (index === 0) ctx.moveTo(x(index), y(point[1]));
+          else ctx.lineTo(x(index), y(point[1]));
+        });
+        ctx.strokeStyle = "#54b6ff";
+        ctx.lineWidth = 2.2;
+        ctx.lineJoin = "round";
+        ctx.stroke();
+
+        const last = points[points.length - 1];
+        ctx.beginPath();
+        ctx.arc(x(points.length - 1), y(last[1]), 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = "#75e4d0";
+        ctx.fill();
+
+        const startLabel = new Date(points[0][0]).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+        const endLabel = new Date(last[0]).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+        ctx.fillStyle = "#a3b4ca";
+        ctx.textAlign = "left"; ctx.fillText(startLabel, pad.left, cssHeight - 8);
+        ctx.textAlign = "right"; ctx.fillText(endLabel, cssWidth - pad.right, cssHeight - 8);
+      }
+
+      async function loadMarketData() {
+        const assetId = marketAssetSelect.value;
+        const rangeDays = marketRangeSelect.value;
+        const symbol = marketIds[assetId] || assetId.toUpperCase();
+        const refreshButton = document.getElementById("refresh-market-button");
+        refreshButton.disabled = true;
+        marketStatus.textContent = "Fetching current public prices and chart history…";
+
+        try {
+          const priceUrl = "/api/market?type=price&id=" + encodeURIComponent(assetId);
+          const chartUrl = "/api/market?type=chart&id=" + encodeURIComponent(assetId) +
+            "&days=" + encodeURIComponent(rangeDays);
+
+          const responses = await Promise.all([
+            fetch(priceUrl, { headers: { accept: "application/json" }, cache: "no-store" }),
+            fetch(chartUrl, { headers: { accept: "application/json" }, cache: "no-store" })
+          ]);
+          if (responses.some(response => !response.ok)) {
+            const failed = responses.find(response => !response.ok);
+            throw new Error(failed.status === 429
+              ? "The market data provider is rate-limiting requests. Please wait a little and refresh."
+              : "The market data provider could not return data right now (HTTP " + failed.status + ").");
+          }
+          const priceData = await responses[0].json();
+          const chartData = await responses[1].json();
+          const quote = priceData[assetId];
+          const prices = Array.isArray(chartData.prices) ? chartData.prices : [];
+          marketChartPoints = prices.filter(point =>
+            Array.isArray(point) && Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1]))
+          ).map(point => [Number(point[0]), Number(point[1])]);
+
+          if (!quote || !Number.isFinite(Number(quote.usd)) || marketChartPoints.length < 2) {
+            throw new Error("The provider returned incomplete data for " + symbol + ". Please try another asset or range.");
+          }
+
+          setMarketMetric("market-current-price", formatMarketPrice(Number(quote.usd)));
+          const change24 = Number(quote.usd_24h_change);
+          setMarketMetric("market-24h-change",
+            Number.isFinite(change24) ? (change24 > 0 ? "+" : "") + change24.toFixed(2) + "%" : "Unavailable",
+            Number.isFinite(change24) ? (change24 > 0 ? "up" : change24 < 0 ? "down" : "") : "");
+          const firstPrice = marketChartPoints[0][1];
+          const lastPrice = marketChartPoints[marketChartPoints.length - 1][1];
+          const periodChange = firstPrice ? ((lastPrice - firstPrice) / firstPrice) * 100 : 0;
+          setMarketMetric("market-period-change",
+            (periodChange > 0 ? "+" : "") + periodChange.toFixed(2) + "%",
+            periodChange > 0 ? "up" : periodChange < 0 ? "down" : "");
+          drawMarketChart(marketChartPoints);
+          marketStatus.textContent = symbol + " market data loaded. Last chart point: " +
+            new Date(marketChartPoints[marketChartPoints.length - 1][0]).toLocaleString() +
+            ". Public prices may be delayed.";
+        } catch (error) {
+          console.error("Market data load failed:", error);
+          marketStatus.textContent = error.message ||
+            "Could not load market data. Check your connection and try again.";
+          if (marketChartPoints.length >= 2) drawMarketChart(marketChartPoints);
+        } finally {
+          refreshButton.disabled = false;
+        }
+      }
+
+      function openProfileEditor() {
+        const card = document.getElementById("profile-edit-card");
+        const message = document.getElementById("profile-edit-message");
+        message.textContent = "";
+        message.className = "form-message";
+        card.hidden = false;
+        document.getElementById("profile-full-name").focus();
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function closeProfileEditor() {
+        document.getElementById("profile-edit-card").hidden = true;
+        document.getElementById("profile-edit-message").textContent = "";
+      }
+
+      async function saveProfile(event) {
+        event.preventDefault();
+        const input = document.getElementById("profile-full-name");
+        const button = document.getElementById("save-profile-button");
+        const message = document.getElementById("profile-edit-message");
+        const fullName = input.value.trim();
+
+        if (!currentUser) {
+          message.textContent = "Your sign-in session has expired. Please sign in again.";
+          message.className = "form-message error-message";
+          return;
+        }
+        if (!fullName || fullName.length > 120) {
+          message.textContent = "Enter a name between 1 and 120 characters.";
+          message.className = "form-message error-message";
+          input.focus();
+          return;
+        }
+
+        button.disabled = true;
+        message.textContent = "Saving your profile…";
+        message.className = "form-message";
+
+        try {
+          // Only the authenticated user's own full_name field is submitted.
+          // Role, account status, KYC, email, and financial data are never editable here.
+          const result = await supabaseClient.rpc("update_my_profile_name", {
+            p_full_name: fullName
+          });
+
+          if (result.error) throw result.error;
+          if (!result.data || result.data.success !== true || !result.data.full_name) {
+            throw new Error("Profile was not updated. Please try again.");
+          }
+
+          setText("account-full-name", result.data.full_name);
+          message.textContent = "Profile updated successfully.";
+          message.className = "form-message success-message";
+          window.setTimeout(closeProfileEditor, 1200);
+        } catch (error) {
+          console.error("Profile update failed:", error);
+          message.textContent = error.message ||
+            "We could not save your profile. Please try again.";
+          message.className = "form-message error-message";
+        } finally {
+          button.disabled = false;
         }
       }
 
@@ -941,8 +1323,42 @@
 
           await Promise.all([
             loadLedgerBalances(),
-            loadRequestHistory()
+            loadRequestHistory(),
+            loadLedgerHistory(),
+            loadMarketData()
           ]);
+
+          // Refresh public market data once per minute; users can also refresh manually.
+          marketRefreshTimer = window.setInterval(loadMarketData, 60000);
+          window.addEventListener("beforeunload", () => {
+            if (marketRefreshTimer) window.clearInterval(marketRefreshTimer);
+          });
+
+          const channel = supabaseClient
+            .channel("client-ledger-and-request-updates-" + currentUser.id)
+            .on("postgres_changes", {
+              event: "*", schema: "public", table: "ledger_entries",
+              filter: "user_id=eq." + currentUser.id
+            }, () => {
+              loadLedgerBalances();
+              loadLedgerHistory();
+            })
+            .on("postgres_changes", {
+              event: "*", schema: "public", table: "fund_requests",
+              filter: "user_id=eq." + currentUser.id
+            }, () => loadRequestHistory())
+            .subscribe();
+
+          // Poll every 30 seconds as a fallback if Realtime is unavailable.
+          window.setInterval(() => {
+            loadLedgerBalances();
+            loadLedgerHistory();
+            loadRequestHistory();
+          }, 30000);
+
+          window.addEventListener("beforeunload", () => {
+            supabaseClient.removeChannel(channel);
+          });
 
         } catch (error) {
           console.error("Dashboard initialization failed:", error);
@@ -952,6 +1368,32 @@
           );
         }
       }
+
+      document
+        .getElementById("market-asset")
+        .addEventListener("change", loadMarketData);
+
+      document
+        .getElementById("market-range")
+        .addEventListener("change", loadMarketData);
+
+      document
+        .getElementById("refresh-market-button")
+        .addEventListener("click", loadMarketData);
+
+      window.addEventListener("resize", () => drawMarketChart(marketChartPoints));
+
+      document
+        .getElementById("edit-profile-button")
+        .addEventListener("click", openProfileEditor);
+
+      document
+        .getElementById("cancel-profile-edit-button")
+        .addEventListener("click", closeProfileEditor);
+
+      document
+        .getElementById("profile-edit-form")
+        .addEventListener("submit", saveProfile);
 
       document
         .getElementById("sign-out-button")
@@ -964,6 +1406,10 @@
       document
         .getElementById("refresh-requests-button")
         .addEventListener("click", loadRequestHistory);
+
+      document
+        .getElementById("refresh-ledger-history-button")
+        .addEventListener("click", loadLedgerHistory);
 
       document
         .getElementById("support-form")
