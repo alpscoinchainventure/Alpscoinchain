@@ -384,6 +384,17 @@
       </section>
     </div>
 
+    <section class="card" id="ledger-history-card">
+      <h3>Transaction History</h3>
+      <p class="muted">Posted ledger transactions that affect your recorded balances. This history refreshes automatically when new ledger entries are recorded. Pending requests appear separately below.</p>
+      <div class="button-row"><button type="button" id="refresh-ledger-history-button">Refresh transaction history</button></div>
+      <p id="ledger-history-message" class="form-message" role="status" aria-live="polite">Transaction history has not been loaded yet.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Type</th><th>Amount</th><th>Asset</th><th>Description</th><th>Reference</th><th>Date</th></tr></thead>
+        <tbody id="ledger-history-rows"><tr><td colspan="6" class="empty">Sign in to load your transaction history.</td></tr></tbody>
+      </table></div>
+    </section>
+
     <section class="card">
       <h3>Deposit &amp; Withdrawal Request History</h3>
 
@@ -711,6 +722,52 @@
         }
       }
 
+      async function loadLedgerHistory() {
+        if (!currentUser) return;
+        const button = document.getElementById("refresh-ledger-history-button");
+        const tbody = document.getElementById("ledger-history-rows");
+        const message = document.getElementById("ledger-history-message");
+        button.disabled = true;
+        message.textContent = "Loading posted transactions…";
+        showEmptyRows(tbody, "Loading…");
+        try {
+          const result = await supabaseClient
+            .from("ledger_entries")
+            .select("entry_type, amount, asset, reference, description, created_at")
+            .eq("user_id", currentUser.id)
+            .order("created_at", { ascending: false })
+            .limit(100);
+          if (result.error) throw result.error;
+          const records = (result.data || []).filter(item =>
+            !["TEST", "TES"].includes(String(item?.asset || "").trim().toUpperCase()) &&
+            !String(item?.reference || "").toUpperCase().includes("TEST")
+          );
+          tbody.replaceChildren();
+          if (!records.length) {
+            showEmptyRows(tbody, "No posted ledger transactions found.");
+            message.textContent = "No posted ledger transactions were found for this account.";
+            return;
+          }
+          for (const item of records) {
+            const row = document.createElement("tr");
+            addCell(row, item.entry_type);
+            addCell(row, formatAmount(item.amount));
+            addCell(row, String(item.asset || "").toUpperCase());
+            addCell(row, item.description || "—");
+            addCell(row, item.reference || "—");
+            addCell(row, formatDate(item.created_at));
+            tbody.appendChild(row);
+          }
+          message.textContent = records.length + " posted transaction(s) loaded. Latest 100 entries shown.";
+        } catch (error) {
+          console.error("Ledger transaction history query failed:", error);
+          showEmptyRows(tbody, "Transaction history could not be loaded.");
+          message.textContent = "Unable to load posted transactions. Check ledger_entries read access and its Row Level Security policies.";
+        } finally {
+          button.disabled = false;
+        }
+      }
+
       async function loadRequestHistory() {
         if (!currentUser) return;
 
@@ -941,8 +998,35 @@
 
           await Promise.all([
             loadLedgerBalances(),
-            loadRequestHistory()
+            loadRequestHistory(),
+            loadLedgerHistory()
           ]);
+
+          const channel = supabaseClient
+            .channel("client-ledger-and-request-updates-" + currentUser.id)
+            .on("postgres_changes", {
+              event: "*", schema: "public", table: "ledger_entries",
+              filter: "user_id=eq." + currentUser.id
+            }, () => {
+              loadLedgerBalances();
+              loadLedgerHistory();
+            })
+            .on("postgres_changes", {
+              event: "*", schema: "public", table: "fund_requests",
+              filter: "user_id=eq." + currentUser.id
+            }, () => loadRequestHistory())
+            .subscribe();
+
+          // Poll every 30 seconds as a fallback if Realtime is unavailable.
+          window.setInterval(() => {
+            loadLedgerBalances();
+            loadLedgerHistory();
+            loadRequestHistory();
+          }, 30000);
+
+          window.addEventListener("beforeunload", () => {
+            supabaseClient.removeChannel(channel);
+          });
 
         } catch (error) {
           console.error("Dashboard initialization failed:", error);
@@ -964,6 +1048,10 @@
       document
         .getElementById("refresh-requests-button")
         .addEventListener("click", loadRequestHistory);
+
+      document
+        .getElementById("refresh-ledger-history-button")
+        .addEventListener("click", loadLedgerHistory);
 
       document
         .getElementById("support-form")
