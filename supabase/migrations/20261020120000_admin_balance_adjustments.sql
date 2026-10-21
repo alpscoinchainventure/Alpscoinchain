@@ -17,6 +17,9 @@ create table if not exists public.admin_balance_adjustment_audit (
   created_at timestamptz not null default now()
 );
 
+create unique index if not exists admin_balance_adjustment_audit_reference_unique
+  on public.admin_balance_adjustment_audit (lower(reference));
+
 alter table public.admin_balance_adjustment_audit enable row level security;
 revoke all on public.admin_balance_adjustment_audit from public, anon;
 grant select on public.admin_balance_adjustment_audit to authenticated;
