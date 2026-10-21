@@ -1075,11 +1075,9 @@
         marketStatus.textContent = "Fetching current public prices and chart history…";
 
         try {
-          const base = "https://api.coingecko.com/api/v3";
-          const priceUrl = base + "/simple/price?ids=" + encodeURIComponent(assetId) +
-            "&vs_currencies=usd&include_24hr_change=true";
-          const chartUrl = base + "/coins/" + encodeURIComponent(assetId) +
-            "/market_chart?vs_currency=usd&days=" + encodeURIComponent(rangeDays);
+          const priceUrl = "/api/market?type=price&id=" + encodeURIComponent(assetId);
+          const chartUrl = "/api/market?type=chart&id=" + encodeURIComponent(assetId) +
+            "&days=" + encodeURIComponent(rangeDays);
 
           const responses = await Promise.all([
             fetch(priceUrl, { headers: { accept: "application/json" }, cache: "no-store" }),
@@ -1169,19 +1167,16 @@
         try {
           // Only the authenticated user's own full_name field is submitted.
           // Role, account status, KYC, email, and financial data are never editable here.
-          const result = await supabaseClient
-            .from("profiles")
-            .update({ full_name: fullName })
-            .eq("id", currentUser.id)
-            .select("full_name")
-            .maybeSingle();
+          const result = await supabaseClient.rpc("update_my_profile_name", {
+            p_full_name: fullName
+          });
 
           if (result.error) throw result.error;
-          if (!result.data) {
-            throw new Error("Profile was not updated. Check your profile update permission and try again.");
+          if (!result.data || result.data.success !== true || !result.data.full_name) {
+            throw new Error("Profile was not updated. Please try again.");
           }
 
-          setText("account-full-name", result.data.full_name || fullName);
+          setText("account-full-name", result.data.full_name);
           message.textContent = "Profile updated successfully.";
           message.className = "form-message success-message";
           window.setTimeout(closeProfileEditor, 1200);
