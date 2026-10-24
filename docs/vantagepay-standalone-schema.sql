@@ -176,6 +176,7 @@ CREATE TABLE IF NOT EXISTS public.vp_apy_source_events (
   rate_basis_points INTEGER CHECK (rate_basis_points >= 0 AND rate_basis_points <= 100000),
   source_status TEXT NOT NULL CHECK (source_status IN ('received','verified','rejected','posted','reversed')),
   source_payload_hash TEXT NOT NULL,
+  source_occurred_at TIMESTAMPTZ NOT NULL,
   ledger_transaction_id UUID REFERENCES public.vp_ledger_transactions(id) ON DELETE RESTRICT,
   received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   verified_at TIMESTAMPTZ,
