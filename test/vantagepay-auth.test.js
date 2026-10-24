@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
+import { validateTransactionRequest } from '../lib/vantagepay-api.js';
 
 const html = await readFile(new URL('../vantagepay-auth.html', import.meta.url), 'utf8');
 const dashboardHtml = await readFile(new URL('../vantagepay-dashboard.html', import.meta.url), 'utf8');
@@ -75,4 +76,37 @@ test('VantagePay standalone schema uses valid dollar-quoted trigger function and
   assert.match(vantagepayApi, /beneficiary:vp_beneficiary_accounts\(id,beneficiary_name,bank_name,account_last4,currency_code\)/);
   assert.match(dashboardHtml, /beneficiaryText/);
   assert.match(dashboardHtml, /account_last4/);
+});
+
+
+test('transaction request validation requires safe idempotency keys and positive integer minor units', () => {
+  const base = { request_type: 'deposit', amount_minor_units: '1250', currency_code: 'NGN' };
+  assert.equal(validateTransactionRequest(base, 'request-key-123').valid, true);
+  assert.equal(validateTransactionRequest({ ...base, amount_minor_units: '0' }, 'request-key-123').valid, false);
+  assert.equal(validateTransactionRequest({ ...base, amount_minor_units: '1.25' }, 'request-key-123').valid, false);
+  assert.equal(validateTransactionRequest(base, 'short').valid, false);
+  assert.equal(validateTransactionRequest({ ...base, currency_code: 'ngn' }, 'request-key-123').valid, false);
+  assert.equal(validateTransactionRequest({ ...base, customer_note: 'x'.repeat(501) }, 'request-key-123').valid, false);
+});
+
+test('withdrawal request validation requires a UUID beneficiary and excludes beneficiary from deposits', () => {
+  const key = 'request-key-123';
+  const withdrawal = { request_type: 'withdrawal', amount_minor_units: '500', currency_code: 'NGN' };
+  assert.equal(validateTransactionRequest(withdrawal, key).valid, false);
+  const beneficiaryId = 'a1b2c3d4-e5f6-4789-8123-abcdef123456';
+  const valid = validateTransactionRequest({ ...withdrawal, beneficiary_id: beneficiaryId }, key);
+  assert.equal(valid.valid, true);
+  assert.equal(valid.value.beneficiary_id, beneficiaryId);
+  const deposit = validateTransactionRequest({ request_type: 'deposit', amount_minor_units: '500', currency_code: 'NGN', beneficiary_id: beneficiaryId }, key);
+  assert.equal(deposit.valid, true);
+  assert.equal(Object.hasOwn(deposit.value, 'beneficiary_id'), false);
+});
+
+test('transaction request endpoint safely reuses matching idempotency keys and rejects mismatched payloads', () => {
+  assert.match(vantagepayApi, /async function findExistingRequest\(\)/);
+  assert.match(vantagepayApi, /idempotency_key=eq\.' \+/);
+  assert.match(vantagepayApi, /if \(!sameRequest\(existing\)\)/);
+  assert.match(vantagepayApi, /success: true, duplicate: true, request: existing/);
+  assert.match(vantagepayApi, /A concurrent retry may have inserted the row/);
+  assert.match(vantagepayApi, /No money was moved/);
 });
