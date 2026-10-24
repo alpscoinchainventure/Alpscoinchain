@@ -5,6 +5,7 @@ on:
     paths:
       - 'lib/vantagepay-webhook.js'
       - 'lib/vantagepay-ledger.js'
+      - 'vantagepay-preview.html'
       - 'test/**'
       - 'package.json'
       - '.github/workflows/vantagepay-tests.yml'
