@@ -12,8 +12,6 @@
 <div class="notice"><strong>Important:</strong> VantagePay is intended to be a standalone product. This development build still uses shared temporary authentication infrastructure and is not production-separated yet. No balance, deposit, withdrawal, transfer, or payout is enabled; APY credits are also inactive. Do not submit identity documents or payment details.</div><p class="small"><a class="back" href="/vantagepay-auth.html">← Account access</a></p></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 (function(){'use strict';
-const PROJECT_URL='https://uevofmlzpwrdidjnwxfd.supabase.co';
-const PUBLISHABLE_KEY='sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
 const message=document.getElementById('message'),dashboard=document.getElementById('dashboard'),activityMessage=document.getElementById('activity-message'),activityWrap=document.getElementById('activity-wrap'),activityRows=document.getElementById('activity-rows'),activitySearch=document.getElementById('activity-search'),exportActivity=document.getElementById('export-activity');let client,currentEntries=[];
 function status(text,kind){message.textContent=text;message.className='message'+(kind?' '+kind:'');}
 function cell(text){const td=document.createElement('td');td.textContent=text==null||text===''?'—':String(text);return td;}
@@ -22,32 +20,36 @@ function signIn(){window.location.replace('/vantagepay-auth.html');}
 async function load(){
 status('Checking your secure session…');
 if(!window.supabase||!window.supabase.createClient){status('Authentication library did not load. Refresh and try again.','bad');return;}
-if(!client)client=window.supabase.createClient(PROJECT_URL,PUBLISHABLE_KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
+const configResponse=await fetch('/api/vantagepay/config',{headers:{accept:'application/json'}});
+if(!configResponse.ok){status('VantagePay standalone authentication is not configured yet. No other product account is used.','bad');return;}
+const config=await configResponse.json();
+if(!config.supabaseUrl||!config.publishableKey){status('VantagePay standalone authentication is not configured yet.','bad');return;}
+if(!client)client=window.supabase.createClient(config.supabaseUrl,config.publishableKey,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
 const {data:authData,error:authError}=await client.auth.getUser();
 if(authError||!authData||!authData.user){status('Please sign in to view your account.');setTimeout(signIn,800);return;}
 const user=authData.user;dashboard.classList.remove('hidden');document.getElementById('customer-email').textContent=user.email||'Authenticated customer';
-const {data:profile,error:profileError}=await client.from('profiles').select('id,full_name,account_status,created_at').eq('id',user.id).maybeSingle();
+const {data:profile,error:profileError}=await client.from('vp_customer_accounts').select('user_id,display_name,account_status,created_at').eq('user_id',user.id).maybeSingle();
 if(profileError){document.getElementById('customer-name').textContent='there';document.getElementById('account-status').textContent='Unavailable';document.getElementById('member-since').textContent='Unavailable';status('Signed in, but profile data could not be loaded. Permissions or profile setup may need review.','bad');}
 else if(!profile){document.getElementById('customer-name').textContent='there';document.getElementById('account-status').textContent='Profile pending';document.getElementById('member-since').textContent='—';status('No customer profile was found for this authenticated user. Please contact support; do not create another account.','bad');}
-else{document.getElementById('customer-name').textContent=profile.full_name||'there';document.getElementById('account-status').textContent=profile.account_status||'Pending';document.getElementById('member-since').textContent=profile.created_at?new Date(profile.created_at).toLocaleDateString():'—';status('Signed in. Profile details loaded through your authenticated session.','good');}
+else{document.getElementById('customer-name').textContent=profile.display_name||'there';document.getElementById('account-status').textContent=profile.account_status||'Pending';document.getElementById('member-since').textContent=profile.created_at?new Date(profile.created_at).toLocaleDateString():'—';status('Signed in. Profile details loaded through your authenticated session.','good');}
 activityMessage.textContent='Loading account activity…';activityMessage.classList.remove('hidden');activityWrap.classList.add('hidden');activityRows.replaceChildren();
-const {data:entries,error:entriesError}=await client.from('ledger_entries').select('entry_type,amount,asset,reference,description,created_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(20);
+const {data:entries,error:entriesError}=await client.from('vp_ledger_transactions').select('transaction_type,amount_minor_units,currency_code,transaction_reference,description,status,created_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50);
 if(entriesError){currentEntries=[];activityMessage.textContent='Activity is unavailable for this account. No balance is shown.';return;}
 currentEntries=Array.isArray(entries)?entries:[];renderActivity();
 }
 function renderActivity(){
 activityRows.replaceChildren();
 const q=(activitySearch.value||'').trim().toLowerCase();
-const filtered=currentEntries.filter(e=>[e.entry_type,e.amount,e.asset,e.reference,e.description,e.created_at].some(v=>String(v??'').toLowerCase().includes(q)));
+const filtered=currentEntries.filter(e=>[e.transaction_type,e.amount_minor_units,e.currency_code,e.transaction_reference,e.description,e.status,e.created_at].some(v=>String(v??'').toLowerCase().includes(q)));
 if(!filtered.length){activityWrap.classList.add('hidden');activityMessage.classList.remove('hidden');activityMessage.textContent=q?'No activity matches your search.':'No ledger entries are available for this account yet.';return;}
-for(const e of filtered){const tr=document.createElement('tr');tr.append(cell(date(e.created_at)),cell(e.entry_type),cell(String(e.amount)+' '+String(e.asset||'')),cell(e.reference),cell(e.description));activityRows.append(tr);}
+for(const e of filtered){const tr=document.createElement('tr');tr.append(cell(date(e.created_at)),cell(e.transaction_type),cell(String(e.amount_minor_units)+' minor units '+String(e.currency_code||'')),cell(e.transaction_reference),cell((e.description||'')+' · '+String(e.status||'pending')));activityRows.append(tr);}
 activityMessage.classList.add('hidden');activityWrap.classList.remove('hidden');
 }
 activitySearch.addEventListener('input',renderActivity);
 exportActivity.addEventListener('click',()=>{
 const q=(activitySearch.value||'').trim().toLowerCase();
-const rows=currentEntries.filter(e=>[e.entry_type,e.amount,e.asset,e.reference,e.description,e.created_at].some(v=>String(v??'').toLowerCase().includes(q)));
-const csv=[['Date','Type','Amount','Asset','Reference','Description'],...rows.map(e=>[e.created_at,e.entry_type,e.amount,e.asset,e.reference,e.description])].map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+const rows=currentEntries.filter(e=>[e.transaction_type,e.amount_minor_units,e.currency_code,e.transaction_reference,e.description,e.status,e.created_at].some(v=>String(v??'').toLowerCase().includes(q)));
+const csv=[['Date','Type','Amount minor units','Currency','Reference','Status','Description'],...rows.map(e=>[e.created_at,e.transaction_type,e.amount_minor_units,e.currency_code,e.transaction_reference,e.status,e.description])].map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
 const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='vantagepay-account-activity.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
 document.getElementById('refresh').addEventListener('click',()=>load().catch(()=>status('Could not refresh the account. Try again.','bad')));
