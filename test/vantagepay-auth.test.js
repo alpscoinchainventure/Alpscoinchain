@@ -136,10 +136,10 @@ test('VantagePay admin operations are server-authorized, audited, and cannot mar
   assert.match(adminPage, /Server will check enabled admin membership/);
   assert.match(adminPage, /does not settle payments or directly edit balances/);
   assert.doesNotThrow(() => new vm.Script(inlineScript(adminPage, 'admin')), 'admin console script must parse');
-  assert.match(vantagepayApi, /app\\.post\\('\\/api\\/vantagepay\\/admin\\/balance-adjustments'/);
+  assert.match(vantagepayApi, /app\.post\('\/api\/vantagepay\/admin\/balance-adjustments'/);
   assert.match(vantagepayApi, /rpc\\/vp_admin_adjust_customer_balance/);
-  assert.match(standaloneSchema, /CREATE OR REPLACE FUNCTION public\\.vp_admin_adjust_customer_balance/);
-  assert.match(standaloneSchema, /GRANT EXECUTE ON FUNCTION public\\.vp_admin_adjust_customer_balance/);
+  assert.match(standaloneSchema, /CREATE OR REPLACE FUNCTION public\.vp_admin_adjust_customer_balance/);
+  assert.match(standaloneSchema, /GRANT EXECUTE ON FUNCTION public\.vp_admin_adjust_customer_balance/);
   assert.match(standaloneSchema, /customer_balance_adjustment/);
   assert.match(adminPage, /Audited balance adjustment/);
 });
