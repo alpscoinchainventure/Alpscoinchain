@@ -35,7 +35,7 @@
       <button id="refreshAccountsButton" type="button">Refresh accounts</button>
     </div>
     <div id="accountsNotice" class="notice" role="status" aria-live="polite">Client accounts have not been loaded yet.</div>
-    <div class="table-wrap"><table><thead><tr><th>Account ID</th><th>Role</th><th>Account status</th></tr></thead><tbody id="accountRows"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Client name</th><th>Account ID</th><th>Role</th><th>Account status</th></tr></thead><tbody id="accountRows"></tbody></table></div>
   </section>
 
   <section class="panel" aria-labelledby="ledgerHeading">
@@ -154,12 +154,12 @@
 
   function renderAccounts(){
     const query=$("accountSearch").value.trim().toLowerCase(),body=$("accountRows");body.replaceChildren();
-    const filtered=visibleProfiles.filter(profile=>normalizeId(profile.id).includes(query)||String(profile.role||"").toLowerCase().includes(query)||String(profile.account_status||"").toLowerCase().includes(query));
+    const filtered=visibleProfiles.filter(profile=>String(profile.full_name||"").toLowerCase().includes(query)||normalizeId(profile.id).includes(query)||String(profile.role||"").toLowerCase().includes(query)||String(profile.account_status||"").toLowerCase().includes(query));
     const select=$("ledgerClient");select.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select a client account";select.appendChild(placeholder);
-    for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client")){const option=document.createElement("option");option.value=profile.id;option.textContent=profile.id+" · "+(profile.account_status||"status unavailable");select.appendChild(option)}
+    for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client")){const option=document.createElement("option");option.value=profile.id;option.textContent=(profile.full_name||"Name not provided")+" · "+profile.id+" · "+(profile.account_status||"status unavailable");select.appendChild(option)}
     const balanceSelect=$("balanceClient");if(balanceSelect){balanceSelect.replaceChildren();const balancePlaceholder=document.createElement("option");balancePlaceholder.value="";balancePlaceholder.textContent="Select a client account";balanceSelect.appendChild(balancePlaceholder);for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client")){const option=document.createElement("option");option.value=profile.id;option.textContent=profile.id+" · "+(profile.account_status||"status unavailable");balanceSelect.appendChild(option)}}
     if(!filtered.length){setNotice("accountsNotice",visibleProfiles.length?"No visible accounts match your search.":"No profiles are visible under the current database function.",visibleProfiles.length?"":"warning");return}
-    for(const profile of filtered){const row=document.createElement("tr");for(const value of [profile.id,profile.role,profile.account_status]){const cell=document.createElement("td");cell.textContent=value||"—";row.appendChild(cell)}body.appendChild(row)}
+    for(const profile of filtered){const row=document.createElement("tr");for(const value of [profile.full_name||"Name not provided",profile.id,profile.role,profile.account_status]){const cell=document.createElement("td");cell.textContent=value||"—";row.appendChild(cell)}body.appendChild(row)}
     setNotice("accountsNotice","Showing "+filtered.length+" of "+visibleProfiles.length+" visible profiles.");
   }
 
@@ -189,7 +189,7 @@
     const clientId=$("ledgerClient").value,entryType=$("ledgerType").value,amount=Number($("ledgerAmount").value),asset=$("ledgerAsset").value.trim().toUpperCase(),reference=$("ledgerReference").value.trim(),description=$("ledgerDescription").value.trim();
     if(!clientId||!entryType||!Number.isFinite(amount)||amount<=0||!asset||!reference||!description){setNotice("ledgerNotice","Complete every ledger field with valid values.","error");return}
     const selectedProfile=visibleProfiles.find(profile=>profile.id===clientId);if(!selectedProfile||String(selectedProfile.role||"").toLowerCase()!=="client"){setNotice("ledgerNotice","Select a valid client account.","error");return}
-    const confirmed=window.confirm((entryType==="credit"?"Credit ":"Debit ")+amount+" "+asset+" for client "+clientId+"?\n\nReference: "+reference+"\n\nConfirm only if this accounting entry is authorized and verified.");if(!confirmed)return;
+    const clientLabel=selectedProfile.full_name||"Name not provided";const confirmed=window.confirm((entryType==="credit"?"Credit ":"Debit ")+amount+" "+asset+" for "+clientLabel+" (ID: "+clientId+")?\n\nReference: "+reference+"\n\nConfirm only if this accounting entry is authorized and verified.");if(!confirmed)return;
     const button=$("submitLedgerButton");button.disabled=true;ledgerSubmissionInProgress=true;setNotice("ledgerNotice","Submitting the ledger entry… Do not repeat the request while it is processing.");
     try{
       const {data,error}=await client.rpc("admin_post_ledger_entry",{p_user_id:clientId,p_entry_type:entryType,p_amount:amount,p_asset:asset,p_reference:reference,p_description:description});
