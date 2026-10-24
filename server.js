@@ -13,7 +13,9 @@ const app = express();
 const port = process.env.PORT || 3000;
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-app.use(express.json());
+app.use(express.json({ verify(req, _res, buf) {
+  if (req.originalUrl.startsWith('/api/vantagepay/webhooks/')) req.rawBody = Buffer.from(buf);
+} }));
 app.use(express.urlencoded({ extended: true }));
 
 // VantagePay routes use only its dedicated backend environment variables.
