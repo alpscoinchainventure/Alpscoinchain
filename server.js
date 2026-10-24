@@ -4,6 +4,7 @@ import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { registerVantagePayApi } from './lib/vantagepay-api.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,9 +13,31 @@ const app = express();
 const port = process.env.PORT || 3000;
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-app.use(express.json());
+app.use(express.json({ verify(req, _res, buf) {
+  if (req.originalUrl.startsWith('/api/vantagepay/webhooks/')) req.rawBody = Buffer.from(buf);
+} }));
 app.use(express.urlencoded({ extended: true }));
+
+// VantagePay routes use only its dedicated backend environment variables.
+// They fail closed until a separate VantagePay Supabase project is configured.
+registerVantagePayApi(app);
 app.use(express.static(__dirname));
+
+// VantagePay has a customer-facing homepage and separate demo/auth/dashboard routes.
+app.get('/vantagepay', (_req, res) => res.sendFile(path.join(__dirname, 'vantagepay-home.html')));
+app.get('/vantagepay/demo', (_req, res) => res.redirect(302, '/vantagepay-preview.html'));
+app.get('/vantagepay-home.html', (_req, res) => res.sendFile(path.join(__dirname, 'vantagepay-home.html')));
+app.get('/vantagepay/login', (_req, res) => res.redirect(302, '/vantagepay-auth.html'));
+app.get('/vantagepay/dashboard', (_req, res) => res.redirect(302, '/vantagepay-dashboard.html'));
+app.get('/vantagepay-preview.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'vantagepay-preview.html'));
+});
+app.get('/vantagepay-auth.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'vantagepay-auth.html'));
+});
+app.get('/vantagepay-dashboard.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'vantagepay-dashboard.html'));
+});
 
 function escapeHtml(value) {
   return String(value)
@@ -30,13 +53,7 @@ async function sendEmail({ to, subject, text, html }) {
   const recipient = to || process.env.TO_EMAIL || process.env.FROM_EMAIL || process.env.SMTP_USER || 'delivered@resend.dev';
 
   if (resend) {
-    await resend.emails.send({
-      from: fromEmail,
-      to: [recipient],
-      subject,
-      text,
-      html
-    });
+    await resend.emails.send({ from: fromEmail, to: [recipient], subject, text, html });
     return;
   }
 
@@ -52,19 +69,10 @@ async function sendEmail({ to, subject, text, html }) {
     host: smtpHost,
     port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: smtpUser,
-      pass: smtpPass
-    }
+    auth: { user: smtpUser, pass: smtpPass }
   });
 
-  await transporter.sendMail({
-    from: fromEmail,
-    to: recipient,
-    subject,
-    text,
-    html
-  });
+  await transporter.sendMail({ from: fromEmail, to: recipient, subject, text, html });
 }
 
 app.post('/api/contact', async (req, res) => {
@@ -89,7 +97,6 @@ app.post('/api/contact', async (req, res) => {
       text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
       html: htmlMessage
     });
-
     return res.json({ success: true, message: 'Message sent successfully.' });
   } catch (error) {
     console.error('Email send failed:', error);
@@ -126,7 +133,6 @@ app.post('/api/trade', async (req, res) => {
       text: `Hello,\n\nYour ${actionLabel.toLowerCase()} order for ${asset} has been received.\nAmount: ${parsedAmount}\nMarket: ${market || 'N/A'}`,
       html: htmlMessage
     });
-
     return res.json({ success: true, message: `${actionLabel} order placed successfully.` });
   } catch (error) {
     console.error('Trade notification failed:', error);
