@@ -7,10 +7,10 @@ const html = await readFile(new URL('../vantagepay-auth.html', import.meta.url),
 
 test('VantagePay auth page includes account access modes', () => {
   for (const mode of ['login', 'signup', 'reset', 'recovery']) {
-    assert.match(html, new RegExp("['\\\"]" + mode + "['\\\"]"), 'missing auth mode: ' + mode);
+    assert.ok(html.includes("data-mode=\"" + mode + "\"") || html.includes("mode:'" + mode + "'"), 'missing auth mode: ' + mode);
   }
   for (const id of ['auth-form', 'email', 'password', 'confirm-password', 'new-password', 'resend', 'signout', 'refresh-profile']) {
-    assert.match(html, new RegExp('id="' + id + '"'), 'missing auth control: ' + id);
+    assert.ok(html.includes('id="' + id + '"'), 'missing auth control: ' + id);
   }
 });
 
@@ -24,9 +24,12 @@ test('VantagePay auth page calls Supabase auth APIs rather than simulating authe
 });
 
 test('inline authentication script parses and is guarded when the SDK is unavailable', () => {
-  const matches = [...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/gi)];
-  assert.ok(matches.length, 'auth inline script must exist');
-  for (const match of matches) assert.doesNotThrow(() => new vm.Script(match[1]), 'inline script must parse');
+  const open = html.indexOf('<script>', html.indexOf('src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"'));
+  assert.ok(open >= 0, 'auth inline script must exist');
+  const start = open + '<script>'.length;
+  const end = html.indexOf('</script>', start);
+  assert.ok(end > start, 'auth inline script must be closed');
+  assert.doesNotThrow(() => new vm.Script(html.slice(start, end)), 'inline script must parse');
   assert.match(html, /Authentication library did not load/);
   assert.match(html, /emailRedirectTo/);
   assert.match(html, /redirectTo/);
