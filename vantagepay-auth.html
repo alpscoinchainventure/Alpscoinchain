@@ -97,10 +97,51 @@
     document.getElementById('signed-in-as').textContent = user && user.email ? 'Signed in as ' + user.email : 'Your identity session is active.';
   }
   function showAuth() { accountView.classList.add('hidden'); authView.classList.remove('hidden'); }
+  async function ensureSupabaseLibrary() {
+    if (window.supabase && window.supabase.createClient) return;
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      let settled = false;
+      const finish = (error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        error ? reject(error) : resolve();
+      };
+      const timer = setTimeout(() => finish(new Error('The authentication library could not load. Check your internet connection or content blocker, then refresh.')), 12000);
+      script.src = 'https://unpkg.com/@supabase/supabase-js@2';
+      script.async = true;
+      script.onload = () => finish();
+      script.onerror = () => finish(new Error('Both authentication-library sources failed to load. Check your internet connection or content blocker, then refresh.'));
+      document.head.appendChild(script);
+    });
+    if (!window.supabase || !window.supabase.createClient) throw new Error('Authentication library loaded without its client. Refresh the page and try again.');
+  }
+  function explainAuthError(error) {
+    const raw = String((error && error.message) || 'The request could not be completed.');
+    const status = error && error.status ? ' (HTTP ' + error.status + ')' : '';
+    const code = error && error.code ? ' [' + error.code + ']' : '';
+    if (/failed to fetch|networkerror|load failed|network request failed/i.test(raw)) {
+      return 'Could not reach the authentication service. Check mobile data/Wi-Fi, disable content blockers or VPN temporarily, and try again. If it continues, the browser cannot reach Supabase.';
+    }
+    if (/redirect.*(allow|whitelist|not allowed)|not allowed.*redirect/i.test(raw)) {
+      return 'The account request reached authentication, but this page URL is not on Supabase Auth’s allowed redirect URL list. Add this exact page URL in Supabase Dashboard → Authentication → URL Configuration, then retry.';
+    }
+    if (/email.*(rate limit|sending limit)|rate limit.*email|too many requests/i.test(raw)) {
+      return raw + status + code + '. Email sending may be rate-limited; wait before retrying or configure a verified SMTP provider in Supabase Auth.';
+    }
+    if (/database error saving new user/i.test(raw)) {
+      return 'Supabase rejected account creation while saving the user profile. The profile-creation trigger/database needs correction; this is not a password problem. Reference: ' + raw + status + code;
+    }
+    return raw.slice(0, 240) + status + code;
+  }
   async function init() {
-    if (!window.supabase || !window.supabase.createClient) {
-      showMessage(message, 'The authentication library did not load. Check your connection and refresh this page.', 'bad');
-      submit.disabled=true; return;
+    try {
+      await ensureSupabaseLibrary();
+    } catch (error) {
+      showMessage(message, explainAuthError(error), 'bad');
+      submit.disabled=true;
+      return;
     }
     client = window.supabase.createClient(PROJECT_URL, PUBLISHABLE_KEY, {auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
@@ -148,7 +189,7 @@
         const {error}=await client.auth.updateUser({password:newPassword}); if (error) throw error;
         pendingReset=false; setMode('login'); showMessage(message, 'Password updated. You can now sign in with your new password.', 'good');
       }
-    } catch(error) { showMessage(message, ((error&&error.message)||'Request could not be completed.').slice(0,240), 'bad'); }
+    } catch(error) { showMessage(message, explainAuthError(error), 'bad'); }
     finally { submit.disabled=false; submit.textContent=(modes[mode]||modes.login).button; }
   });
   resendButton.addEventListener('click',async()=>{
@@ -157,7 +198,7 @@
     if (!lastEmail) { showMessage(message,'Enter your email address first.','bad'); return; }
     resendButton.disabled=true;
     try { const {error}=await client.auth.resend({type:'signup',email:lastEmail,options:{emailRedirectTo:redirectUrl()}}); if(error)throw error; showMessage(message,'If confirmation can be resent, a new email has been requested.','good'); }
-    catch(error){showMessage(message,((error&&error.message)||'Could not request confirmation.').slice(0,240),'bad');}
+    catch(error){showMessage(message,explainAuthError(error),'bad');}
     finally{resendButton.disabled=false;}
   });
   document.getElementById('signout').addEventListener('click',async()=>{
