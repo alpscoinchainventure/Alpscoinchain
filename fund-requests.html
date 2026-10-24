@@ -95,18 +95,19 @@
         </label>
 
         <label>
-          Asset code
-          <input name="asset" type="text"
-            minlength="2" maxlength="20"
-            placeholder="e.g. USDT" required>
+          Beneficiary
+          <select name="beneficiary_id" id="withdrawal-beneficiary" required>
+            <option value="">Loading your saved beneficiaries…</option>
+          </select>
         </label>
 
-        <label>
-          Destination or reference
-          <input name="destination" type="text"
-            maxlength="500" placeholder="Wallet address or destination reference"
-            required>
-        </label>
+        <div id="beneficiary-details" class="notice" aria-live="polite">
+          Choose a saved beneficiary to use it as the withdrawal destination.
+          <a href="/beneficiaries.html" style="color:inherit;text-decoration:underline">Manage beneficiaries</a>
+        </div>
+
+        <input name="asset" id="withdrawal-asset" type="hidden" value="">
+        <input name="destination" id="withdrawal-destination" type="hidden" value="">
 
         <p class="muted">
           A request is not a promise or confirmation of payout.
@@ -143,6 +144,7 @@
   const $ = id => document.getElementById(id);
   let currentUser = null;
   let depositWallets = [];
+  let clientBeneficiaries = [];
 
   function showMessage(text, type = "success") {
     const el = $("message");
@@ -221,6 +223,73 @@
       assetSelect.replaceChildren();const option=document.createElement("option");option.value="";option.textContent="Deposit addresses unavailable";assetSelect.appendChild(option);
       $("deposit-network").disabled=true;$("deposit-wallet-panel").textContent="Deposit address settings are unavailable. Please contact support and do not send funds until an official address is displayed.";
     }
+  }
+
+  async function loadClientBeneficiaries() {
+    const select = $("withdrawal-beneficiary");
+    const details = $("beneficiary-details");
+    select.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select a saved beneficiary";
+    select.appendChild(placeholder);
+    details.textContent = "Choose a saved beneficiary to use it as the withdrawal destination. ";
+    const link = document.createElement("a");
+    link.href = "/beneficiaries.html";
+    link.textContent = "Manage beneficiaries";
+    link.style.color = "inherit";
+    link.style.textDecoration = "underline";
+    details.appendChild(link);
+    try {
+      const { data, error } = await supabase
+        .from("beneficiaries")
+        .select("id,beneficiary_name,destination,asset")
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      clientBeneficiaries = Array.isArray(data) ? data : [];
+      for (const beneficiary of clientBeneficiaries) {
+        const option = document.createElement("option");
+        option.value = beneficiary.id;
+        option.textContent = beneficiary.beneficiary_name + " · " + beneficiary.asset;
+        select.appendChild(option);
+      }
+      if (!clientBeneficiaries.length) {
+        placeholder.textContent = "No saved beneficiaries — add one first";
+        details.replaceChildren(document.createTextNode("You need a saved beneficiary before requesting a withdrawal. "));
+        const manage = document.createElement("a");
+        manage.href = "/beneficiaries.html";
+        manage.textContent = "Add beneficiary";
+        manage.style.color = "inherit";
+        manage.style.textDecoration = "underline";
+        details.appendChild(manage);
+      }
+    } catch (error) {
+      console.error("Beneficiary lookup failed:", error);
+      placeholder.textContent = "Beneficiaries unavailable";
+      details.textContent = "Could not load saved beneficiaries. Refresh this page or open Manage beneficiaries before requesting a withdrawal.";
+      showMessage("Saved beneficiaries could not be loaded.", "error");
+    }
+    updateWithdrawalBeneficiary();
+  }
+
+  function updateWithdrawalBeneficiary() {
+    const selectedId = $("withdrawal-beneficiary").value;
+    const beneficiary = clientBeneficiaries.find(item => item.id === selectedId);
+    $("withdrawal-asset").value = beneficiary ? String(beneficiary.asset || "").trim().toUpperCase() : "";
+    $("withdrawal-destination").value = beneficiary ? String(beneficiary.destination || "").trim() : "";
+    const details = $("beneficiary-details");
+    if (!beneficiary) return;
+    details.replaceChildren();
+    const name = document.createElement("strong");
+    name.textContent = "Selected beneficiary: " + beneficiary.beneficiary_name;
+    const asset = document.createElement("div");
+    asset.textContent = "Asset/currency: " + beneficiary.asset;
+    const destination = document.createElement("div");
+    destination.style.overflowWrap = "anywhere";
+    destination.textContent = "Destination/account reference: " + beneficiary.destination;
+    details.append(name, asset, destination);
   }
 
   async function loadRequests() {
@@ -325,8 +394,17 @@
     const amount = Number(fields.get("amount"));
     const asset = String(fields.get("asset") || "")
       .trim().toUpperCase();
-    const destination = String(fields.get("destination") || "").trim();
+    let destination = String(fields.get("destination") || "").trim();
+    const beneficiaryId = String(fields.get("beneficiary_id") || "").trim();
     const network = type === "deposit" ? String(fields.get("network") || "").trim() : "";
+    if (type === "withdrawal") {
+      const beneficiary = clientBeneficiaries.find(item => item.id === beneficiaryId);
+      if (!beneficiary) {
+        showMessage("Select one of your saved beneficiaries before submitting a withdrawal.", "error");
+        return;
+      }
+      destination = String(beneficiary.destination || "").trim();
+    }
 
     if (!Number.isFinite(amount) ||
         amount <= 0 ||
@@ -380,6 +458,7 @@
         row.destination = "Network: " + network;
       } else {
         row.destination = destination;
+        row.beneficiary_id = beneficiaryId;
       }
 
       const { error } = await supabase
@@ -410,6 +489,7 @@
     }
   }
 
+  $("withdrawal-beneficiary").addEventListener("change", updateWithdrawalBeneficiary);
   $("deposit-asset").addEventListener("change", renderDepositNetworks);
   $("deposit-network").addEventListener("change", renderDepositWallet);
 
@@ -427,6 +507,7 @@
     currentUser = await getSessionUser();
 
     if (currentUser) {
+      await loadClientBeneficiaries();
       await loadRequests();
     }
   } catch (error) {
