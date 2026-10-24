@@ -243,6 +243,9 @@ GRANT SELECT ON public.vp_ledger_entries TO authenticated;
 
 COMMIT;
 
+-- Ledger convention: customer liability account codes use 'customer:' || auth user UUID.
+-- For each posted journal, calculate a displayed customer balance as credits minus debits
+-- on that account code, grouped by currency; never derive balances from request rows.
 -- Required before production:
 -- 1) Apply only to the dedicated VantagePay Supabase project; review project cost first.
 -- 2) Add server-side authenticated routes/provider adapters for beneficiary verification,
