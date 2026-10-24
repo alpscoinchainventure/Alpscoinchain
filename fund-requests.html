@@ -1,0 +1,427 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b50">
+  <title>Deposit & Withdrawal Requests | AlpsCoinChain</title>
+  <style>
+    :root{color-scheme:dark;--bg:#07111f;--panel:rgba(15,29,49,.94);--text:#edf5ff;--muted:#9fb1c8;--line:rgba(148,177,213,.18);--blue:#2f83ff;--navy:#10213a;--green:#69e0b0;--orange:#f0d49b;--red:#ff9d9d}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 12% 0%,rgba(36,111,190,.2),transparent 38%),radial-gradient(ellipse at 92% 20%,rgba(35,183,154,.1),transparent 32%),linear-gradient(145deg,#07111f,#0a1728 55%,#07101d);color:var(--text);font:15px/1.65 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    header{background:rgba(5,14,26,.84);backdrop-filter:blur(18px);border-bottom:1px solid var(--line);color:white;padding:22px 18px}header div,main{max-width:1000px;margin:auto}h1{font-size:clamp(22px,4vw,28px);letter-spacing:-.04em;margin:0}header p{margin:4px 0 0;color:#a9c6e8;font-size:13px}main{padding:26px 16px 44px}
+    .notice{background:rgba(98,73,30,.2);border:1px solid rgba(230,200,137,.32);border-radius:13px;padding:15px 17px;color:#f1dfb7;font-size:13px;margin-bottom:20px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.panel{background:linear-gradient(145deg,rgba(19,36,59,.94),rgba(12,25,43,.94));border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 48px rgba(0,0,0,.16);overflow:hidden;min-width:0}.panel h2{font-size:17px;margin:0;padding:16px 20px;border-bottom:1px solid var(--line)}form{padding:20px;display:grid;gap:14px}label{font-size:13px;font-weight:700;display:grid;gap:6px;color:#cbdcf0}input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:rgba(3,12,23,.65);color:var(--text)}input:focus,select:focus{outline:2px solid rgba(47,131,255,.45);outline-offset:1px}
+    button,.link{border:1px solid rgba(92,157,255,.25);border-radius:10px;background:linear-gradient(135deg,#2f83ff,#1b60cf);color:white;padding:11px 15px;font-weight:700;font-size:13px;cursor:pointer;text-align:center;text-decoration:none;font-family:inherit;transition:filter .18s,transform .18s}button:hover,.link:hover{filter:brightness(1.1);transform:translateY(-1px)}button:disabled{opacity:.6;cursor:wait;transform:none}.secondary{background:rgba(137,170,210,.09);color:#d8e8ff;border-color:var(--line)}.muted{color:var(--muted);font-size:12px}
+    #message{display:none;padding:12px 14px;border-radius:10px;margin:16px 0;font-size:13px}#message.show{display:block}#message.error{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.25)}#message.success{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.25)}
+    .requests{margin-top:22px}.request{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}.request:last-child{border-bottom:0}.request strong{display:block;overflow-wrap:anywhere}.status{display:inline-block;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:750;text-transform:capitalize;background:rgba(240,212,155,.12);color:var(--orange)}.status-approved{background:rgba(105,224,176,.12);color:var(--green)}.status-rejected,.status-cancelled{background:rgba(255,157,157,.12);color:var(--red)}.empty{padding:24px;text-align:center;color:var(--muted)}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+    @media(max-width:680px){main{padding:18px 12px 32px}.grid{grid-template-columns:1fr}.request{flex-direction:column}.panel h2{padding:15px}form{padding:16px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}
+  </style>
+</head>
+
+<body>
+<header>
+  <div>
+    <h1>AlpsCoinChain Investment</h1>
+    <p>Deposit and withdrawal request tracking</p>
+  </div>
+</header>
+
+<main>
+  <div class="notice">
+    <strong>Important:</strong>
+    This page records requests for review. It does not itself move money,
+    confirm deposits, execute withdrawals, or change your balance.
+    Never enter passwords, recovery phrases, or private keys.
+  </div>
+
+  <div class="actions">
+    <a class="link secondary" href="/client-dashboard.html">
+      Back to dashboard
+    </a>
+    <button class="secondary" id="refresh" type="button">
+      Refresh requests
+    </button>
+  </div>
+
+  <div id="message" role="status" aria-live="polite"></div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Submit a deposit request</h2>
+      <form id="deposit-form">
+        <label>
+          Amount
+          <input name="amount" type="number"
+            min="0.00000001" max="999999999999"
+            step="any" required>
+        </label>
+
+        <label>
+          Asset
+          <select name="asset" id="deposit-asset" required>
+            <option value="">Loading supported assets…</option>
+          </select>
+        </label>
+
+        <label>
+          Network
+          <select name="network" id="deposit-network" required disabled>
+            <option value="">Select an asset first</option>
+          </select>
+        </label>
+
+        <div id="deposit-wallet-panel" class="notice" aria-live="polite">
+          Select an asset and network to view the official deposit address.
+        </div>
+
+        <p class="muted">
+          Send only the selected asset on the exact network shown. A deposit is credited only after the administrator verifies receipt and posts the matching ledger entry. Never send funds to an address for a different network.
+        </p>
+
+        <button type="submit">Submit deposit request</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Submit a withdrawal request</h2>
+      <form id="withdrawal-form">
+        <label>
+          Amount
+          <input name="amount" type="number"
+            min="0.00000001" max="999999999999"
+            step="any" required>
+        </label>
+
+        <label>
+          Asset code
+          <input name="asset" type="text"
+            minlength="2" maxlength="20"
+            placeholder="e.g. USDT" required>
+        </label>
+
+        <label>
+          Destination or reference
+          <input name="destination" type="text"
+            maxlength="500" placeholder="Wallet address or destination reference"
+            required>
+        </label>
+
+        <p class="muted">
+          A request is not a promise or confirmation of payout.
+          Check destination details carefully before submitting.
+        </p>
+
+        <button type="submit">Submit withdrawal request</button>
+      </form>
+    </section>
+  </div>
+
+  <section class="panel requests">
+    <h2>Your requests</h2>
+    <div id="request-list">
+      <div class="empty">Checking your sign-in session…</div>
+    </div>
+  </section>
+
+  <p class="muted" style="text-align:center;margin-top:22px">
+    Request statuses are controlled by authorized review processes.
+    This page does not offer approval or cancellation controls.
+  </p>
+</main>
+
+<script type="module">
+  import { createClient } from
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+  const supabase = createClient(
+    "https://uevofmlzpwrdidjnwxfd.supabase.co",
+    "sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB"
+  );
+
+  const $ = id => document.getElementById(id);
+  let currentUser = null;\n  let depositWallets = [];
+
+  function showMessage(text, type = "success") {
+    const el = $("message");
+    el.textContent = text;
+    el.className = "show " + type;
+  }
+
+  function formatDate(value) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? "Date unavailable"
+      : date.toLocaleString();
+  }
+
+  async function getSessionUser() {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) throw error;
+
+    if (!data.session) {
+      window.location.href = "/login";
+      return null;
+    }
+
+    const user = data.session.user;
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role,account_status,kyc_status")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profileError) throw profileError;
+    if (!profile || profile.account_status !== "active") {
+      throw new Error("An active account is required. Please contact support.");
+    }
+    if (profile.role === "client" && profile.kyc_status !== "approved") {
+      window.location.replace("/kyc.html");
+      return null;
+    }
+    return user;
+  }
+
+  function renderDepositNetworks(){
+    const asset=$("deposit-asset").value,networkSelect=$("deposit-network"),panel=$("deposit-wallet-panel");
+    networkSelect.replaceChildren();const matching=depositWallets.filter(wallet=>wallet.asset_code===asset&&wallet.is_active);
+    if(!asset||!matching.length){networkSelect.disabled=true;const option=document.createElement("option");option.value="";option.textContent=asset?"No active network configured":"Select an asset first";networkSelect.appendChild(option);panel.textContent=asset?"No deposit address is currently configured for this asset. Contact support before sending funds.":"Select an asset and network to view the official deposit address.";return}
+    networkSelect.disabled=false;const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select network";networkSelect.appendChild(placeholder);
+    for(const wallet of matching){const option=document.createElement("option");option.value=wallet.network;option.textContent=wallet.network;networkSelect.appendChild(option)}
+    panel.textContent="Select a network to view its deposit address.";
+  }
+
+  function renderDepositWallet(){
+    const asset=$("deposit-asset").value,network=$("deposit-network").value,panel=$("deposit-wallet-panel");
+    const wallet=depositWallets.find(item=>item.asset_code===asset&&item.network===network&&item.is_active);
+    panel.replaceChildren();
+    if(!wallet){panel.textContent="No active deposit address is configured for this asset/network. Do not send funds; contact support.";return}
+    const title=document.createElement("strong");title.textContent="Official deposit address · "+wallet.asset_code+" · "+wallet.network;
+    const address=document.createElement("div");address.style.cssText="overflow-wrap:anywhere;word-break:break-word;margin:8px 0;font-weight:700";address.textContent=wallet.wallet_address;
+    const copy=document.createElement("button");copy.type="button";copy.className="secondary";copy.textContent="Copy address";copy.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(wallet.wallet_address);copy.textContent="Copied"}catch{copy.textContent="Copy unavailable — select address to copy"}});
+    panel.append(title,address,copy);
+    if(wallet.instructions){const note=document.createElement("p");note.className="muted";note.textContent=wallet.instructions;panel.appendChild(note)}
+    const warning=document.createElement("p");warning.className="muted";warning.textContent="Confirm the address and network carefully before sending. This page cannot detect a blockchain payment by itself.";panel.appendChild(warning);
+  }
+
+  async function loadDepositWallets(){
+    const assetSelect=$("deposit-asset");
+    try{
+      const {data,error}=await supabase.from("deposit_wallet_addresses").select("asset_code,network,wallet_address,instructions,is_active").eq("is_active",true).order("asset_code").order("network");
+      if(error)throw error;
+      depositWallets=Array.isArray(data)?data:[];
+      assetSelect.replaceChildren();
+      const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent=depositWallets.length?"Select asset":"No deposit assets available";assetSelect.appendChild(placeholder);
+      for(const asset of [...new Set(depositWallets.map(item=>item.asset_code))]){const option=document.createElement("option");option.value=asset;option.textContent=asset;assetSelect.appendChild(option)}
+      renderDepositNetworks();renderDepositWallet();
+    }catch(error){
+      console.error("Deposit wallet lookup failed:",error);
+      assetSelect.replaceChildren();const option=document.createElement("option");option.value="";option.textContent="Deposit addresses unavailable";assetSelect.appendChild(option);
+      $("deposit-network").disabled=true;$("deposit-wallet-panel").textContent="Deposit address settings are unavailable. Please contact support and do not send funds until an official address is displayed.";
+    }
+  }
+
+  async function loadRequests() {
+    if (!currentUser) return;
+
+    $("refresh").disabled = true;
+    const list = $("request-list");
+    list.replaceChildren();
+
+    try {
+      const { data, error } = await supabase
+        .from("fund_requests")
+        .select(
+          "id,request_type,amount,asset,destination,status,reference,created_at,review_note,reviewed_at"
+        )
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      const visibleRequests = (data || []).filter(request =>
+        !["TEST", "TES"].includes(String(request.asset || "").trim().toUpperCase()) &&
+        !String(request.reference || "").toUpperCase().includes("TEST")
+      );
+
+      if (visibleRequests.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "You have not submitted any requests yet.";
+        list.appendChild(empty);
+        return;
+      }
+
+      for (const request of visibleRequests) {
+        const item = document.createElement("article");
+        item.className = "request";
+
+        const left = document.createElement("div");
+        const title = document.createElement("strong");
+
+        title.textContent =
+          (request.request_type === "deposit" ? "Deposit" : "Withdrawal") +
+          " · " + request.amount + " " + request.asset;
+
+        const meta = document.createElement("div");
+        meta.className = "muted";
+        meta.textContent =
+          "Reference: " + request.reference +
+          " · Submitted: " + formatDate(request.created_at);
+
+        left.append(title, meta);
+
+        if (request.request_type === "withdrawal" && request.destination) {
+          const destination = document.createElement("div");
+          destination.className = "muted";
+          destination.textContent = "Destination: " + request.destination;
+          left.appendChild(destination);
+        }
+
+        if (request.review_note) {
+          const note = document.createElement("div");
+          note.className = "muted";
+          note.textContent = "Review note: " + request.review_note;
+          left.appendChild(note);
+        }
+
+        const status = document.createElement("span");
+        status.className = "status";
+
+        if (["approved", "rejected", "cancelled"].includes(request.status)) {
+          status.classList.add("status-" + request.status);
+        }
+
+        status.textContent = request.status;
+
+        const right = document.createElement("div");
+        right.appendChild(status);
+        item.append(left, right);
+        list.appendChild(item);
+      }
+    } catch (error) {
+      console.error("Request lookup failed:", error.message);
+      list.textContent =
+        "Could not load requests. Please refresh and try again.";
+      showMessage(
+        "Your requests could not be loaded. Please try again.",
+        "error"
+      );
+    } finally {
+      $("refresh").disabled = false;
+    }
+  }
+
+  async function submitRequest(event, type) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    const fields = new FormData(form);
+
+    const amount = Number(fields.get("amount"));
+    const asset = String(fields.get("asset") || "")
+      .trim().toUpperCase();
+    const destination = String(fields.get("destination") || "").trim();
+
+    if (!Number.isFinite(amount) ||
+        amount <= 0 ||
+        amount >= 1000000000000) {
+      showMessage("Enter a valid amount greater than zero.", "error");
+      return;
+    }
+
+    if (!/^[A-Z0-9._-]{2,20}$/.test(asset)) {
+      showMessage(
+        "Use an asset code with 2–20 letters, numbers, dots, underscores, or hyphens.",
+        "error"
+      );
+      return;
+    }
+
+    if (type === "deposit" && !depositWallets.some(wallet => wallet.asset_code === asset && wallet.network === network && wallet.is_active)) {\n      showMessage("No active official deposit address is configured for this asset and network. Do not send funds; contact support.", "error");\n      return;\n    }\n\n    if (type === "withdrawal" && !destination) {
+      showMessage(
+        "Enter a destination or reference for the withdrawal request.",
+        "error"
+      );
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Submitting…";
+
+    try {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
+      if (sessionError || !sessionData.session) {
+        throw new Error("Your session expired. Please sign in again.");
+      }
+
+      const row = {
+        user_id: currentUser.id,
+        request_type: type,
+        amount,
+        asset,
+        reference: "AC-REQ-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 10).toUpperCase(),
+        status: "pending"
+      };
+
+      if (type === "withdrawal") {
+        row.destination = destination;
+      }
+
+      const { error } = await supabase
+        .from("fund_requests")
+        .insert(row);
+
+      if (error) throw error;
+
+      showMessage(
+        "Your " + type +
+        " request was saved as pending for review. No transfer has been executed automatically."
+      );
+
+      form.reset();
+      await loadRequests();
+    } catch (error) {
+      console.error("Request submission failed:", error.message);
+
+      showMessage(
+        "The request could not be saved. Please try again or contact support.",
+        "error"
+      );
+    } finally {
+      button.disabled = false;
+      button.textContent = type === "deposit"
+        ? "Submit deposit request"
+        : "Submit withdrawal request";
+    }
+  }
+
+  $("deposit-asset").addEventListener("change", renderDepositNetworks);\n  $("deposit-network").addEventListener("change", renderDepositWallet);\n\n  $("deposit-form").addEventListener("submit", event =>
+    submitRequest(event, "deposit")
+  );
+
+  $("withdrawal-form").addEventListener("submit", event =>
+    submitRequest(event, "withdrawal")
+  );
+
+  $("refresh").addEventListener("click", loadRequests);
+
+  try {
+    currentUser = await getSessionUser();
+
+    if (currentUser) {
+      await loadRequests();
+    }
+  } catch (error) {
+    console.error("Request page initialization failed:", error);
+    $("request-list").textContent =
+      "Could not verify your sign-in session. Please sign in again.";
+  }
+</script>
+</body>
+</html>
