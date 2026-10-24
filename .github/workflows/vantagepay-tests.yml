@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'lib/vantagepay-webhook.js'
+      - 'lib/vantagepay-ledger.js'
       - 'test/**'
       - 'package.json'
       - '.github/workflows/vantagepay-tests.yml'
