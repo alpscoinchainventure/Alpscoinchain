@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS public.vp_transaction_requests (
   status TEXT NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending','under_review','submitted','settled','failed','rejected','cancelled','reversed')),
   provider_reference TEXT UNIQUE,
-  idempotency_key TEXT NOT NULL UNIQUE,
+  idempotency_key TEXT NOT NULL,
   customer_note TEXT,
   failure_code TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -96,7 +96,8 @@ CREATE TABLE IF NOT EXISTS public.vp_transaction_requests (
   CHECK (
     (request_type = 'withdrawal' AND beneficiary_id IS NOT NULL)
     OR request_type = 'deposit'
-  )
+  ),
+  UNIQUE(user_id, idempotency_key)
 );
 
 CREATE INDEX IF NOT EXISTS vp_transaction_requests_user_date_idx
