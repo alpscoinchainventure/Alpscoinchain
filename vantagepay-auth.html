@@ -40,7 +40,7 @@
 <div class="account-actions"><a class="dashboard-link" href="/vantagepay-dashboard.html">Open customer dashboard</a><button id="refresh-profile" type="button">Refresh session</button><button id="signout" type="button">Sign out</button></div>
 <div id="account-message" class="msg" role="status" aria-live="polite"></div>
 </div>
-<div class="notice"><strong>Preview notice:</strong> This page uses the connected AlpsCoinChain Supabase Auth project. Use a test account only. Do not enter bank details or identity documents. Do not use this as a live financial account. Existing application records and authorization settings require security review before public rollout.</div>
+<div class="notice"><strong>Preview notice:</strong> VantagePay is designed as a standalone product. This development build still uses shared temporary authentication infrastructure and has not yet been fully separated into its own production backend. Use a test account only. Do not enter bank details or identity documents. No live financial account or APY return is active.</div>
 </section>
 <a class="back" href="/vantagepay-preview.html">← Back to VantagePay demo</a>
 <div class="foot">Secure identity provider · No real-money operations enabled</div>
@@ -91,7 +91,7 @@
     });
     clearMessage(message); resendButton.hidden = next !== 'signup';
   }
-  // Always return auth emails to the VantagePay auth page, never the AlpsCoinChain home/dashboard.
+  // Always return auth emails to the VantagePay auth page, never another product home/dashboard.
   const redirectUrl = () => new URL('/vantagepay-auth.html', window.location.origin).toString();
   function showAccount(user) {
     authView.classList.add('hidden'); accountView.classList.remove('hidden');
@@ -179,7 +179,7 @@
         const {data,error}=await client.auth.signUp({email,password,options:{data:{full_name:fullName},emailRedirectTo:redirectUrl()}});
         if (error) throw error;
         if (data.session) showMessage(message, 'Account created and signed in. Keep this as a test account until security review is complete.', 'good');
-        else showMessage(message, 'Sign-up request accepted. Check your email for the confirmation link. The link must return to VantagePay. If it opens AlpsCoinChain instead, the VantagePay redirect URL still needs to be allow-listed in Supabase Auth.', 'good');
+        else showMessage(message, 'Sign-up request accepted. Check your email for the confirmation link. The link must return to VantagePay. If it opens a different product, the VantagePay redirect URL still needs to be allow-listed in the identity provider.', 'good');
       } else if (mode==='login') {
         const {error}=await client.auth.signInWithPassword({email,password}); if (error) throw error;
         const {data}=await client.auth.getSession(); if (data.session) showAccount(data.session.user);
