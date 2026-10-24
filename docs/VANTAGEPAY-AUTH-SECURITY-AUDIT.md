@@ -16,24 +16,28 @@ This is a configuration/schema audit of the connected Supabase project named "Al
 
 ## Security findings and actions
 
-1. **Anonymous execution grants:** Supabase Security Advisor originally flagged multiple `SECURITY DEFINER` functions. The definitions for the following RPCs were inspected and each checks `auth.uid()`; admin actions also check the caller's admin profile:
-   - `public.admin_list_client_kyc_status()`
-   - `public.admin_review_fund_request(uuid, text, text)`
-   - `public.admin_review_kyc(uuid, text, text)`
-   - `public.admin_update_client_kyc_status(uuid, text, text, boolean)`
-   - `public.submit_kyc(text, date, text, text, text)`
+1. **Anonymous execution grants reduced.** The definitions and trigger bindings for the following five SECURITY DEFINER helper functions were inspected. They are bound to table triggers or a DDL event trigger, not intended as public RPCs:
+   - `public.require_approved_kyc_for_fund_request()`
+   - `public.rls_auto_enable()` (bound to event trigger `ensure_rls`)
+   - `public.sync_profile_kyc_status()`
+   - `public.sync_profile_kyc_status_on_submission()`
+   - `public.validate_fund_request_beneficiary()`
 
-   A migration named `revoke_anon_execute_from_authenticated_rpcs` has been applied to revoke `EXECUTE` from `anon` for those five RPCs. A follow-up SQL query confirmed the `anon` grant is absent and grants to `authenticated` and `service_role` remain.
+   A migration named `restrict_trigger_helper_execution` revoked direct EXECUTE grants from `PUBLIC`, `anon`, `authenticated`, and `service_role` for these helpers. A follow-up query confirmed their ACLs now grant execute only to `postgres`; the four table-trigger bindings remain present. The DDL event trigger `ensure_rls` was separately verified as bound to `rls_auto_enable()`. Security Advisor no longer reports anonymous-callable SECURITY DEFINER functions.
 
-2. **Remaining SECURITY DEFINER review:** Security Advisor still flags 18 functions executable by `authenticated` and five functions callable by `anon`. Several remaining anonymous entries appear to be trigger helpers (including `require_approved_kyc_for_fund_request`, `sync_profile_kyc_status`, `sync_profile_kyc_status_on_submission`, and `validate_fund_request_beneficiary`) or an event trigger (`rls_auto_enable`). Do not revoke or alter these blindly: trigger execution and event-trigger behavior differ from directly callable RPCs. Continue inspecting each definition, grant, trigger binding, and intended caller before changing permissions. Authenticated admin RPCs generally should retain explicit in-function authorization checks, and access should be limited to the minimum necessary roles.
+2. **Test request policies hardened.** A migration named `tighten_test_financial_request_rls` changed client-created `test_deposits` and `test_withdrawals` inserts to require `user_id = auth.uid()`, `status = 'pending'`, and `reviewed_at IS NULL`. Admin select/update policies for `test_deposits`, `test_withdrawals`, and `test_transactions` now require both `role = 'admin'` and an active account status. A follow-up query verified the expected policies. These are test tables; this does not enable real deposits or withdrawals.
 
-3. `public.admin_action_audit` has RLS enabled but no policies. This prevents accidental row access but means intended audit access is not fully defined. Design an explicit privileged read model before exposing audit records.
+3. **Remaining authenticated SECURITY DEFINER functions.** The latest Security Advisor reports 13 functions executable by `authenticated`: `admin_adjust_client_balance`, `admin_list_balance_adjustments`, `admin_list_beneficiaries`, `admin_list_client_kyc_status`, `admin_list_profiles`, `admin_post_ledger_entry`, `admin_preview_client_balance`, `admin_review_fund_request`, `admin_review_kyc`, `admin_review_test_deposit`, `admin_update_client_kyc_status`, `submit_kyc`, and `update_my_profile_name`. The inspected function definitions include caller identity checks and, for privileged administrative operations, admin/account-status checks. The profile-name helper is intended to update the caller's own name; `submit_kyc` is a signed-in customer workflow. Keep these grants only if the functions are needed, and continue testing unauthorized and cross-customer calls. The advisor finding alone is not proof of an exploit, but these functions are privileged and require careful review.
 
-4. **Leaked-password protection is disabled** in Supabase Auth. Enable it in Auth password/security settings before onboarding real users.
+4. **Profile table grants are restrictive.** The inspected `public.profiles` table grants `authenticated` table-level SELECT only; no authenticated UPDATE grant was present. Although a self-update RLS policy exists, the inspected Data API privileges do not currently permit authenticated users to update profile rows. Do not grant broad UPDATE access: fields such as `role`, `account_status`, and `kyc_status` are privileged. Use a narrow, reviewed column/function path if profile editing is added later.
 
-5. Review RLS policies on every exposed table, especially ledger entries, profiles, KYC metadata, fund requests, beneficiaries, deposit wallet addresses, and audit tables. Confirm customers can access only their own rows and cannot change privileged columns such as role, KYC status, approval status, reviewer fields, balances, or ledger entries.
+5. `public.admin_action_audit` has RLS enabled but no policies. This currently blocks normal row access but leaves intended privileged audit access undefined. Design and test a least-privilege read model before exposing audit records.
 
-7. Review Storage bucket policies for KYC documents. Keep identity documents private and use short-lived signed URLs only after server-side authorization.
+6. **Leaked-password protection remains disabled** in Supabase Auth. Enable it in Auth password/security settings before onboarding real users. The available project tools do not expose that Auth security setting, so it has not been changed here.
+
+7. Review RLS policies on all exposed tables, especially ledger entries, profiles, KYC metadata, fund requests, beneficiaries, test financial requests, and audit tables. Confirm ordinary customers can access only their own rows and cannot change role, KYC status, approval status, reviewer fields, balances, or ledger entries.
+
+8. Review Storage bucket policies for KYC documents. Keep identity documents private and use short-lived signed URLs only after server-side authorization.
 
 ## Safe implementation order
 
@@ -42,7 +46,7 @@ This is a configuration/schema audit of the connected Supabase project named "Al
 3. Enable leaked-password protection; review email confirmation, password reset, session lifetime, rate limiting, and redirect allow-list settings.
 4. Complete end-to-end Supabase Auth tests with a test account. Never ask users to share passwords, verification codes, reset links, or session tokens in chat.
 5. Ensure profile creation is tied to `auth.users.id`; derive identity from the verified session, not a user-supplied ID.
-6. Add a customer-only dashboard only after authorization and row-level access tests pass.
+6. A read-only session-guarded dashboard is now deployed, but test with an ordinary customer and a second account to verify cross-customer isolation; static smoke tests are not a penetration test.
 7. Keep balances derived from server-controlled ledger records. Customers must never write ledger entries or set their own balance. Deposits and withdrawals remain disabled until provider integration, reconciliation, legal authorization, and production controls are verified.
 8. Re-run Supabase Security Advisor and automated tests before exposing signup broadly.
 
