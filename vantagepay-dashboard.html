@@ -92,7 +92,7 @@ document.getElementById('request-type').addEventListener('change',event=>{docume
 document.getElementById('request-form').addEventListener('submit',async event=>{
  event.preventDefault();const button=document.getElementById('submit-request');button.disabled=true;setMessage('request-status','Submitting request for review…');
  try{
-  const raw=document.getElementById('request-amount').value.trim();if(!/^\\d+(?:\\.\\d{1,2})?$/.test(raw)||Number(raw)<=0)throw new Error('Enter a positive amount with up to two decimal places.');
+  const raw=document.getElementById('request-amount').value.trim();if(!/^\d+(?:\.\d{1,2})?$/.test(raw)||Number(raw)<=0)throw new Error('Enter a positive amount with up to two decimal places.');
   const parts=raw.split('.');const minor=(BigInt(parts[0])*100n+BigInt(((parts[1]||'')+'00').slice(0,2))).toString();
   const requestType=document.getElementById('request-type').value;const payload={request_type:requestType,amount_minor_units:minor,currency_code:document.getElementById('request-currency').value,customer_note:document.getElementById('request-note').value.trim()};
   if(requestType==='withdrawal'){payload.beneficiary_id=document.getElementById('request-beneficiary').value;if(!payload.beneficiary_id)throw new Error('Choose a verified beneficiary before requesting a withdrawal.');}
