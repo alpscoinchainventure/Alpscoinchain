@@ -1,0 +1,28 @@
+name: VantagePay validation tests
+
+on:
+  pull_request:
+    paths:
+      - 'lib/vantagepay-webhook.js'
+      - 'test/**'
+      - 'package.json'
+      - '.github/workflows/vantagepay-tests.yml'
+  push:
+    branches:
+      - vantagepay-integration-plan
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run validation tests
+        run: npm test
