@@ -16,6 +16,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
+// Serve the VantagePay demo explicitly so Vercel's function file tracing includes it.
+app.get('/vantagepay-preview.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'vantagepay-preview.html'));
+});
+
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, '&amp;')
