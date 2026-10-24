@@ -91,7 +91,8 @@
     });
     clearMessage(message); resendButton.hidden = next !== 'signup';
   }
-  // Always return auth emails to the VantagePay auth page, never the AlpsCoinChain home/dashboard.\n  const redirectUrl = () => new URL('/vantagepay-auth.html', window.location.origin).toString();
+  // Always return auth emails to the VantagePay auth page, never the AlpsCoinChain home/dashboard.
+  const redirectUrl = () => new URL('/vantagepay-auth.html', window.location.origin).toString();
   function showAccount(user) {
     authView.classList.add('hidden'); accountView.classList.remove('hidden');
     document.getElementById('signed-in-as').textContent = user && user.email ? 'Signed in as ' + user.email : 'Your identity session is active.';
