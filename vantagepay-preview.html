@@ -29,6 +29,16 @@
 <tr><td>20 Oct 2026</td><td>Illustrative adjustment</td><td>DEMO-1002</td><td><span class="status">Sample</span></td><td style="text-align:right">+£180.00</td></tr>
 <tr><td>15 Oct 2026</td><td>Demo account setup</td><td>DEMO-1003</td><td><span class="status">Sample</span></td><td style="text-align:right">£0.00</td></tr>
 </tbody></table></div></section>
+
+<section class="section card" aria-labelledby="readiness-title">
+  <h2 id="readiness-title">What is available today?</h2>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+    <div><span class="status">Available in preview</span><p style="margin-top:10px">Explore the interface, review fictional activity, and download a sample CSV statement.</p></div>
+    <div><span class="status" style="border-color:#8b6b34;background:#382c19;color:#ffe4a7">Not connected</span><p style="margin-top:10px">Client sign-in, identity checks, real balances, deposits, withdrawals, and investment execution are not enabled.</p></div>
+    <div><span class="status" style="border-color:#8b6b34;background:#382c19;color:#ffe4a7">Required before launch</span><p style="margin-top:10px">Secure authentication, a server-side double-entry ledger, provider verification, reconciliation, legal review, and security testing.</p></div>
+  </div>
+  <p class="tiny" style="margin-top:14px">Please use this page for interface feedback only. Do not submit personal, banking, identity, or payment information. A displayed demo balance is not money held for you.</p>
+</section>
 <div class="footer">VantagePay is a proposed account and ledger platform by AlpsCoinChain Investment Ventures. This preview uses invented data for interface review only. It is not a bank, investment recommendation, offer, or confirmation that funds or investments exist. <br><br><a href="/">Return to AlpsCoinChain</a></div>
 </div><script>
 (function(){
@@ -41,7 +51,7 @@
     const csv=rows.map(row=>row.map(value=>'"'+value.replace(/"/g,'""')+'"').join(",")).join("\r\n");
     const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
     const url=URL.createObjectURL(blob);const link=document.createElement("a");
-    link.href=url;link.download="vantagepay-demo-statement.csv";document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+    link.href=url;link.download="vantagepay-demo-statement.csv";document.body.appendChild(link);link.click();link.remove();window.setTimeout(function(){URL.revokeObjectURL(url);},1000);
     status.textContent="Sample statement downloaded. It contains fictional demo records only.";
   });
 })();
