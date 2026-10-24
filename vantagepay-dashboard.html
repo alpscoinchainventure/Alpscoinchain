@@ -10,6 +10,7 @@
 <div class="buttons"><button id="refresh" class="primary" type="button">Refresh account</button><button id="signout" type="button">Sign out</button><a class="button" href="/vantagepay-preview.html">Open demo</a></div></div>
 <div class="panel"><h2>Ledger balances</h2><p>Balances are calculated from posted, customer-owned ledger entries only. Pending requests are not available funds.</p><div id="balances-grid" class="grid"><div class="empty">Checking posted ledger entries…</div></div></div>
 <div class="panel"><h2>Beneficiary bank accounts</h2><p>Only verified beneficiary records may be selected for withdrawal requests. Bank details must be linked through a reviewed provider-hosted flow.</p><div id="beneficiary-list" class="empty">Loading beneficiary accounts…</div><div class="buttons"><button id="refresh-beneficiaries" type="button">Refresh beneficiaries</button><button id="link-beneficiary" type="button">Link a bank account</button></div><div id="beneficiary-status" class="message" role="status" aria-live="polite">Secure linking is not enabled until a provider adapter is configured.</div></div>
+<div class="panel"><h2>Notifications</h2><p>Updates appear when a request is received or its processing status changes. Email/SMS delivery will require a configured notification provider.</p><div id="notification-list" class="empty">Loading notifications…</div><div class="buttons"><button id="refresh-notifications" type="button">Refresh notifications</button></div></div>
 <div class="panel"><h2>Deposit and withdrawal requests</h2><p>Submit a request for review. Recording a request does not accept a deposit or transfer money. Withdrawals require a verified beneficiary and remain pending until an authorized provider confirms settlement.</p><form id="request-form"><label for="request-type">Request type</label><select id="request-type" required style="display:block;width:100%;margin:6px 0 12px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#071321;color:var(--ink)"><option value="deposit">Deposit request</option><option value="withdrawal">Withdrawal request</option></select><label for="request-amount">Amount</label><input id="request-amount" type="number" min="0.01" max="999999999" step="0.01" required placeholder="0.00" style="display:block;width:100%;margin:6px 0 12px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#071321;color:var(--ink)"><label for="request-currency">Currency</label><select id="request-currency" required style="display:block;width:100%;margin:6px 0 12px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#071321;color:var(--ink)"><option>GBP</option><option>USD</option><option>EUR</option><option>NGN</option></select><label for="request-beneficiary">Beneficiary for withdrawal</label><select id="request-beneficiary" style="display:block;width:100%;margin:6px 0 12px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#071321;color:var(--ink)"><option value="">Select a verified beneficiary</option></select><label for="request-note">Optional note</label><input id="request-note" maxlength="500" type="text" placeholder="Optional request note" style="display:block;width:100%;margin:6px 0 12px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#071321;color:var(--ink)"><button id="submit-request" class="primary" type="submit">Submit request</button></form><div id="request-status" class="message" role="status" aria-live="polite">Requests require the dedicated VantagePay backend to be configured.</div><h3 style="margin-top:20px">Request history</h3><div id="request-list" class="empty">Loading request history…</div></div>
 <div class="panel"><h2>Account activity</h2><p>Read-only entries returned by your authenticated VantagePay ledger. Only posted records represent ledger entries; a pending request is not a settled transaction.</p><div class="buttons"><label for="activity-search" class="small">Search activity</label><input id="activity-search" type="search" placeholder="Search type, reference, description…" autocomplete="off"><button id="export-activity" type="button">Export CSV</button></div><div id="activity-message" class="empty">Loading account activity…</div><div id="activity-wrap" class="activity hidden"><table><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Reference</th><th>Description</th></tr></thead><tbody id="activity-rows"></tbody></table></div></div></section>
 <div class="notice"><strong>Important:</strong> VantagePay is intended to be a standalone product. The standalone VantagePay backend must be configured before customer account features can be used. No other product account is used. No balance, deposit, withdrawal, transfer, or payout is enabled; APY credits are also inactive. Do not submit identity documents or payment details.</div><p class="small"><a class="back" href="/vantagepay-auth.html">← Account access</a></p></main>
@@ -42,6 +43,7 @@ currentEntries=Array.isArray(entries)?entries:[];renderActivity();
 await loadBalances(user.id);
 await loadBeneficiaries();
 await loadTransactionRequests();
+await loadNotifications();
 }
 function setMessage(id,text,kind){const el=document.getElementById(id);if(!el)return;el.textContent=text;el.className='message'+(kind?' '+kind:'');}
 function minorUnitsToDisplay(units){const s=String(units||'0');const padded=s.padStart(3,'0');return padded.slice(0,-2)+'.'+padded.slice(-2);}
@@ -81,12 +83,30 @@ async function loadBeneficiaries(){
   setMessage('beneficiary-status',verified.length?'Verified beneficiary available for withdrawal requests.':'No verified beneficiary is available. Secure bank linking remains provider-dependent.',verified.length?'good':'');
  }catch(error){currentBeneficiaries=[];list.textContent=error.message;setMessage('beneficiary-status',error.message,'bad');}
 }
+async function loadNotifications(){
+ const list=document.getElementById('notification-list');list.textContent='Loading notifications…';
+ try{
+  const data=await apiRequest('/api/vantagepay/notifications');
+  const rows=Array.isArray(data.notifications)?data.notifications:[];
+  if(!rows.length){list.textContent='No notifications yet.';return;}
+  list.replaceChildren();
+  for(const n of rows){
+   const row=document.createElement('div');row.className='message';
+   const title=document.createElement('strong');title.textContent=n.title||'VantagePay update';
+   const body=document.createElement('p');body.textContent=(n.message||'')+' · '+date(n.created_at)+(n.read_at?' · Read':' · Unread');
+   row.append(title,body);
+   if(!n.read_at){const button=document.createElement('button');button.type='button';button.textContent='Mark as read';button.addEventListener('click',async()=>{button.disabled=true;try{await apiRequest('/api/vantagepay/notifications/'+encodeURIComponent(n.id)+'/read',{method:'PATCH',body:'{}'});await loadNotifications();}catch(error){button.disabled=false;setMessage('request-status',error.message,'bad');}});row.append(button);}
+   list.append(row);
+  }
+ }catch(error){list.textContent=error.message;}
+}
 async function loadTransactionRequests(){
  const list=document.getElementById('request-list');list.textContent='Loading request history…';
  try{const data=await apiRequest('/api/vantagepay/transaction-requests');const rows=Array.isArray(data.requests)?data.requests:[];if(!rows.length){list.textContent='No deposit or withdrawal requests yet.';return;}list.replaceChildren();for(const r of rows){const row=document.createElement('div');row.className='message';const b=Array.isArray(r.beneficiary)?r.beneficiary[0]:r.beneficiary;const beneficiaryText=b?[b.beneficiary_name,b.bank_name,b.account_last4?'•••• '+b.account_last4:''].filter(Boolean).join(' / '):'';row.textContent=[r.request_reference,r.request_type,minorUnitsToDisplay(r.amount_minor_units)+' '+r.currency_code,beneficiaryText,r.status,new Date(r.created_at).toLocaleString()].filter(Boolean).join(' · ');list.append(row);}}
  catch(error){list.textContent=error.message;}
 }
 document.getElementById('refresh-beneficiaries').addEventListener('click',()=>loadBeneficiaries());
+document.getElementById('refresh-notifications').addEventListener('click',()=>loadNotifications());
 document.getElementById('link-beneficiary').addEventListener('click',()=>setMessage('beneficiary-status','Secure beneficiary linking is not enabled yet. Do not enter bank details until a verified provider-hosted flow is connected.','bad'));
 document.getElementById('request-type').addEventListener('change',event=>{document.getElementById('request-beneficiary').disabled=event.target.value!=='withdrawal';});
 document.getElementById('request-form').addEventListener('submit',async event=>{
