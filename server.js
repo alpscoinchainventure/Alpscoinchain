@@ -16,7 +16,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
-// Explicit routes ensure Vercel's function file tracing includes the VantagePay pages.
+// VantagePay has explicit, branded routes and never uses the AlpsCoinChain
+// home page as an authentication callback.
+app.get('/vantagepay', (_req, res) => res.redirect(302, '/vantagepay-preview.html'));
+app.get('/vantagepay/login', (_req, res) => res.redirect(302, '/vantagepay-auth.html'));
+app.get('/vantagepay/dashboard', (_req, res) => res.redirect(302, '/vantagepay-dashboard.html'));
 app.get('/vantagepay-preview.html', (_req, res) => {
   res.sendFile(path.join(__dirname, 'vantagepay-preview.html'));
 });
