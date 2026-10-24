@@ -23,6 +23,9 @@ app.get('/vantagepay-preview.html', (_req, res) => {
 app.get('/vantagepay-auth.html', (_req, res) => {
   res.sendFile(path.join(__dirname, 'vantagepay-auth.html'));
 });
+app.get('/vantagepay-dashboard.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'vantagepay-dashboard.html'));
+});
 
 function escapeHtml(value) {
   return String(value)
