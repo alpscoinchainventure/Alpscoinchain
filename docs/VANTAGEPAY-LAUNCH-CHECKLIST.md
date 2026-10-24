@@ -45,7 +45,7 @@ No domain has been purchased or reserved. Confirm the exact domain and budget be
 - [ ] Configure and verify notification delivery provider for email/SMS; current customer notifications are in-app only.
 - [ ] Provision named admin users through a trusted reviewed process in the dedicated VantagePay database; never let customers self-assign admin access.
 - [ ] Establish a written integration contract and authenticated sandbox with AlpsCoinChain Investment Ventures, including customer-reference mapping, signed events, source reconciliation, reversals, and idempotency.
-- [ ] Implement and independently test atomic admin ledger adjustments and verified reward posting before any balances are changed; require reason, audit trail, and appropriate approval controls.
+- [x] Added an atomic admin ledger-adjustment function with finance/super-admin authorization, balanced entries, idempotency, audit reason, audit record, and customer notification (design migration only; not deployed).\n- [ ] Independently test the adjustment function and implement verified reward posting before production; require reconciliation, audit trail, and appropriate approval controls.
 - [ ] Do not apply this schema to the shared AlpsCoinChain database. Dedicated VantagePay backend and environment secrets are still required.
 
 ## Before real-money capability
