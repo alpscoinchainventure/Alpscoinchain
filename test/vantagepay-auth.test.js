@@ -73,6 +73,8 @@ test('VantagePay demo links to authentication and clearly labels fictional finan
 test('VantagePay standalone schema uses valid dollar-quoted trigger function and beneficiary relationship', () => {
   assert.match(standaloneSchema, /AS \$\$\s+BEGIN[\s\S]*?RETURN NEW;\s+END;\s+\$\$;/);
   assert.match(standaloneSchema, /beneficiary_id UUID REFERENCES public\.vp_beneficiary_accounts\(id\)/);
+  assert.match(standaloneSchema, /UNIQUE\(user_id, idempotency_key\)/);
+  assert.match(standaloneSchema, /idempotency_key TEXT NOT NULL,/);
   assert.match(vantagepayApi, /beneficiary:vp_beneficiary_accounts\(id,beneficiary_name,bank_name,account_last4,currency_code\)/);
   assert.match(dashboardHtml, /beneficiaryText/);
   assert.match(dashboardHtml, /account_last4/);
