@@ -8,11 +8,14 @@
 <section id="dashboard" class="hidden"><div class="panel"><h1>Welcome, <span id="customer-name">customer</span></h1><p id="customer-email">Checking account access…</p>
 <div class="grid"><div class="stat"><div class="label">Account status</div><div id="account-status" class="value">Loading…</div></div><div class="stat"><div class="label">Access type</div><div class="value">Customer</div></div><div class="stat"><div class="label">Member since</div><div id="member-since" class="value">Loading…</div></div></div>
 <div class="buttons"><button id="refresh" class="primary" type="button">Refresh account</button><button id="signout" type="button">Sign out</button><a class="button" href="/vantagepay-preview.html">Open demo</a></div></div>
-<div class="panel"><h2>Account activity</h2><p>Read-only entries returned by your authenticated database session. Entries are not proof of settled funds.</p><div class="buttons"><label for="activity-search" class="small">Search activity</label><input id="activity-search" type="search" placeholder="Search type, reference, description…" autocomplete="off"><button id="export-activity" type="button">Export CSV</button></div><div id="activity-message" class="empty">Loading account activity…</div><div id="activity-wrap" class="activity hidden"><table><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Reference</th><th>Description</th></tr></thead><tbody id="activity-rows"></tbody></table></div></div></section>
+<div class="panel"><h2>Ledger balances</h2><p>Balances are calculated from posted, customer-owned ledger entries only. Pending requests are not available funds.</p><div id="balances-grid" class="grid"><div class="empty">Checking posted ledger entries…</div></div></div>
+<div class="panel"><h2>Beneficiary bank accounts</h2><p>Only verified beneficiary records may be selected for withdrawal requests. Bank details must be linked through a reviewed provider-hosted flow.</p><div id="beneficiary-list" class="empty">Loading beneficiary accounts…</div><div class="buttons"><button id="refresh-beneficiaries" type="button">Refresh beneficiaries</button><button id="link-beneficiary" type="button">Link a bank account</button></div><div id="beneficiary-status" class="message" role="status" aria-live="polite">Secure linking is not enabled until a provider adapter is configured.</div></div>
+<div class="panel"><h2>Deposit and withdrawal requests</h2><p>Submit a request for review. Recording a request does not accept a deposit or transfer money. Withdrawals require a verified beneficiary and remain pending until an authorized provider confirms settlement.</p><form id="request-form"><label for="request-type">Request type</label><select id="request-type" required style="display:block;width:100%;margin:6px 0 12px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#071321;color:var(--ink)"><option value="deposit">Deposit request</option><option value="withdrawal">Withdrawal request</option></select><label for="request-amount">Amount</label><input id="request-amount" type="number" min="0.01" max="999999999" step="0.01" required placeholder="0.00" style="display:block;width:100%;margin:6px 0 12px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#071321;color:var(--ink)"><label for="request-currency">Currency</label><select id="request-currency" required style="display:block;width:100%;margin:6px 0 12px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#071321;color:var(--ink)"><option>GBP</option><option>USD</option><option>EUR</option><option>NGN</option></select><label for="request-beneficiary">Beneficiary for withdrawal</label><select id="request-beneficiary" style="display:block;width:100%;margin:6px 0 12px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#071321;color:var(--ink)"><option value="">Select a verified beneficiary</option></select><label for="request-note">Optional note</label><input id="request-note" maxlength="500" type="text" placeholder="Optional request note" style="display:block;width:100%;margin:6px 0 12px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#071321;color:var(--ink)"><button id="submit-request" class="primary" type="submit">Submit request</button></form><div id="request-status" class="message" role="status" aria-live="polite">Requests require the dedicated VantagePay backend to be configured.</div><h3 style="margin-top:20px">Request history</h3><div id="request-list" class="empty">Loading request history…</div></div>
+<div class="panel"><h2>Account activity</h2><p>Read-only entries returned by your authenticated VantagePay ledger. Only posted records represent ledger entries; a pending request is not a settled transaction.</p><div class="buttons"><label for="activity-search" class="small">Search activity</label><input id="activity-search" type="search" placeholder="Search type, reference, description…" autocomplete="off"><button id="export-activity" type="button">Export CSV</button></div><div id="activity-message" class="empty">Loading account activity…</div><div id="activity-wrap" class="activity hidden"><table><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Reference</th><th>Description</th></tr></thead><tbody id="activity-rows"></tbody></table></div></div></section>
 <div class="notice"><strong>Important:</strong> VantagePay is intended to be a standalone product. This development build still uses shared temporary authentication infrastructure and is not production-separated yet. No balance, deposit, withdrawal, transfer, or payout is enabled; APY credits are also inactive. Do not submit identity documents or payment details.</div><p class="small"><a class="back" href="/vantagepay-auth.html">← Account access</a></p></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 (function(){'use strict';
-const message=document.getElementById('message'),dashboard=document.getElementById('dashboard'),activityMessage=document.getElementById('activity-message'),activityWrap=document.getElementById('activity-wrap'),activityRows=document.getElementById('activity-rows'),activitySearch=document.getElementById('activity-search'),exportActivity=document.getElementById('export-activity');let client,currentEntries=[];
+const message=document.getElementById('message'),dashboard=document.getElementById('dashboard'),activityMessage=document.getElementById('activity-message'),activityWrap=document.getElementById('activity-wrap'),activityRows=document.getElementById('activity-rows'),activitySearch=document.getElementById('activity-search'),exportActivity=document.getElementById('export-activity');let client,currentEntries=[],currentSession=null,currentBeneficiaries=[];
 function status(text,kind){message.textContent=text;message.className='message'+(kind?' '+kind:'');}
 function cell(text){const td=document.createElement('td');td.textContent=text==null||text===''?'—':String(text);return td;}
 function date(value){if(!value)return '—';const d=new Date(value);return Number.isNaN(d.getTime())?'—':d.toLocaleString();}
@@ -27,7 +30,7 @@ if(!config.supabaseUrl||!config.publishableKey){status('VantagePay standalone au
 if(!client)client=window.supabase.createClient(config.supabaseUrl,config.publishableKey,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
 const {data:authData,error:authError}=await client.auth.getUser();
 if(authError||!authData||!authData.user){status('Please sign in to view your account.');setTimeout(signIn,800);return;}
-const user=authData.user;dashboard.classList.remove('hidden');document.getElementById('customer-email').textContent=user.email||'Authenticated customer';
+const user=authData.user;const {data:sessionData}=await client.auth.getSession();currentSession=sessionData&&sessionData.session?sessionData.session:null;dashboard.classList.remove('hidden');document.getElementById('customer-email').textContent=user.email||'Authenticated customer';
 const {data:profile,error:profileError}=await client.from('vp_customer_accounts').select('user_id,display_name,account_status,created_at').eq('user_id',user.id).maybeSingle();
 if(profileError){document.getElementById('customer-name').textContent='there';document.getElementById('account-status').textContent='Unavailable';document.getElementById('member-since').textContent='Unavailable';status('Signed in, but profile data could not be loaded. Permissions or profile setup may need review.','bad');}
 else if(!profile){document.getElementById('customer-name').textContent='there';document.getElementById('account-status').textContent='Profile pending';document.getElementById('member-since').textContent='—';status('No customer profile was found for this authenticated user. Please contact support; do not create another account.','bad');}
@@ -36,7 +39,69 @@ activityMessage.textContent='Loading account activity…';activityMessage.classL
 const {data:entries,error:entriesError}=await client.from('vp_ledger_transactions').select('transaction_type,amount_minor_units,currency_code,transaction_reference,description,status,created_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50);
 if(entriesError){currentEntries=[];activityMessage.textContent='Activity is unavailable for this account. No balance is shown.';return;}
 currentEntries=Array.isArray(entries)?entries:[];renderActivity();
+await loadBalances(user.id);
+await loadBeneficiaries();
+await loadTransactionRequests();
 }
+function setMessage(id,text,kind){const el=document.getElementById(id);if(!el)return;el.textContent=text;el.className='message'+(kind?' '+kind:'');}
+function minorUnitsToDisplay(units){const s=String(units||'0');const padded=s.padStart(3,'0');return padded.slice(0,-2)+'.'+padded.slice(-2);}
+async function loadBalances(userId){
+ const grid=document.getElementById('balances-grid');grid.replaceChildren();
+ try{
+  const {data:posted,error}=await client.from('vp_ledger_transactions').select('id').eq('user_id',userId).eq('status','posted').limit(500);
+  if(error)throw error;
+  const ids=(posted||[]).map(x=>x.id);
+  if(!ids.length){grid.innerHTML='<div class="empty">No posted balance entries are available yet.</div>';return;}
+  const {data:entries,error:entryError}=await client.from('vp_ledger_entries').select('side,amount_minor_units,currency_code').eq('account_code','customer:'+userId).in('transaction_id',ids);
+  if(entryError)throw entryError;
+  const balances={};
+  for(const e of entries||[]){const currency=e.currency_code;const amount=BigInt(String(e.amount_minor_units));balances[currency]=(balances[currency]||0n)+(e.side==='credit'?amount:-amount);}
+  const currencies=Object.keys(balances);
+  if(!currencies.length){grid.innerHTML='<div class="empty">No posted customer balance entries are available yet.</div>';return;}
+  for(const currency of currencies){const value=balances[currency];const card=document.createElement('div');card.className='stat';const label=document.createElement('div');label.className='label';label.textContent='Posted '+currency+' balance';const amount=document.createElement('div');amount.className='value';amount.textContent=(value<0n?'-':'')+currency+' '+minorUnitsToDisplay((value<0n?-value:value).toString());card.append(label,amount);grid.append(card);}
+ }catch{grid.innerHTML='<div class="empty">Balance data is unavailable. No estimate has been substituted.</div>';}
+}
+async function apiRequest(path,options={}){
+ if(!currentSession||!currentSession.access_token)throw new Error('Your VantagePay session is not available. Sign in again.');
+ const response=await fetch(path,{...options,headers:{accept:'application/json','Content-Type':'application/json',Authorization:'Bearer '+currentSession.access_token,...(options.headers||{})}});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(data.message||'The VantagePay service is not configured yet.');
+ return data;
+}
+async function loadBeneficiaries(){
+ const list=document.getElementById('beneficiary-list'),select=document.getElementById('request-beneficiary');
+ list.textContent='Loading beneficiary accounts…';select.replaceChildren(new Option('Select a verified beneficiary',''));
+ try{
+  const data=await apiRequest('/api/vantagepay/beneficiaries');
+  currentBeneficiaries=Array.isArray(data.beneficiaries)?data.beneficiaries:[];
+  const verified=currentBeneficiaries.filter(b=>b.verification_status==='verified');
+  if(!currentBeneficiaries.length)list.textContent='No beneficiary accounts are linked yet.';
+  else{list.replaceChildren();for(const b of currentBeneficiaries){const row=document.createElement('div');row.className='message';row.textContent=[b.beneficiary_name,b.bank_name,b.account_last4?'•••• '+b.account_last4:'',b.currency_code,b.verification_status].filter(Boolean).join(' · ');list.append(row);}}
+  for(const b of verified)select.add(new Option((b.beneficiary_name||'Beneficiary')+' · '+(b.bank_name||'Bank')+' · '+(b.account_last4||'••••'),b.id));
+  setMessage('beneficiary-status',verified.length?'Verified beneficiary available for withdrawal requests.':'No verified beneficiary is available. Secure bank linking remains provider-dependent.',verified.length?'good':'');
+ }catch(error){currentBeneficiaries=[];list.textContent=error.message;setMessage('beneficiary-status',error.message,'bad');}
+}
+async function loadTransactionRequests(){
+ const list=document.getElementById('request-list');list.textContent='Loading request history…';
+ try{const data=await apiRequest('/api/vantagepay/transaction-requests');const rows=Array.isArray(data.requests)?data.requests:[];if(!rows.length){list.textContent='No deposit or withdrawal requests yet.';return;}list.replaceChildren();for(const r of rows){const row=document.createElement('div');row.className='message';row.textContent=[r.request_reference,r.request_type,minorUnitsToDisplay(r.amount_minor_units)+' '+r.currency_code,r.status,new Date(r.created_at).toLocaleString()].join(' · ');list.append(row);}}
+ catch(error){list.textContent=error.message;}
+}
+document.getElementById('refresh-beneficiaries').addEventListener('click',()=>loadBeneficiaries());
+document.getElementById('link-beneficiary').addEventListener('click',()=>setMessage('beneficiary-status','Secure beneficiary linking is not enabled yet. Do not enter bank details until a verified provider-hosted flow is connected.','bad'));
+document.getElementById('request-type').addEventListener('change',event=>{document.getElementById('request-beneficiary').disabled=event.target.value!=='withdrawal';});
+document.getElementById('request-form').addEventListener('submit',async event=>{
+ event.preventDefault();const button=document.getElementById('submit-request');button.disabled=true;setMessage('request-status','Submitting request for review…');
+ try{
+  const raw=document.getElementById('request-amount').value.trim();if(!/^\\d+(?:\\.\\d{1,2})?$/.test(raw)||Number(raw)<=0)throw new Error('Enter a positive amount with up to two decimal places.');
+  const parts=raw.split('.');const minor=(BigInt(parts[0])*100n+BigInt(((parts[1]||'')+'00').slice(0,2))).toString();
+  const requestType=document.getElementById('request-type').value;const payload={request_type:requestType,amount_minor_units:minor,currency_code:document.getElementById('request-currency').value,customer_note:document.getElementById('request-note').value.trim()};
+  if(requestType==='withdrawal'){payload.beneficiary_id=document.getElementById('request-beneficiary').value;if(!payload.beneficiary_id)throw new Error('Choose a verified beneficiary before requesting a withdrawal.');}
+  const idempotency='vp-'+Date.now()+'-'+Math.random().toString(36).slice(2,12);
+  const result=await apiRequest('/api/vantagepay/transaction-requests',{method:'POST',headers:{'Idempotency-Key':idempotency},body:JSON.stringify(payload)});
+  setMessage('request-status',result.message||'Request recorded for review only. No money was moved.','good');document.getElementById('request-form').reset();document.getElementById('request-beneficiary').disabled=true;await loadTransactionRequests();
+ }catch(error){setMessage('request-status',error.message,'bad');}
+ finally{button.disabled=false;}
+});
 function renderActivity(){
 activityRows.replaceChildren();
 const q=(activitySearch.value||'').trim().toLowerCase();
