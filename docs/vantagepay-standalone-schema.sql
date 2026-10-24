@@ -150,9 +150,13 @@ END;
 $;
 
 REVOKE EXECUTE ON FUNCTION public.vp_notify_transaction_request() FROM PUBLIC, anon, authenticated;
-DROP TRIGGER IF EXISTS vp_transaction_request_notification ON public.vp_transaction_requests;
-CREATE TRIGGER vp_transaction_request_notification
-  AFTER INSERT OR UPDATE OF status ON public.vp_transaction_requests
+DROP TRIGGER IF EXISTS vp_transaction_request_insert_notification ON public.vp_transaction_requests;
+CREATE TRIGGER vp_transaction_request_insert_notification
+  AFTER INSERT ON public.vp_transaction_requests
+  FOR EACH ROW EXECUTE FUNCTION public.vp_notify_transaction_request();
+DROP TRIGGER IF EXISTS vp_transaction_request_status_notification ON public.vp_transaction_requests;
+CREATE TRIGGER vp_transaction_request_status_notification
+  AFTER UPDATE OF status ON public.vp_transaction_requests
   FOR EACH ROW EXECUTE FUNCTION public.vp_notify_transaction_request();
 
 -- Generic verified source records let approved external partners report APY,
