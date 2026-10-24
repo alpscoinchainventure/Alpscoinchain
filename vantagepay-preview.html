@@ -105,6 +105,7 @@
     if(amount===null){say("Simulation cancelled. No request was sent.");return;}
     if(!/^\d+(\.\d{1,2})?$/.test(amount.trim())||Number(amount)<=0||Number(amount)>1000){say("Please enter a sample amount between £1 and £1,000 with at most two decimal places. Nothing was sent.");return;}
     const value=Number(amount);
+    if(value>demoBalance){say("That sample amount exceeds the current fictional demo balance. No request was created.");return;}
     addSampleRow("Simulated withdrawal draft (not sent)",-value,"Demo draft");
     say("Demo withdrawal draft recorded for £"+value.toFixed(2)+". No payout was requested and no money moved. The fictional balance changed only for this demonstration.");
   });
