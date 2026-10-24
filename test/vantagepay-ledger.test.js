@@ -66,3 +66,50 @@ test('rejects malformed persisted entries during balance projection', () => {
     { accountCode: 'customer-1', asset: 'GBP', side: 'debit', amountUnits: '1.5' }
   ], 'customer-1', 'GBP'), TypeError);
 });
+
+
+test('preserves very large integer-unit totals exactly beyond Number precision', () => {
+  const huge = '900719925474099312345678901234567890';
+  const result = validateJournalTransaction({
+    ...balanced,
+    entries: [
+      { accountCode: 'large-debit', side: 'debit', asset: 'GBP', amountUnits: huge },
+      { accountCode: 'large-credit', side: 'credit', asset: 'GBP', amountUnits: huge }
+    ]
+  });
+  assert.equal(result.valid, true);
+  assert.equal(result.transaction.totalDebitUnits, huge);
+  assert.equal(result.transaction.totalCreditUnits, huge);
+});
+
+test('freezes the normalized transaction and its entry collection', () => {
+  const result = validateJournalTransaction(balanced);
+  assert.equal(result.valid, true);
+  assert.equal(Object.isFrozen(result.transaction), true);
+  assert.equal(Object.isFrozen(result.transaction.entries), true);
+  assert.equal(Object.isFrozen(result.transaction.entries[0]), true);
+});
+
+test('rejects excessive entry counts and malformed transaction shapes', () => {
+  assert.equal(validateJournalTransaction([]).valid, false);
+  assert.equal(validateJournalTransaction({ ...balanced, entries: [] }).valid, false);
+  assert.equal(validateJournalTransaction({
+    ...balanced,
+    entries: Array.from({ length: 101 }, (_, i) => ({
+      accountCode: `account-${i}`,
+      side: i % 2 === 0 ? 'debit' : 'credit',
+      asset: 'GBP',
+      amountUnits: '1'
+    }))
+  }).valid, false);
+});
+
+test('balance projection ignores unrelated rows but rejects invalid matching rows', () => {
+  assert.equal(calculateAccountBalanceUnits([
+    { accountCode: 'other-account', asset: 'GBP', side: 'invalid', amountUnits: 'nope' },
+    { accountCode: 'customer-1', asset: 'GBP', side: 'credit', amountUnits: '10' }
+  ], 'customer-1', 'GBP'), '-10');
+  assert.throws(() => calculateAccountBalanceUnits([
+    { accountCode: 'customer-1', asset: 'GBP', side: 'invalid', amountUnits: '10' }
+  ], 'customer-1', 'GBP'), TypeError);
+});
