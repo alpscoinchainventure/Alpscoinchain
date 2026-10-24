@@ -203,6 +203,16 @@ app.get('/fund-request-admin.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'fund-request-admin.html'));
 });
 
+// Fund request page: always serve the latest form without stale browser/CDN caching.
+app.get('/fund-requests.html', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+    Pragma: 'no-cache',
+    Expires: '0'
+  });
+  res.sendFile(path.join(__dirname, 'fund-requests.html'));
+});
+
 // Serve static files without automatically serving index.html.
 app.use(express.static(__dirname, { index: false }));
 
