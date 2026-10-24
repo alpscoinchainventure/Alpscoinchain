@@ -82,6 +82,21 @@
     <p class="muted small">After a successful ledger post, the client's dashboard will calculate its current recorded balance from the ledger RPC. If a request times out, verify the ledger and audit records before retrying.</p>
   </section>
 
+
+  <section class="panel" aria-labelledby="balanceHeading">
+    <h2 id="balanceHeading">Client balance lookup & adjustment audit</h2>
+    <p class="muted small">Look up a client's recorded balance for a supported asset and review recent administrator adjustment audit records. Balances are calculated from ledger entries; this does not verify external funds.</p>
+    <div class="form-grid">
+      <div><label for="balanceClient">Client account</label><select id="balanceClient" required><option value="">Load accounts first</option></select></div>
+      <div><label for="balanceAsset">Asset</label><select id="balanceAsset"><option>USDT</option><option>USDC</option><option>BTC</option><option>ETH</option><option>BNB</option><option>SOL</option><option>LTC</option><option>XRP</option></select></div>
+    </div>
+    <div class="button-row"><button id="previewBalanceButton" class="primary" type="button">Check recorded balance</button><button id="refreshAuditButton" type="button">Refresh adjustment audit</button></div>
+    <div id="balanceNotice" class="notice" role="status" aria-live="polite">Choose a client and asset to check the recorded balance.</div>
+    <h3>Recent balance adjustments</h3>
+    <div id="auditNotice" class="notice" role="status" aria-live="polite">Adjustment audit has not been loaded.</div>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Client</th><th>Type / amount</th><th>Asset</th><th>Before → after</th><th>Reference</th><th>Reason</th></tr></thead><tbody id="auditRows"></tbody></table></div>
+  </section>
+
   <section class="panel" aria-labelledby="walletHeading">
     <h2 id="walletHeading">Deposit wallet addresses</h2>
     <p class="muted">Add the official receiving address for each asset and network. Verify the address and network carefully before activating it. Never enter private keys or recovery phrases here.</p>
@@ -142,6 +157,7 @@
     const filtered=visibleProfiles.filter(profile=>normalizeId(profile.id).includes(query)||String(profile.role||"").toLowerCase().includes(query)||String(profile.account_status||"").toLowerCase().includes(query));
     const select=$("ledgerClient");select.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select a client account";select.appendChild(placeholder);
     for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client")){const option=document.createElement("option");option.value=profile.id;option.textContent=profile.id+" · "+(profile.account_status||"status unavailable");select.appendChild(option)}
+    const balanceSelect=$("balanceClient");if(balanceSelect){balanceSelect.replaceChildren();const balancePlaceholder=document.createElement("option");balancePlaceholder.value="";balancePlaceholder.textContent="Select a client account";balanceSelect.appendChild(balancePlaceholder);for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client")){const option=document.createElement("option");option.value=profile.id;option.textContent=profile.id+" · "+(profile.account_status||"status unavailable");balanceSelect.appendChild(option)}}
     if(!filtered.length){setNotice("accountsNotice",visibleProfiles.length?"No visible accounts match your search.":"No profiles are visible under the current database function.",visibleProfiles.length?"":"warning");return}
     for(const profile of filtered){const row=document.createElement("tr");for(const value of [profile.id,profile.role,profile.account_status]){const cell=document.createElement("td");cell.textContent=value||"—";row.appendChild(cell)}body.appendChild(row)}
     setNotice("accountsNotice","Showing "+filtered.length+" of "+visibleProfiles.length+" visible profiles.");
@@ -187,13 +203,13 @@
   async function loadWalletAddresses(){
     const body=$("walletRows");body.replaceChildren();setNotice("walletNotice","Loading wallet address settings…");
     try{
-      const {data,error}=await client.from("deposit_wallet_addresses").select("id,asset_code,network,wallet_address,is_active,updated_at").order("asset_code").order("network");
+      const {data,error}=await client.from("deposit_wallet_addresses").select("id,asset_code,network,wallet_address,instructions,is_active,updated_at").order("asset_code").order("network");
       if(error)throw error;
       if(!data||!data.length){const row=document.createElement("tr");const cell=document.createElement("td");cell.colSpan=5;cell.textContent="No deposit wallet addresses configured yet.";row.appendChild(cell);body.appendChild(row);setNotice("walletNotice","Add a verified receiving address for each asset/network you support.");return}
       for(const item of data){const row=document.createElement("tr");
         for(const value of [item.asset_code,item.network,item.wallet_address,item.is_active?"Active":"Inactive"]){const cell=document.createElement("td");cell.textContent=value||"—";row.appendChild(cell)}
         const actionCell=document.createElement("td"),button=document.createElement("button");button.type="button";button.textContent="Edit";button.addEventListener("click",()=>{
-          $("walletAsset").value=item.asset_code;$("walletNetwork").value=item.network;$("walletAddress").value=item.wallet_address;$("walletActive").checked=Boolean(item.is_active);$("walletInstructions").value="";
+          $("walletAsset").value=item.asset_code;$("walletNetwork").value=item.network;$("walletAddress").value=item.wallet_address;$("walletActive").checked=Boolean(item.is_active);$("walletInstructions").value=item.instructions||"";
           $("walletForm").dataset.editId=item.id;$("walletForm").dataset.originalAsset=item.asset_code;$("walletForm").dataset.originalNetwork=item.network;$("walletNotice").textContent="Editing "+item.asset_code+" on "+item.network+". Save to update it.";
           $("walletForm").scrollIntoView({behavior:"smooth",block:"center"});
         });actionCell.appendChild(button);row.appendChild(actionCell);body.appendChild(row)
@@ -210,21 +226,55 @@
     const button=$("saveWalletButton");button.disabled=true;setNotice("walletNotice","Saving wallet address…");
     try{
       const payload={asset_code:asset,network,wallet_address:address,instructions,is_active:isActive,updated_by:dashboardUser.id,updated_at:new Date().toISOString()};
-      const originalAsset=$("walletForm").dataset.originalAsset,originalNetwork=$("walletForm").dataset.originalNetwork;
-      if(originalAsset&&originalNetwork&&(originalAsset!==asset||originalNetwork!==network)){
-        const {error:deleteError}=await client.from("deposit_wallet_addresses").delete().eq("asset_code",originalAsset).eq("network",originalNetwork);
-        if(deleteError)throw deleteError;
+      const editId=$("walletForm").dataset.editId;
+      let result;
+      if(editId){
+        const {id,...updates}=payload;
+        result=await client.from("deposit_wallet_addresses").update(updates).eq("id",editId);
+      }else{
+        result=await client.from("deposit_wallet_addresses").insert(payload);
       }
-      const {error}=await client.from("deposit_wallet_addresses").upsert(payload,{onConflict:"asset_code,network"});
-      if(error)throw error;
+      if(result.error)throw result.error;
       $("walletForm").reset();delete $("walletForm").dataset.editId;delete $("walletForm").dataset.originalAsset;delete $("walletForm").dataset.originalNetwork;
       setNotice("walletNotice","Deposit wallet address saved. Clients can see it after refreshing the deposit page.","success");await loadWalletAddresses();
     }catch(error){console.error("Saving wallet address failed:",error);setNotice("walletNotice","Could not save the address. Ensure the Supabase migration is applied and administrator policies are active.","error")}
     finally{button.disabled=false}
   }
 
+
+  async function previewClientBalance(){
+    const clientId=$("balanceClient").value,asset=$("balanceAsset").value;
+    if(!clientId){setNotice("balanceNotice","Select a client account first.","error");return}
+    const button=$("previewBalanceButton");button.disabled=true;setNotice("balanceNotice","Checking recorded balance…");
+    try{
+      const {data,error}=await client.rpc("admin_preview_client_balance",{p_client_id:clientId,p_asset:asset});
+      if(error)throw error;
+      if(!data||data.success!==true)throw new Error("The balance lookup did not return a successful result.");
+      setNotice("balanceNotice","Recorded balance: "+data.balance+" "+data.asset+" · Client: "+data.client_id,"success");
+    }catch(error){console.error("Balance lookup failed:",error);setNotice("balanceNotice","Could not check the recorded balance. "+(error.message||""),"error")}
+    finally{button.disabled=false}
+  }
+
+  async function loadBalanceAdjustments(){
+    const body=$("auditRows");body.replaceChildren();setNotice("auditNotice","Loading adjustment audit…");
+    try{
+      const {data,error}=await client.rpc("admin_list_balance_adjustments");
+      if(error)throw error;
+      const rows=Array.isArray(data)?data:[];
+      if(!rows.length){setNotice("auditNotice","No balance adjustment audit records were returned.");return}
+      for(const item of rows){
+        const row=document.createElement("tr");
+        for(const value of [item.created_at?new Date(item.created_at).toLocaleString():"—",item.client_name||item.client_id,(item.entry_type||"")+" · "+item.amount,item.asset,(item.balance_before??"—")+" → "+(item.balance_after??"—"),item.reference,item.reason]){
+          const cell=document.createElement("td");cell.textContent=value==null?"—":String(value);row.appendChild(cell)
+        }
+        body.appendChild(row)
+      }
+      setNotice("auditNotice","Loaded "+rows.length+" recent audit record(s).");
+    }catch(error){console.error("Adjustment audit lookup failed:",error);setNotice("auditNotice","Could not load adjustment audit. "+(error.message||""),"error")}
+  }
+
   async function refreshDashboard(){
-    setNotice("dashboardNotice","Refreshing administrator data…");const ok=await verifySession();if(!ok)return;await loadAccounts();setNotice("dashboardNotice","Administrator dashboard refreshed.","success")
+    setNotice("dashboardNotice","Refreshing administrator data…");const ok=await verifySession();if(!ok)return;await loadAccounts();await loadWalletAddresses();await loadBalanceAdjustments();setNotice("dashboardNotice","Administrator dashboard refreshed.","success")
   }
 
   $("signOutButton").addEventListener("click",async()=>{const button=$("signOutButton");button.disabled=true;try{const {error}=await client.auth.signOut();if(error)throw error;window.location.replace("/login")}catch(error){console.error(error);button.disabled=false;setNotice("sessionNotice","Could not sign out. Please try again.","error")}});
@@ -234,8 +284,10 @@
   $("walletForm").addEventListener("submit",saveWalletAddress);
   $("walletForm").addEventListener("reset",()=>{delete $("walletForm").dataset.editId;delete $("walletForm").dataset.originalAsset;delete $("walletForm").dataset.originalNetwork});
   $("refreshButton").addEventListener("click",refreshDashboard);
+  $("previewBalanceButton").addEventListener("click",previewClientBalance);
+  $("refreshAuditButton").addEventListener("click",loadBalanceAdjustments);
 
-  (async()=>{const ok=await verifySession();if(ok){await loadAccounts();await loadWalletAddresses()}})();
+  (async()=>{const ok=await verifySession();if(ok){await loadAccounts();await loadWalletAddresses();await loadBalanceAdjustments()}})();
 })();
 </script>
 </body>
