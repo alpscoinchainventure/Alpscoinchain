@@ -116,7 +116,7 @@ test('transaction request endpoint safely reuses matching idempotency keys and r
 
 test('VantagePay request lifecycle creates customer notifications and supports read acknowledgements', () => {
   assert.match(standaloneSchema, /CREATE TABLE IF NOT EXISTS public\.vp_customer_notifications/);
-  assert.match(standaloneSchema, /AFTER INSERT OR UPDATE OF status ON public\.vp_transaction_requests/);
+  assert.match(standaloneSchema, /AFTER INSERT ON public\\.vp_transaction_requests/);\n  assert.match(standaloneSchema, /AFTER UPDATE OF status ON public\\.vp_transaction_requests/);
   assert.match(standaloneSchema, /vp_customer_notifications_user_date_idx/);
   assert.match(vantagepayApi, /app\.get\('\/api\/vantagepay\/notifications'/);
   assert.match(vantagepayApi, /app\.patch\('\/api\/vantagepay\/notifications\/:id\/read'/);
