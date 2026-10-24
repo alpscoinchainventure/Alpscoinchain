@@ -7,9 +7,10 @@ const html = await readFile(new URL('../vantagepay-auth.html', import.meta.url),
 const previewHtml = await readFile(new URL('../vantagepay-preview.html', import.meta.url), 'utf8');
 
 test('VantagePay auth page includes account access modes', () => {
-  for (const mode of ['login', 'signup', 'reset', 'recovery']) {
-    assert.ok(html.includes('data-mode="' + mode + '"') || html.includes("mode:'" + mode + "'"), 'missing auth mode: ' + mode);
+  for (const mode of ['login', 'signup', 'reset']) {
+    assert.ok(html.includes('data-mode="' + mode + '"'), 'missing visible auth mode: ' + mode);
   }
+  assert.match(html, /recovery:\s*\{/);
   for (const id of ['auth-form', 'email', 'password', 'confirm-password', 'new-password', 'resend', 'signout', 'refresh-profile']) {
     assert.ok(html.includes('id="' + id + '"'), 'missing auth control: ' + id);
   }
