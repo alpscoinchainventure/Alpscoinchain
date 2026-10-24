@@ -36,5 +36,17 @@ No domain has been purchased or reserved. Confirm the exact domain and budget be
 - `lib/vantagepay-apy.js` validates APY source-event envelopes and converts decimal currency values to integer minor units without floating-point arithmetic. It does not authenticate a source, prove a return was earned, or post balances.
 - `tests/vantagepay-apy.test.js` covers valid/invalid source events, date/rate checks, and exact minor-unit conversion. CI must confirm the full suite passes.
 
+## Notifications, operations, and external investment returns
+- [x] Customer dashboard includes an in-app notification panel and mark-as-read action for request/reward updates (code only; requires the standalone schema to be installed).
+- [x] Transaction request creation and status changes create in-app notifications through database triggers.
+- [x] Restricted operations console is available at `/vantagepay/admin`; every API call checks enabled admin membership and request status changes require an audit reason.
+- [x] Admin status controls cannot mark requests settled or directly edit customer balances; confirmed balances must come from balanced, reconciled ledger entries.
+- [x] Signed external reward webhook intake supports APY, bonuses, investment-plan returns, dividends, and other approved reward categories; duplicate source events are ignored and incoming records are not auto-credited.
+- [ ] Configure and verify notification delivery provider for email/SMS; current customer notifications are in-app only.
+- [ ] Provision named admin users through a trusted reviewed process in the dedicated VantagePay database; never let customers self-assign admin access.
+- [ ] Establish a written integration contract and authenticated sandbox with AlpsCoinChain Investment Ventures, including customer-reference mapping, signed events, source reconciliation, reversals, and idempotency.
+- [ ] Implement and independently test atomic admin ledger adjustments and verified reward posting before any balances are changed; require reason, audit trail, and appropriate approval controls.
+- [ ] Do not apply this schema to the shared AlpsCoinChain database. Dedicated VantagePay backend and environment secrets are still required.
+
 ## Before real-money capability
 Create a dedicated VantagePay authentication/data project (review any project cost first) and remove shared backend dependencies before launch. Keep VantagePay independently branded. Implement server-side ledger posting with immutable balanced entries, audited admin controls, and a separate verified integration with AlpsCoinChain Investment Ventures for any approved APY credits; add provider reconciliation, idempotent processing, monitoring, backups, legal/compliance review, and independent security review. Do not describe the preview as a bank or as holding customer funds.
