@@ -112,3 +112,37 @@ test('transaction request endpoint safely reuses matching idempotency keys and r
   assert.match(vantagepayApi, /A concurrent retry may have inserted the row/);
   assert.match(vantagepayApi, /No money was moved/);
 });
+
+
+test('VantagePay request lifecycle creates customer notifications and supports read acknowledgements', () => {
+  assert.match(standaloneSchema, /CREATE TABLE IF NOT EXISTS public\.vp_customer_notifications/);
+  assert.match(standaloneSchema, /AFTER INSERT OR UPDATE OF status ON public\.vp_transaction_requests/);
+  assert.match(standaloneSchema, /vp_customer_notifications_user_date_idx/);
+  assert.match(vantagepayApi, /app\.get\('\/api\/vantagepay\/notifications'/);
+  assert.match(vantagepayApi, /app\.patch\('\/api\/vantagepay\/notifications\/:id\/read'/);
+  assert.match(dashboardHtml, /<h2>Notifications<\/h2>/);
+  assert.match(dashboardHtml, /loadNotifications\(\)/);
+});
+
+test('VantagePay admin operations are server-authorized, audited, and cannot mark a request settled', async () => {
+  const adminPage = await readFile(new URL('../vantagepay-admin.html', import.meta.url), 'utf8');
+  assert.match(server, /\/vantagepay\/admin/);
+  assert.match(vantagepayApi, /async function requireAdmin\(/);
+  assert.match(vantagepayApi, /vp_admin_memberships/);
+  assert.match(vantagepayApi, /vp_admin_audit_log/);
+  assert.match(vantagepayApi, /transaction_request_status_changed/);
+  assert.match(vantagepayApi, /!\['under_review', 'submitted', 'rejected', 'cancelled'\]\.includes\(nextStatus\)/);
+  assert.match(adminPage, /Server will check enabled admin membership/);
+  assert.match(adminPage, /does not settle payments or directly edit balances/);
+});
+
+test('external rewards from the configured partner are signed, mapped, deduplicated, and not auto-credited', () => {
+  assert.match(standaloneSchema, /CREATE TABLE IF NOT EXISTS public\.vp_external_reward_events/);
+  assert.match(standaloneSchema, /UNIQUE\(provider_code, source_event_id\)/);
+  assert.match(standaloneSchema, /vp_notify_external_reward_received/);
+  assert.match(vantagepayApi, /app\.post\('\/api\/vantagepay\/webhooks\/rewards'/);
+  assert.match(vantagepayApi, /VANTAGEPAY_REWARD_WEBHOOK_SECRET/);
+  assert.match(vantagepayApi, /VANTAGEPAY_REWARD_PROVIDER_CODE/);
+  assert.match(vantagepayApi, /No balance has been credited/);
+  assert.match(vantagepayApi, /on_conflict=provider_code,source_event_id/);
+});
