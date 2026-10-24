@@ -83,7 +83,7 @@ async function loadBeneficiaries(){
 }
 async function loadTransactionRequests(){
  const list=document.getElementById('request-list');list.textContent='Loading request history…';
- try{const data=await apiRequest('/api/vantagepay/transaction-requests');const rows=Array.isArray(data.requests)?data.requests:[];if(!rows.length){list.textContent='No deposit or withdrawal requests yet.';return;}list.replaceChildren();for(const r of rows){const row=document.createElement('div');row.className='message';row.textContent=[r.request_reference,r.request_type,minorUnitsToDisplay(r.amount_minor_units)+' '+r.currency_code,r.status,new Date(r.created_at).toLocaleString()].join(' · ');list.append(row);}}
+ try{const data=await apiRequest('/api/vantagepay/transaction-requests');const rows=Array.isArray(data.requests)?data.requests:[];if(!rows.length){list.textContent='No deposit or withdrawal requests yet.';return;}list.replaceChildren();for(const r of rows){const row=document.createElement('div');row.className='message';const b=Array.isArray(r.beneficiary)?r.beneficiary[0]:r.beneficiary;const beneficiaryText=b?[b.beneficiary_name,b.bank_name,b.account_last4?'•••• '+b.account_last4:''].filter(Boolean).join(' / '):'';row.textContent=[r.request_reference,r.request_type,minorUnitsToDisplay(r.amount_minor_units)+' '+r.currency_code,beneficiaryText,r.status,new Date(r.created_at).toLocaleString()].filter(Boolean).join(' · ');list.append(row);}}
  catch(error){list.textContent=error.message;}
 }
 document.getElementById('refresh-beneficiaries').addEventListener('click',()=>loadBeneficiaries());
