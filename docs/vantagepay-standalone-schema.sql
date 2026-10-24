@@ -261,6 +261,30 @@ CREATE TABLE IF NOT EXISTS public.vp_apy_source_events (
   UNIQUE(provider_code, source_event_id)
 );
 
+CREATE OR REPLACE FUNCTION public.vp_notify_external_reward_received()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $
+BEGIN
+  INSERT INTO public.vp_customer_notifications(user_id, notification_type, title, message)
+  VALUES (
+    NEW.vantagepay_user_id,
+    'investment_return',
+    'External investment record received',
+    'A ' || NEW.reward_type || ' record from ' || NEW.provider_code || ' was received for review. It has not been verified or credited to your balance.'
+  );
+  RETURN NEW;
+END;
+$;
+
+REVOKE EXECUTE ON FUNCTION public.vp_notify_external_reward_received() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS vp_external_reward_received_notification ON public.vp_external_reward_events;
+CREATE TRIGGER vp_external_reward_received_notification
+  AFTER INSERT ON public.vp_external_reward_events
+  FOR EACH ROW EXECUTE FUNCTION public.vp_notify_external_reward_received();
+
 CREATE TABLE IF NOT EXISTS public.vp_admin_audit_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   actor_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
