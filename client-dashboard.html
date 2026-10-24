@@ -212,15 +212,20 @@
       const result=await Promise.race([query,timeout]);
       if(result.error)throw result.error;
       const rows=Array.isArray(result.data)?result.data:[];
-      const verifiedRows=rows.filter(item =>
-        item &&
-        (item.verified===true || item.is_verified===true) &&
-        item.available_balance!==undefined &&
-        item.available_balance!==null &&
-        String(item.asset||"").trim() &&
-        !["TEST","TES"].includes(String(item.asset).trim().toUpperCase()) &&
-        Number.isFinite(Number(item.available_balance))
-      );
+      // get_my_ledger_balances() returns { asset, balance }.
+      // Normalize that actual RPC contract instead of requiring verification
+      // fields that do not exist in the ledger schema or RPC response.
+      const verifiedRows=rows
+        .filter(item =>
+          item &&
+          String(item.asset||"").trim() &&
+          !["TEST","TES"].includes(String(item.asset).trim().toUpperCase()) &&
+          Number.isFinite(Number(item.available_balance ?? item.balance))
+        )
+        .map(item => ({
+          ...item,
+          available_balance: Number(item.available_balance ?? item.balance)
+        }));
       const verifiedByAsset=new Map();
       for(const item of verifiedRows){
         const code=String(item.asset).trim().toUpperCase();
@@ -242,7 +247,7 @@
         if(item){
           amount.className="asset-amount asset-verified";
           amount.textContent=formatAmount(item.available_balance)+" "+code;
-          label.textContent="Verified ledger balance";
+          label.textContent="Recorded ledger balance";
         }else{
           const hasUnverifiedEntry=rows.some(entry=>entry&&String(entry.asset||"").trim().toUpperCase()===code);
           if(hasUnverifiedEntry){
@@ -258,8 +263,8 @@
         card.append(head,amount,label);ledgerBalanceList.appendChild(card);
       }
       ledgerBalanceMessage.textContent=verifiedByAsset.size
-        ? "Verified ledger amounts are shown per asset. Other assets remain pending until reconciled records are verified. A request or approval alone does not confirm that a payment was received."
-        : "Asset cards are ready, but no explicitly verified, reconciled balances are available yet. No amounts are being guessed or displayed as funds.";
+        ? "Recorded balances are calculated from your ledger entries per asset. Deposit or withdrawal request status alone does not confirm payment or a completed transfer."
+        : "No ledger entries were returned for this account yet. Assets without ledger entries show 0.00; no amounts are inferred from request history.";
     }catch(error){
       console.error("Ledger balance loading failed:",error);
       ledgerBalanceList.replaceChildren();
