@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="VantagePay customer sign-in and account access.">
+  <title>VantagePay | Secure account access</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#07111f;color:#eaf1fb}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at top,#17385a 0,transparent 55%),#07111f}
+    main{width:min(100%,460px);border:1px solid #2d4563;border-radius:22px;padding:28px;background:#0b1929;box-shadow:0 24px 80px #0005}
+    h1{margin:0 0 8px;font-size:1.8rem}p{line-height:1.5;color:#b7c7dc}.brand{letter-spacing:.13em;text-transform:uppercase;color:#8bc5ff;font-size:.78rem;font-weight:800;margin-bottom:18px}
+    label{display:block;font-size:.9rem;margin:14px 0 7px;color:#dbe8f8}input{width:100%;padding:12px;border:1px solid #405976;border-radius:10px;background:#07111f;color:#fff;font:inherit}
+    button{border:0;border-radius:10px;padding:12px 14px;font:inherit;font-weight:700;cursor:pointer}.primary{background:#8bc5ff;color:#061426}.secondary{background:#1b3048;color:#eaf1fb;border:1px solid #405976}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.wide{width:100%;margin-top:10px}.links{display:flex;justify-content:space-between;gap:10px;margin-top:16px;flex-wrap:wrap}.links button{padding:6px 0;background:none;color:#9acbff}
+    #status{padding:10px 12px;border-radius:8px;background:#12253a;min-height:42px;overflow-wrap:anywhere}#session{display:none;border:1px solid #345b50;background:#0d2827;border-radius:12px;padding:14px;margin-top:14px}
+    .note{font-size:.8rem;color:#9fb2ca;border-top:1px solid #273b52;margin-top:20px;padding-top:14px}
+    button:disabled{opacity:.55;cursor:wait}
+  </style>
+</head>
+<body>
+<main>
+  <div class="brand">VantagePay</div>
+  <h1>Secure account access</h1>
+  <p>Sign in or create an account. New accounts may need email verification before sign-in.</p>
+  <form id="auth-form">
+    <label for="email">Email address</label>
+    <input id="email" name="email" type="email" autocomplete="email" required maxlength="254">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required>
+    <div class="actions">
+      <button class="primary" type="submit" id="signin">Sign in</button>
+      <button class="secondary" type="button" id="signup">Create account</button>
+    </div>
+  </form>
+  <div class="links">
+    <button type="button" id="reset">Forgot password?</button>
+    <button type="button" id="signout" hidden>Sign out</button>
+  </div>
+  <p id="status" role="status" aria-live="polite">Enter your email and password to continue.</p>
+  <section id="session" aria-live="polite">
+    <strong>Authenticated session detected</strong>
+    <p id="identity"></p>
+    <p>Your sign-in is active. Account balances and money movement are not enabled on this page.</p>
+  </section>
+  <p class="note">Security notice: this page does not request banking credentials, identity document numbers, wallet seed phrases, or payment card details. VantagePay is a software preview, not a bank. Do not deposit funds based on this preview.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  const SUPABASE_URL = 'https://uevofmlzpwrdidjnwxfd.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+  const status = document.getElementById('status');
+  const form = document.getElementById('auth-form');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const sessionPanel = document.getElementById('session');
+  const identity = document.getElementById('identity');
+  const signoutButton = document.getElementById('signout');
+  let client;
+  try {
+    if (!window.supabase || !window.supabase.createClient) throw new Error('Authentication library failed to load. Refresh and try again.');
+    client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+  } catch (error) {
+    status.textContent = error.message;
+    document.querySelectorAll('button').forEach((button) => button.disabled = true);
+    return;
+  }
+  const message = (text) => { status.textContent = text; };
+  const email = () => emailInput.value.trim().toLowerCase();
+  const setBusy = (busy) => document.querySelectorAll('button').forEach((button) => button.disabled = busy);
+  async function showSession(session) {
+    sessionPanel.style.display = session ? 'block' : 'none';
+    signoutButton.hidden = !session;
+    if (session) {
+      identity.textContent = 'Signed in as ' + (session.user.email || 'verified account');
+      message('Sign-in successful. Account-data access remains subject to server/database authorization.');
+    }
+  }
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    setBusy(true);
+    try {
+      const { data, error } = await client.auth.signInWithPassword({ email: email(), password: passwordInput.value });
+      if (error) throw error;
+      passwordInput.value = '';
+      await showSession(data.session);
+    } catch (error) {
+      message(error.message || 'Unable to sign in. Check your details and try again.');
+    } finally { setBusy(false); }
+  });
+  document.getElementById('signup').addEventListener('click', async () => {
+    if (!form.reportValidity()) return;
+    setBusy(true);
+    try {
+      const { data, error } = await client.auth.signUp({
+        email: email(),
+        password: passwordInput.value,
+        options: { emailRedirectTo: window.location.origin + '/vantagepay-auth.html' }
+      });
+      if (error) throw error;
+      passwordInput.value = '';
+      if (data.session) await showSession(data.session);
+      else message('Registration request received. If email confirmation is enabled, check your inbox to verify the address before signing in.');
+    } catch (error) {
+      message(error.message || 'Unable to create account. Please try again.');
+    } finally { setBusy(false); }
+  });
+  document.getElementById('reset').addEventListener('click', async () => {
+    const address = email();
+    if (!address) { message('Enter your email address first, then choose Forgot password.'); emailInput.focus(); return; }
+    setBusy(true);
+    try {
+      const { error } = await client.auth.resetPasswordForEmail(address, {
+        redirectTo: window.location.origin + '/vantagepay-auth.html?reset=1'
+      });
+      if (error) throw error;
+      message('If an account exists for that address, a password-reset email will be sent.');
+    } catch (error) {
+      message(error.message || 'Unable to request password reset.');
+    } finally { setBusy(false); }
+  });
+  signoutButton.addEventListener('click', async () => {
+    setBusy(true);
+    try {
+      const { error } = await client.auth.signOut();
+      if (error) throw error;
+      sessionPanel.style.display = 'none';
+      signoutButton.hidden = true;
+      message('You have been signed out.');
+    } catch (error) { message(error.message || 'Unable to sign out.'); }
+    finally { setBusy(false); }
+  });
+  client.auth.onAuthStateChange((_event, session) => { showSession(session); });
+  client.auth.getSession().then(({ data, error }) => {
+    if (error) message(error.message);
+    else if (data.session) showSession(data.session);
+  });
+})();
+</script>
+</body>
+</html>
