@@ -124,7 +124,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
-AS $
+AS $$
 DECLARE
   v_title TEXT;
   v_message TEXT;
@@ -147,7 +147,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$;
+$$;
 
 REVOKE EXECUTE ON FUNCTION public.vp_notify_transaction_request() FROM PUBLIC, anon, authenticated;
 DROP TRIGGER IF EXISTS vp_transaction_request_insert_notification ON public.vp_transaction_requests;
@@ -158,30 +158,6 @@ DROP TRIGGER IF EXISTS vp_transaction_request_status_notification ON public.vp_t
 CREATE TRIGGER vp_transaction_request_status_notification
   AFTER UPDATE OF status ON public.vp_transaction_requests
   FOR EACH ROW EXECUTE FUNCTION public.vp_notify_transaction_request();
-
--- Generic verified source records let approved external partners report APY,
--- bonuses, and investment-plan returns. Receiving a record never credits a balance.
-CREATE TABLE IF NOT EXISTS public.vp_external_reward_events (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  provider_code TEXT NOT NULL,
-  source_event_id TEXT NOT NULL,
-  external_customer_reference TEXT NOT NULL,
-  vantagepay_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
-  reward_type TEXT NOT NULL CHECK (reward_type IN ('apy','bonus','investment_return','dividend','other')),
-  plan_reference TEXT,
-  period_start DATE,
-  period_end DATE,
-  currency_code CHAR(3) NOT NULL,
-  amount_minor_units NUMERIC(36,0) NOT NULL CHECK (amount_minor_units > 0),
-  source_payload_hash TEXT NOT NULL,
-  source_occurred_at TIMESTAMPTZ NOT NULL,
-  source_status TEXT NOT NULL DEFAULT 'received' CHECK (source_status IN ('received','verified','rejected','posted','reversed')),
-  ledger_transaction_id UUID REFERENCES public.vp_ledger_transactions(id) ON DELETE RESTRICT,
-  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  verified_at TIMESTAMPTZ,
-  posted_at TIMESTAMPTZ,
-  UNIQUE(provider_code, source_event_id)
-);
 
 CREATE TABLE IF NOT EXISTS public.vp_ledger_transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -225,6 +201,32 @@ CREATE INDEX IF NOT EXISTS vp_ledger_entries_transaction_idx
   ON public.vp_ledger_entries(transaction_id);
 CREATE INDEX IF NOT EXISTS vp_ledger_entries_account_idx
   ON public.vp_ledger_entries(account_code, currency_code, created_at DESC);
+
+-- Generic verified source records let approved external partners report APY,
+-- bonuses, and investment-plan returns. Receiving a record never credits a balance.
+CREATE TABLE IF NOT EXISTS public.vp_external_reward_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider_code TEXT NOT NULL,
+  source_event_id TEXT NOT NULL,
+  external_customer_reference TEXT NOT NULL,
+  vantagepay_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
+  reward_type TEXT NOT NULL CHECK (reward_type IN ('apy','bonus','investment_return','dividend','other')),
+  plan_reference TEXT,
+  period_start DATE,
+  period_end DATE,
+  currency_code CHAR(3) NOT NULL,
+  amount_minor_units NUMERIC(36,0) NOT NULL CHECK (amount_minor_units > 0),
+  source_payload_hash TEXT NOT NULL,
+  source_occurred_at TIMESTAMPTZ NOT NULL,
+  source_status TEXT NOT NULL DEFAULT 'received' CHECK (source_status IN ('received','verified','rejected','posted','reversed')),
+  ledger_transaction_id UUID REFERENCES public.vp_ledger_transactions(id) ON DELETE RESTRICT,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  verified_at TIMESTAMPTZ,
+  posted_at TIMESTAMPTZ,
+  UNIQUE(provider_code, source_event_id)
+);
+
+
 
 -- Source events are internal integration records. APY is posted only after
 -- authoritative source reconciliation and an authorized, idempotent posting.
@@ -270,7 +272,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
-AS $
+AS $$
 BEGIN
   INSERT INTO public.vp_customer_notifications(user_id, notification_type, title, message)
   VALUES (
@@ -281,7 +283,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$;
+$$;
 
 REVOKE EXECUTE ON FUNCTION public.vp_notify_external_reward_received() FROM PUBLIC, anon, authenticated;
 DROP TRIGGER IF EXISTS vp_external_reward_received_notification ON public.vp_external_reward_events;
@@ -314,7 +316,7 @@ RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
-AS $
+AS $$
 DECLARE
   v_role TEXT;
   v_request public.vp_transaction_requests%ROWTYPE;
@@ -355,7 +357,7 @@ BEGIN
   );
   RETURN to_jsonb(v_request);
 END;
-$;
+$$;
 REVOKE EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT, TEXT) TO service_role;
 
@@ -375,7 +377,7 @@ RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
-AS $
+AS $$
 DECLARE
   v_role TEXT;
   v_transaction_id UUID;
@@ -395,6 +397,8 @@ BEGIN
     RAISE EXCEPTION 'An audit reason of 8 to 500 characters is required' USING ERRCODE = '22023';
   END IF;
   IF p_idempotency_key IS NULL OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}
+
+
 -- Enable RLS on all customer/admin data tables.
 ALTER TABLE public.vp_customer_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.vp_admin_memberships ENABLE ROW LEVEL SECURITY;
@@ -480,8 +484,7 @@ COMMIT;
 -- 5) Verify APY events against authoritative provider records before posting; never trust
 --    browser input or a webhook alone. Reconcile duplicates and reversals.
 -- 6) Add provider sandbox tests, backups, monitoring, incident procedures, legal review,
---    and independent security review before real funds are accepted or moved.
- THEN
+--    and independent security review before real funds are accepted or moved. THEN
     RAISE EXCEPTION 'A valid idempotency key is required' USING ERRCODE = '22023';
   END IF;
 
@@ -537,7 +540,7 @@ COMMIT;
   );
   RETURN v_transaction_id;
 END;
-$;
+$$;
 
 REVOKE EXECUTE ON FUNCTION public.vp_admin_adjust_customer_balance(UUID, UUID, NUMERIC, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.vp_admin_adjust_customer_balance(UUID, UUID, NUMERIC, TEXT, TEXT, TEXT, TEXT) TO service_role;
