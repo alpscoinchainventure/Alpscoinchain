@@ -132,7 +132,8 @@ test('VantagePay admin operations are server-authorized, audited, and cannot mar
   assert.match(vantagepayApi, /vp_admin_memberships/);
   assert.match(standaloneSchema, /vp_admin_audit_log/);
   assert.match(standaloneSchema, /transaction_request_status_changed/);
-  assert.match(standaloneSchema, /CREATE OR REPLACE FUNCTION public\\.vp_admin_update_request_status/);\n  assert.match(vantagepayApi, /rpc\/vp_admin_update_request_status/);
+  assert.match(standaloneSchema, /CREATE OR REPLACE FUNCTION public\\.vp_admin_update_request_status/);
+  assert.match(vantagepayApi, /rpc\/vp_admin_update_request_status/);
   assert.match(vantagepayApi, /!\['under_review', 'submitted', 'rejected', 'cancelled'\]\.includes\(nextStatus\)/);
   assert.match(adminPage, /Server will check enabled admin membership/);
   assert.match(adminPage, /does not settle payments or directly edit balances/);
