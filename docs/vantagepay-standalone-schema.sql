@@ -150,13 +150,9 @@ END;
 $$;
 
 REVOKE EXECUTE ON FUNCTION public.vp_notify_transaction_request() FROM PUBLIC, anon, authenticated;
-DROP TRIGGER IF EXISTS vp_transaction_request_insert_notification ON public.vp_transaction_requests;
-CREATE TRIGGER vp_transaction_request_insert_notification
-  AFTER INSERT ON public.vp_transaction_requests
-  FOR EACH ROW EXECUTE FUNCTION public.vp_notify_transaction_request();
-DROP TRIGGER IF EXISTS vp_transaction_request_status_notification ON public.vp_transaction_requests;
-CREATE TRIGGER vp_transaction_request_status_notification
-  AFTER UPDATE OF status ON public.vp_transaction_requests
+DROP TRIGGER IF EXISTS vp_transaction_request_notification ON public.vp_transaction_requests;
+CREATE TRIGGER vp_transaction_request_notification
+  AFTER INSERT OR UPDATE OF status ON public.vp_transaction_requests
   FOR EACH ROW EXECUTE FUNCTION public.vp_notify_transaction_request();
 
 CREATE TABLE IF NOT EXISTS public.vp_ledger_transactions (
@@ -304,8 +300,6 @@ CREATE TABLE IF NOT EXISTS public.vp_admin_audit_log (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Status updates and their audit entries are atomic. The status trigger creates
--- the matching customer notification in the same database transaction.
 CREATE OR REPLACE FUNCTION public.vp_admin_update_request_status(
   p_actor_user_id UUID,
   p_request_id UUID,
@@ -364,6 +358,8 @@ GRANT EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT
 -- Audited admin balance adjustments are posted as balanced, immutable-style ledger
 -- transactions, never as direct edits to a stored balance field. This function
 -- executes atomically and is callable only by the trusted service-role backend.
+
+-- Audited admin balance adjustments are posted as balanced ledger transactions.
 CREATE OR REPLACE FUNCTION public.vp_admin_adjust_customer_balance(
   p_actor_user_id UUID,
   p_customer_user_id UUID,
@@ -387,104 +383,16 @@ BEGIN
   IF p_amount_minor_units IS NULL OR p_amount_minor_units <= 0 OR p_amount_minor_units <> trunc(p_amount_minor_units) THEN
     RAISE EXCEPTION 'Adjustment amount must be a positive integer number of minor units' USING ERRCODE = '22023';
   END IF;
-  IF p_currency_code NOT IN ('GBP','USD','EUR','NGN') THEN
+  IF p_currency_code IS NULL OR p_currency_code NOT IN ('GBP','USD','EUR','NGN') THEN
     RAISE EXCEPTION 'Unsupported adjustment currency' USING ERRCODE = '22023';
   END IF;
-  IF p_direction NOT IN ('credit','debit') THEN
+  IF p_direction IS NULL OR p_direction NOT IN ('credit','debit') THEN
     RAISE EXCEPTION 'Direction must be credit or debit' USING ERRCODE = '22023';
   END IF;
   IF p_reason IS NULL OR length(btrim(p_reason)) < 8 OR length(p_reason) > 500 THEN
     RAISE EXCEPTION 'An audit reason of 8 to 500 characters is required' USING ERRCODE = '22023';
   END IF;
-  IF p_idempotency_key IS NULL OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}
-
-
--- Enable RLS on all customer/admin data tables.
-ALTER TABLE public.vp_customer_accounts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vp_admin_memberships ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vp_beneficiary_accounts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vp_transaction_requests ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vp_ledger_transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vp_ledger_entries ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vp_apy_source_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vp_external_reward_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vp_customer_notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vp_admin_audit_log ENABLE ROW LEVEL SECURITY;
-
--- Customers can read only their own account and beneficiary metadata.
-DROP POLICY IF EXISTS vp_customer_reads_own_account ON public.vp_customer_accounts;
-CREATE POLICY vp_customer_reads_own_account ON public.vp_customer_accounts
-  FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
-
-DROP POLICY IF EXISTS vp_admin_reads_own_membership ON public.vp_admin_memberships;
-CREATE POLICY vp_admin_reads_own_membership ON public.vp_admin_memberships
-  FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id AND enabled = TRUE);
-
-DROP POLICY IF EXISTS vp_customer_reads_own_beneficiaries ON public.vp_beneficiary_accounts;
-CREATE POLICY vp_customer_reads_own_beneficiaries ON public.vp_beneficiary_accounts
-  FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
-
-DROP POLICY IF EXISTS vp_customer_reads_own_requests ON public.vp_transaction_requests;
-CREATE POLICY vp_customer_reads_own_requests ON public.vp_transaction_requests
-  FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
-
-DROP POLICY IF EXISTS vp_customer_reads_own_notifications ON public.vp_customer_notifications;
-CREATE POLICY vp_customer_reads_own_notifications ON public.vp_customer_notifications
-  FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
-
-DROP POLICY IF EXISTS vp_customer_reads_own_transactions ON public.vp_ledger_transactions;
-CREATE POLICY vp_customer_reads_own_transactions ON public.vp_ledger_transactions
-  FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
-
-DROP POLICY IF EXISTS vp_customer_reads_own_ledger_entries ON public.vp_ledger_entries;
-CREATE POLICY vp_customer_reads_own_ledger_entries ON public.vp_ledger_entries
-  FOR SELECT TO authenticated USING (
-    EXISTS (
-      SELECT 1 FROM public.vp_ledger_transactions t
-      WHERE t.id = transaction_id AND t.user_id = (SELECT auth.uid())
-    )
-  );
-
--- Deliberately no authenticated write policies for ledger, APY, payout requests,
--- beneficiary records, audit logs, or admin membership. Trusted server code
--- must authenticate the user, authorize the operation, and write atomically.
--- Service-role credentials must never be exposed in the browser.
-
-REVOKE ALL ON public.vp_customer_accounts FROM anon, authenticated;
-REVOKE ALL ON public.vp_admin_memberships FROM anon, authenticated;
-REVOKE ALL ON public.vp_beneficiary_accounts FROM anon, authenticated;
-REVOKE ALL ON public.vp_transaction_requests FROM anon, authenticated;
-REVOKE ALL ON public.vp_ledger_transactions FROM anon, authenticated;
-REVOKE ALL ON public.vp_ledger_entries FROM anon, authenticated;
-REVOKE ALL ON public.vp_apy_source_events FROM anon, authenticated;
-REVOKE ALL ON public.vp_external_reward_events FROM anon, authenticated;
-REVOKE ALL ON public.vp_customer_notifications FROM anon, authenticated;
-REVOKE ALL ON public.vp_external_account_links FROM anon, authenticated;
-REVOKE ALL ON public.vp_admin_audit_log FROM anon, authenticated;
-
-GRANT SELECT ON public.vp_customer_accounts TO authenticated;
-GRANT SELECT ON public.vp_admin_memberships TO authenticated;
-GRANT SELECT ON public.vp_beneficiary_accounts TO authenticated;
-GRANT SELECT ON public.vp_transaction_requests TO authenticated;
-GRANT SELECT ON public.vp_customer_notifications TO authenticated;
-GRANT SELECT ON public.vp_ledger_transactions TO authenticated;
-GRANT SELECT ON public.vp_ledger_entries TO authenticated;
-
-COMMIT;
-
--- Ledger convention: customer liability account codes use 'customer:' || auth user UUID.
--- For each posted journal, calculate a displayed customer balance as credits minus debits
--- on that account code, grouped by currency; never derive balances from request rows.
--- Required before production:
--- 1) Apply only to the dedicated VantagePay Supabase project; review project cost first.
--- 2) Add server-side authenticated routes/provider adapters for beneficiary verification,
---    deposit reconciliation, withdrawal requests, status webhooks and safe cancellations.
--- 3) Enforce atomic balanced journal posting and prevent UPDATE/DELETE of posted entries.
--- 4) Add account-ownership checks, admin role authorization and audit logging on every write.
--- 5) Verify APY events against authoritative provider records before posting; never trust
---    browser input or a webhook alone. Reconcile duplicates and reversals.
--- 6) Add provider sandbox tests, backups, monitoring, incident procedures, legal review,
---    and independent security review before real funds are accepted or moved. THEN
+  IF p_idempotency_key IS NULL OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}$' THEN
     RAISE EXCEPTION 'A valid idempotency key is required' USING ERRCODE = '22023';
   END IF;
 
@@ -492,7 +400,7 @@ COMMIT;
   FROM public.vp_admin_memberships AS m
   WHERE m.user_id = p_actor_user_id AND m.enabled = TRUE
   LIMIT 1;
-  IF v_role NOT IN ('finance','super_admin') OR v_role IS NULL THEN
+  IF v_role IS NULL OR v_role NOT IN ('finance','super_admin') THEN
     RAISE EXCEPTION 'Enabled finance or super-admin membership is required' USING ERRCODE = '42501';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM auth.users AS u WHERE u.id = p_customer_user_id) THEN
