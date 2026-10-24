@@ -53,3 +53,27 @@ test('rejects invalid amounts, event types, and missing IDs', () => {
   assert.equal(validateVantagePayEvent({ ...event, type: 'withdrawal.approved' }).valid, false);
   assert.equal(validateVantagePayEvent({ ...event, event_id: '' }).valid, false);
 });
+
+test('rejects malformed signature headers, non-Buffer bodies, and out-of-window future timestamps', () => {
+  assert.equal(verifyVantagePaySignature({
+    rawBody: rawBody.toString('utf8'), timestamp, signature: signatureFor(), secret, nowSeconds
+  }), false);
+  assert.equal(verifyVantagePaySignature({
+    rawBody, timestamp, signature: 'sha256=not-hex', secret, nowSeconds
+  }), false);
+  const future = String(nowSeconds + 301);
+  assert.equal(verifyVantagePaySignature({
+    rawBody, timestamp: future, signature: signatureFor(rawBody, future), secret, nowSeconds
+  }), false);
+  assert.equal(verifyVantagePaySignature({
+    rawBody, timestamp: 'not-a-timestamp', signature: signatureFor(), secret, nowSeconds
+  }), false);
+});
+
+test('rejects arrays, invalid dates, zero amounts, and malformed asset codes', () => {
+  const event = JSON.parse(rawBody.toString('utf8'));
+  assert.equal(validateVantagePayEvent([]).valid, false);
+  assert.equal(validateVantagePayEvent({ ...event, occurred_at: 'not-a-date' }).valid, false);
+  assert.equal(validateVantagePayEvent({ ...event, amount: '0' }).valid, false);
+  assert.equal(validateVantagePayEvent({ ...event, asset: 'usdt!' }).valid, false);
+});
