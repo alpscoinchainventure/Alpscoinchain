@@ -25,7 +25,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
-AS $
+AS $$
 BEGIN
   INSERT INTO public.vp_customer_accounts (user_id, account_reference, display_name)
   VALUES (
@@ -36,7 +36,7 @@ BEGIN
   ON CONFLICT (user_id) DO NOTHING;
   RETURN NEW;
 END;
-$;
+$$;
 
 REVOKE EXECUTE ON FUNCTION public.vp_handle_new_auth_user() FROM PUBLIC, anon, authenticated;
 
