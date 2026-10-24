@@ -4,6 +4,7 @@ import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { registerVantagePayApi } from './lib/vantagepay-api.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +15,10 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// VantagePay routes use only its dedicated backend environment variables.
+// They fail closed until a separate VantagePay Supabase project is configured.
+registerVantagePayApi(app);
 app.use(express.static(__dirname));
 
 // VantagePay has a customer-facing homepage and separate demo/auth/dashboard routes.
