@@ -203,7 +203,7 @@
   async function loadWalletAddresses(){
     const body=$("walletRows");body.replaceChildren();setNotice("walletNotice","Loading wallet address settings…");
     try{
-      const {data,error}=await client.from("deposit_wallet_addresses").select("id,asset_code,network,wallet_address,instructions,is_active,updated_at").order("asset_code").order("network");
+      const {data,error}=await client.rpc("admin_list_deposit_wallet_addresses");
       if(error)throw error;
       if(!data||!data.length){const row=document.createElement("tr");const cell=document.createElement("td");cell.colSpan=5;cell.textContent="No deposit wallet addresses configured yet.";row.appendChild(cell);body.appendChild(row);setNotice("walletNotice","Add a verified receiving address for each asset/network you support.");return}
       for(const item of data){const row=document.createElement("tr");
@@ -215,7 +215,7 @@
         });actionCell.appendChild(button);row.appendChild(actionCell);body.appendChild(row)
       }
       setNotice("walletNotice",data.length+" wallet address setting(s) loaded.");
-    }catch(error){console.error("Wallet address lookup failed:",error);setNotice("walletNotice","Wallet settings could not be loaded. Apply the deposit-wallet migration in Supabase, then refresh.","error")}
+    }catch(error){console.error("Wallet address lookup failed:",error);setNotice("walletNotice","Wallet settings could not be loaded: "+(error&&error.message?error.message:"Unknown database error")+". Check the administrator wallet-list function and permissions.","error")}
   }
 
   async function saveWalletAddress(event){
