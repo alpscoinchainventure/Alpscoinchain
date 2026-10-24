@@ -30,7 +30,13 @@ async function sendEmail({ to, subject, text, html }) {
   const recipient = to || process.env.TO_EMAIL || process.env.FROM_EMAIL || process.env.SMTP_USER || 'delivered@resend.dev';
 
   if (resend) {
-    await resend.emails.send({ from: fromEmail, to: [recipient], subject, text, html });
+    await resend.emails.send({
+      from: fromEmail,
+      to: [recipient],
+      subject,
+      text,
+      html
+    });
     return;
   }
 
@@ -46,14 +52,24 @@ async function sendEmail({ to, subject, text, html }) {
     host: smtpHost,
     port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_SECURE === 'true',
-    auth: { user: smtpUser, pass: smtpPass }
+    auth: {
+      user: smtpUser,
+      pass: smtpPass
+    }
   });
 
-  await transporter.sendMail({ from: fromEmail, to: recipient, subject, text, html });
+  await transporter.sendMail({
+    from: fromEmail,
+    to: recipient,
+    subject,
+    text,
+    html
+  });
 }
 
 app.post('/api/contact', async (req, res) => {
   const { name, email, subject, message } = req.body;
+
   if (!name || !email || !subject || !message) {
     return res.status(400).json({ success: false, message: 'All fields are required.' });
   }
@@ -63,16 +79,17 @@ app.post('/api/contact', async (req, res) => {
     <p><strong>Name:</strong> ${escapeHtml(name)}</p>
     <p><strong>Email:</strong> ${escapeHtml(email)}</p>
     <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
-    <p><strong>Message:</strong><br/>${escapeHtml(message).replace(/\\n/g, '<br/>')}</p>
+    <p><strong>Message:</strong><br/>${escapeHtml(message).replace(/\n/g, '<br/>')}</p>
   `;
 
   try {
     await sendEmail({
       to: process.env.TO_EMAIL || process.env.FROM_EMAIL || process.env.SMTP_USER || email,
       subject: `[AlpsCoinChain] ${subject}`,
-      text: `Name: ${name}\\nEmail: ${email}\\n\\nMessage:\\n${message}`,
+      text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
       html: htmlMessage
     });
+
     return res.json({ success: true, message: 'Message sent successfully.' });
   } catch (error) {
     console.error('Email send failed:', error);
@@ -82,6 +99,7 @@ app.post('/api/contact', async (req, res) => {
 
 app.post('/api/trade', async (req, res) => {
   const { clientEmail, asset, action, amount, market } = req.body;
+
   if (!clientEmail || !asset || !action || !amount) {
     return res.status(400).json({ success: false, message: 'Client email, asset, action, and amount are required.' });
   }
@@ -105,9 +123,10 @@ app.post('/api/trade', async (req, res) => {
     await sendEmail({
       to: clientEmail,
       subject: `[AlpsCoinChain] ${actionLabel} order received for ${asset}`,
-      text: `Hello,\\n\\nYour ${actionLabel.toLowerCase()} order for ${asset} has been received.\\nAmount: ${parsedAmount}\\nMarket: ${market || 'N/A'}`,
+      text: `Hello,\n\nYour ${actionLabel.toLowerCase()} order for ${asset} has been received.\nAmount: ${parsedAmount}\nMarket: ${market || 'N/A'}`,
       html: htmlMessage
     });
+
     return res.json({ success: true, message: `${actionLabel} order placed successfully.` });
   } catch (error) {
     console.error('Trade notification failed:', error);
@@ -119,8 +138,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Vercel imports the Express app as a serverless handler; local development uses app.listen().
-export default app;
-if (process.env.VERCEL !== '1') {
-  app.listen(port, () => console.log(`AlpsCoinChain mail server running on port ${port}`));
-}
+app.listen(port, () => {
+  console.log(`AlpsCoinChain mail server running on port ${port}`);
+});
