@@ -31,7 +31,7 @@
     <h2 id="accountsHeading">Client accounts</h2>
     <p class="muted small">Client profiles are loaded through the administrator database function. Database policies remain responsible for authorization.</p>
     <div class="search-row">
-      <input id="accountSearch" type="search" placeholder="Search account ID, role, or status" aria-label="Search accounts">
+      <input id="accountSearch" type="search" placeholder="Search client name, email, account ID, role, or status" aria-label="Search accounts">
       <button id="refreshAccountsButton" type="button">Refresh accounts</button>
     </div>
     <div id="accountsNotice" class="notice" role="status" aria-live="polite">Client accounts have not been loaded yet.</div>
@@ -157,7 +157,7 @@
     const filtered=visibleProfiles.filter(profile=>String(profile.full_name||"").toLowerCase().includes(query)||normalizeId(profile.id).includes(query)||String(profile.role||"").toLowerCase().includes(query)||String(profile.account_status||"").toLowerCase().includes(query));
     const select=$("ledgerClient");select.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select a client account";select.appendChild(placeholder);
     for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client")){const option=document.createElement("option");option.value=profile.id;option.textContent=(profile.full_name||"Name not provided")+" · "+profile.id+" · "+(profile.account_status||"status unavailable");select.appendChild(option)}
-    const balanceSelect=$("balanceClient");if(balanceSelect){balanceSelect.replaceChildren();const balancePlaceholder=document.createElement("option");balancePlaceholder.value="";balancePlaceholder.textContent="Select a client account";balanceSelect.appendChild(balancePlaceholder);for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client")){const option=document.createElement("option");option.value=profile.id;option.textContent=profile.id+" · "+(profile.account_status||"status unavailable");balanceSelect.appendChild(option)}}
+    const balanceSelect=$("balanceClient");if(balanceSelect){balanceSelect.replaceChildren();const balancePlaceholder=document.createElement("option");balancePlaceholder.value="";balancePlaceholder.textContent="Select a client account";balanceSelect.appendChild(balancePlaceholder);for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client")){const option=document.createElement("option");option.value=profile.id;option.textContent=(profile.full_name||"Name not provided")+" · ID: "+profile.id+" · "+(profile.account_status||"status unavailable");balanceSelect.appendChild(option)}}
     if(!filtered.length){setNotice("accountsNotice",visibleProfiles.length?"No visible accounts match your search.":"No profiles are visible under the current database function.",visibleProfiles.length?"":"warning");return}
     for(const profile of filtered){const row=document.createElement("tr");for(const value of [profile.full_name||"Name not provided",profile.id,profile.role,profile.account_status]){const cell=document.createElement("td");cell.textContent=value||"—";row.appendChild(cell)}body.appendChild(row)}
     setNotice("accountsNotice","Showing "+filtered.length+" of "+visibleProfiles.length+" visible profiles.");
@@ -183,6 +183,11 @@
       setNotice("sessionNotice","Administrator session verified.","success");return true;
     }catch(error){console.error("Administrator verification failed:",error);setNotice("sessionNotice","Administrator verification failed. Please sign in again.","error");return false}
   }
+
+  $("ledgerClient").addEventListener("change",()=>{
+    const selected=visibleProfiles.find(profile=>profile.id===$("ledgerClient").value);
+    if(selected){setNotice("ledgerNotice","Selected client: "+(selected.full_name||"Name not provided")+" · Account ID: "+selected.id+". Confirm the client and accounting details before posting.");}
+  });
 
   async function postLedgerEntry(event){
     event.preventDefault();if(ledgerSubmissionInProgress)return;
