@@ -18,6 +18,33 @@ CREATE TABLE IF NOT EXISTS public.vp_customer_accounts (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Provision a VantagePay account record after a user signs up in the
+-- dedicated VantagePay Supabase Auth project. This does not grant permissions.
+CREATE OR REPLACE FUNCTION public.vp_handle_new_auth_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $
+BEGIN
+  INSERT INTO public.vp_customer_accounts (user_id, account_reference, display_name)
+  VALUES (
+    NEW.id,
+    'VP-' || upper(substr(replace(NEW.id::text, '-', ''), 1, 12)),
+    left(coalesce(NEW.raw_user_meta_data ->> 'full_name', ''), 120)
+  )
+  ON CONFLICT (user_id) DO NOTHING;
+  RETURN NEW;
+END;
+$;
+
+REVOKE EXECUTE ON FUNCTION public.vp_handle_new_auth_user() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS vp_on_auth_user_created ON auth.users;
+CREATE TRIGGER vp_on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.vp_handle_new_auth_user();
+
 CREATE TABLE IF NOT EXISTS public.vp_admin_memberships (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE RESTRICT,
   admin_role TEXT NOT NULL CHECK (admin_role IN ('support','operations','finance','super_admin')),
