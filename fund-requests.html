@@ -507,6 +507,8 @@
     currentUser = await getSessionUser();
 
     if (currentUser) {
+      // Load the active deposit asset/network choices before the client can submit.
+      await loadDepositWallets();
       await loadClientBeneficiaries();
       await loadRequests();
     }
