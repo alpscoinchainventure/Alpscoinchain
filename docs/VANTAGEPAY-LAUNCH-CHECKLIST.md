@@ -31,5 +31,10 @@ Status: standalone VantagePay customer-preview phase; keep all changes on `vanta
 
 No domain has been purchased or reserved. Confirm the exact domain and budget before registering.
 
+## New standalone financial-platform foundation (code committed; not yet deployed to a dedicated backend)
+- `docs/vantagepay-standalone-schema.sql` defines isolated customer accounts, provider-token beneficiary records, deposit/withdrawal requests, immutable-ledger foundations, APY source-event records, and admin audit records. It is a design migration and has not been applied to any database.
+- `lib/vantagepay-apy.js` validates APY source-event envelopes and converts decimal currency values to integer minor units without floating-point arithmetic. It does not authenticate a source, prove a return was earned, or post balances.
+- `tests/vantagepay-apy.test.js` covers valid/invalid source events, date/rate checks, and exact minor-unit conversion. CI must confirm the full suite passes.
+
 ## Before real-money capability
 Create a dedicated VantagePay authentication/data project (review any project cost first) and remove shared backend dependencies before launch. Keep VantagePay independently branded. Implement server-side ledger posting with immutable balanced entries, audited admin controls, and a separate verified integration with AlpsCoinChain Investment Ventures for any approved APY credits; add provider reconciliation, idempotent processing, monitoring, backups, legal/compliance review, and independent security review. Do not describe the preview as a bank or as holding customer funds.
