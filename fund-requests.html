@@ -141,7 +141,8 @@
   );
 
   const $ = id => document.getElementById(id);
-  let currentUser = null;\n  let depositWallets = [];
+  let currentUser = null;
+  let depositWallets = [];
 
   function showMessage(text, type = "success") {
     const el = $("message");
@@ -325,6 +326,7 @@
     const asset = String(fields.get("asset") || "")
       .trim().toUpperCase();
     const destination = String(fields.get("destination") || "").trim();
+    const network = type === "deposit" ? String(fields.get("network") || "").trim() : "";
 
     if (!Number.isFinite(amount) ||
         amount <= 0 ||
@@ -341,7 +343,12 @@
       return;
     }
 
-    if (type === "deposit" && !depositWallets.some(wallet => wallet.asset_code === asset && wallet.network === network && wallet.is_active)) {\n      showMessage("No active official deposit address is configured for this asset and network. Do not send funds; contact support.", "error");\n      return;\n    }\n\n    if (type === "withdrawal" && !destination) {
+    if (type === "deposit" && !depositWallets.some(wallet => wallet.asset_code === asset && wallet.network === network && wallet.is_active)) {
+      showMessage("No active official deposit address is configured for this asset and network. Do not send funds; contact support.", "error");
+      return;
+    }
+
+    if (type === "withdrawal" && !destination) {
       showMessage(
         "Enter a destination or reference for the withdrawal request.",
         "error"
@@ -369,7 +376,9 @@
         status: "pending"
       };
 
-      if (type === "withdrawal") {
+      if (type === "deposit") {
+        row.destination = "Network: " + network;
+      } else {
         row.destination = destination;
       }
 
@@ -401,7 +410,10 @@
     }
   }
 
-  $("deposit-asset").addEventListener("change", renderDepositNetworks);\n  $("deposit-network").addEventListener("change", renderDepositWallet);\n\n  $("deposit-form").addEventListener("submit", event =>
+  $("deposit-asset").addEventListener("change", renderDepositNetworks);
+  $("deposit-network").addEventListener("change", renderDepositWallet);
+
+  $("deposit-form").addEventListener("submit", event =>
     submitRequest(event, "deposit")
   );
 
