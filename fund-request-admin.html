@@ -270,7 +270,7 @@
             <tr>
               <th>Created</th>
               <th>Type / amount</th>
-              <th>Client ID</th>
+              <th>Client name / ID</th>
               <th>Destination</th>
               <th>Reference / status</th>
               <th>Review note</th>
@@ -322,6 +322,7 @@
     );
 
     let isAdmin = false;
+    let clientNames = new Map();
     let busy = false;
     let initialized = false;
     let authSubscription = null;
@@ -445,7 +446,17 @@
             request.amount + ' ' + request.asset
           );
 
-          addCell(row, request.user_id);
+          const clientCell = document.createElement('td');
+          const clientName = clientNames.get(
+            String(request.user_id || '').toLowerCase()
+          );
+          const nameText = document.createElement('strong');
+          nameText.textContent = clientName || 'Name not available';
+          const idText = document.createElement('div');
+          idText.className = 'small muted';
+          idText.textContent = request.user_id || '—';
+          clientCell.append(nameText, idText);
+          row.appendChild(clientCell);
           addCell(row, request.destination);
 
           const referenceCell = addCell(row, '');
@@ -813,6 +824,33 @@
         }
 
         isAdmin = true;
+
+        // Fetch names through the protected admin-only profile RPC.
+        clientNames = new Map();
+        const {
+          data: profiles,
+          error: profilesError
+        } = await db.rpc('admin_list_profiles');
+
+        if (profilesError) {
+          console.warn(
+            'Could not load client names:',
+            profilesError.message
+          );
+        } else {
+          for (const client of (profiles || [])) {
+            if (
+              client &&
+              client.id &&
+              String(client.full_name || '').trim()
+            ) {
+              clientNames.set(
+                String(client.id).toLowerCase(),
+                String(client.full_name).trim()
+              );
+            }
+          }
+        }
 
         $('adminEmail').textContent =
           user.email || 'Admin session';
