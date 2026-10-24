@@ -7,6 +7,8 @@ const html = await readFile(new URL('../vantagepay-auth.html', import.meta.url),
 const dashboardHtml = await readFile(new URL('../vantagepay-dashboard.html', import.meta.url), 'utf8');
 const previewHtml = await readFile(new URL('../vantagepay-preview.html', import.meta.url), 'utf8');
 const server = await readFile(new URL('../server.js', import.meta.url), 'utf8');
+const standaloneSchema = await readFile(new URL('../docs/vantagepay-standalone-schema.sql', import.meta.url), 'utf8');
+const vantagepayApi = await readFile(new URL('../lib/vantagepay-api.js', import.meta.url), 'utf8');
 
 function inlineScript(source, label) {
   const sdkTag = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>';
@@ -64,4 +66,13 @@ test('VantagePay demo links to authentication and clearly labels fictional finan
   assert.match(previewHtml, /fictional balances/i);
   assert.match(previewHtml, /does not hold funds/i);
   assert.match(previewHtml, /No live financial connection/i);
+});
+
+
+test('VantagePay standalone schema uses valid dollar-quoted trigger function and beneficiary relationship', () => {
+  assert.match(standaloneSchema, /AS \$\$\s+BEGIN[\s\S]*?RETURN NEW;\s+END;\s+\$\$;/);
+  assert.match(standaloneSchema, /beneficiary_id UUID REFERENCES public\.vp_beneficiary_accounts\(id\)/);
+  assert.match(vantagepayApi, /beneficiary:vp_beneficiary_accounts\(id,beneficiary_name,bank_name,account_last4,currency_code\)/);
+  assert.match(dashboardHtml, /beneficiaryText/);
+  assert.match(dashboardHtml, /account_last4/);
 });
