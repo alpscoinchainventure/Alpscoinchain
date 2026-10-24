@@ -147,6 +147,22 @@ CREATE INDEX IF NOT EXISTS vp_ledger_entries_account_idx
 
 -- Source events are internal integration records. APY is posted only after
 -- authoritative source reconciliation and an authorized, idempotent posting.
+-- Link an external investment-provider customer reference to a VantagePay
+-- user. Create/disable these mappings only through an audited trusted admin flow.
+CREATE TABLE IF NOT EXISTS public.vp_external_account_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider_code TEXT NOT NULL,
+  external_customer_reference TEXT NOT NULL,
+  vantagepay_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  UNIQUE(provider_code, external_customer_reference)
+);
+
+ALTER TABLE public.vp_external_account_links ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.vp_external_account_links FROM anon, authenticated;
+
 CREATE TABLE IF NOT EXISTS public.vp_apy_source_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   provider_code TEXT NOT NULL,
@@ -232,6 +248,7 @@ REVOKE ALL ON public.vp_transaction_requests FROM anon, authenticated;
 REVOKE ALL ON public.vp_ledger_transactions FROM anon, authenticated;
 REVOKE ALL ON public.vp_ledger_entries FROM anon, authenticated;
 REVOKE ALL ON public.vp_apy_source_events FROM anon, authenticated;
+REVOKE ALL ON public.vp_external_account_links FROM anon, authenticated;
 REVOKE ALL ON public.vp_admin_audit_log FROM anon, authenticated;
 
 GRANT SELECT ON public.vp_customer_accounts TO authenticated;
