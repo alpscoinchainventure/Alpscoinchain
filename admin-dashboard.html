@@ -230,7 +230,9 @@
   $("signOutButton").addEventListener("click",async()=>{const button=$("signOutButton");button.disabled=true;try{const {error}=await client.auth.signOut();if(error)throw error;window.location.replace("/login")}catch(error){console.error(error);button.disabled=false;setNotice("sessionNotice","Could not sign out. Please try again.","error")}});
   $("refreshAccountsButton").addEventListener("click",loadAccounts);
   $("accountSearch").addEventListener("input",renderAccounts);
-  $("ledgerForm").addEventListener("submit",postLedgerEntry);\n  $("walletForm").addEventListener("submit",saveWalletAddress);\n  $("walletForm").addEventListener("reset",()=>{delete $("walletForm").dataset.editId;delete $("walletForm").dataset.originalAsset;delete $("walletForm").dataset.originalNetwork});
+  $("ledgerForm").addEventListener("submit",postLedgerEntry);
+  $("walletForm").addEventListener("submit",saveWalletAddress);
+  $("walletForm").addEventListener("reset",()=>{delete $("walletForm").dataset.editId;delete $("walletForm").dataset.originalAsset;delete $("walletForm").dataset.originalNetwork});
   $("refreshButton").addEventListener("click",refreshDashboard);
 
   (async()=>{const ok=await verifySession();if(ok){await loadAccounts();await loadWalletAddresses()}})();
