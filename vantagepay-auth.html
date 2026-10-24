@@ -49,8 +49,6 @@
 <script>
 (function(){
   'use strict';
-  const PROJECT_URL = 'https://uevofmlzpwrdidjnwxfd.supabase.co';
-  const PUBLISHABLE_KEY = 'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
   const authView = document.getElementById('auth-view');
   const accountView = document.getElementById('account-view');
   const form = document.getElementById('auth-form');
@@ -139,12 +137,16 @@
   async function init() {
     try {
       await ensureSupabaseLibrary();
+      const configResponse = await fetch('/api/vantagepay/config', { headers: { accept: 'application/json' } });
+      if (!configResponse.ok) throw new Error('VantagePay standalone authentication is not configured yet. It will not use another product’s accounts.');
+      const config = await configResponse.json();
+      if (!config.supabaseUrl || !config.publishableKey) throw new Error('VantagePay standalone authentication is not configured yet.');
+      client = window.supabase.createClient(config.supabaseUrl, config.publishableKey, {auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
     } catch (error) {
       showMessage(message, explainAuthError(error), 'bad');
       submit.disabled=true;
       return;
     }
-    client = window.supabase.createClient(PROJECT_URL, PUBLISHABLE_KEY, {auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
     const query = new URLSearchParams(window.location.search);
     if (hash.get('type') === 'recovery' || query.get('mode') === 'recovery') { pendingReset=true; setMode('recovery'); }
