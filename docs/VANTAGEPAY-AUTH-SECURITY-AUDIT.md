@@ -9,7 +9,7 @@ This is a configuration/schema audit of the connected Supabase project named "Al
 - Supabase project is active and healthy.
 - The customer authentication page `vantagepay-auth.html` is committed on `vantagepay-integration-plan` and the current Vercel preview serves it with HTTP 200.
 - Verified page response contains the Supabase client, sign-up/sign-in controls, password reset, and the notice that balances and money movement are not enabled.
-- The VantagePay demo page links to the authentication page. The demo uses fictional browser-side data only.
+- The VantagePay demo page links to the authentication page. The demo uses fictional browser-side data only.\n- Added `vantagepay-dashboard.html`, a session-guarded, read-only customer dashboard. It queries the signed-in user's profile with `id = auth user id` and ledger entries with `user_id = auth user id`; it does not create or alter records and does not calculate or display a balance.\n- Added an explicit Express route for the dashboard and a link from the signed-in authentication view.\n- Latest Vercel preview is READY; smoke fetches returned HTTP 200 for authentication, dashboard, and demo pages.\n- Latest GitHub Actions validation workflow completed successfully after adding dashboard script syntax, session-guard, read-only query, and route checks.
 - GitHub Actions validation workflow for commit `b4489ca2eadb8a5e8f34041a46e39a2f7ba749c6` completed successfully.
 - Registration, confirmation-email delivery, sign-in, and password-reset email have **not** been end-to-end tested with a real test account. Redirect allow-list and email provider settings may still need adjustment.
 - Existing schema includes `profiles`, `fund_requests`, `ledger_entries`, `beneficiaries`, `kyc_submissions`, `test_deposits`, `test_withdrawals`, and `test_transactions`. Tables with `test_*` names are not production financial records.
@@ -33,7 +33,7 @@ This is a configuration/schema audit of the connected Supabase project named "Al
 
 5. Review RLS policies on every exposed table, especially ledger entries, profiles, KYC metadata, fund requests, beneficiaries, deposit wallet addresses, and audit tables. Confirm customers can access only their own rows and cannot change privileged columns such as role, KYC status, approval status, reviewer fields, balances, or ledger entries.
 
-6. Review Storage bucket policies for KYC documents. Keep identity documents private and use short-lived signed URLs only after server-side authorization.
+7. Review Storage bucket policies for KYC documents. Keep identity documents private and use short-lived signed URLs only after server-side authorization.
 
 ## Safe implementation order
 
