@@ -35,7 +35,7 @@ test('VantagePay auth page calls Supabase auth APIs rather than simulating authe
   for (const api of ['createClient', 'signUp(', 'signInWithPassword(', 'resetPasswordForEmail(', 'updateUser(', 'resend(', 'signOut(', 'getUser(']) {
     assert.ok(html.includes(api), 'missing Supabase auth API: ' + api);
   }
-  assert.match(html, /sb_publishable_/);
+  assert.match(html, /fetch\('\/api\/vantagepay\/config'/);
   assert.doesNotMatch(html, /service_role|SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(html, /No real-money operations enabled/);
 });
@@ -50,8 +50,10 @@ test('auth and dashboard inline scripts parse', () => {
 
 test('customer dashboard requires a real session and uses user-scoped read-only queries', () => {
   assert.match(dashboardHtml, /client\.auth\.getUser\(\)/);
-  assert.match(dashboardHtml, /\.eq\('id',user\.id\)/);
   assert.match(dashboardHtml, /\.eq\('user_id',user\.id\)/);
+  assert.match(dashboardHtml, /vp_customer_accounts/);
+  assert.match(dashboardHtml, /vp_ledger_transactions/);
+  assert.match(dashboardHtml, /\/api\/vantagepay\/transaction-requests/);
   assert.match(dashboardHtml, /No balance, deposit, withdrawal, transfer, or payout is enabled/i);
   assert.doesNotMatch(dashboardHtml, /\.insert\(|\.upsert\(|\.update\(|\.delete\(/);
   assert.match(server, /app\.get\('\/vantagepay-dashboard\.html'/);
