@@ -302,6 +302,63 @@ CREATE TABLE IF NOT EXISTS public.vp_admin_audit_log (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Status updates and their audit entries are atomic. The status trigger creates
+-- the matching customer notification in the same database transaction.
+CREATE OR REPLACE FUNCTION public.vp_admin_update_request_status(
+  p_actor_user_id UUID,
+  p_request_id UUID,
+  p_next_status TEXT,
+  p_reason TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $
+DECLARE
+  v_role TEXT;
+  v_request public.vp_transaction_requests%ROWTYPE;
+  v_previous_status TEXT;
+BEGIN
+  IF p_next_status NOT IN ('under_review','submitted','rejected','cancelled') THEN
+    RAISE EXCEPTION 'This status requires a provider settlement workflow or is not allowed' USING ERRCODE = '22023';
+  END IF;
+  IF p_reason IS NULL OR length(btrim(p_reason)) < 8 OR length(p_reason) > 500 THEN
+    RAISE EXCEPTION 'An audit reason of 8 to 500 characters is required' USING ERRCODE = '22023';
+  END IF;
+  SELECT m.admin_role INTO v_role FROM public.vp_admin_memberships AS m
+  WHERE m.user_id = p_actor_user_id AND m.enabled = TRUE LIMIT 1;
+  IF v_role NOT IN ('operations','finance','super_admin') OR v_role IS NULL THEN
+    RAISE EXCEPTION 'Enabled operations, finance, or super-admin membership is required' USING ERRCODE = '42501';
+  END IF;
+  SELECT * INTO v_request FROM public.vp_transaction_requests WHERE id = p_request_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Transaction request not found' USING ERRCODE = 'P0002'; END IF;
+  v_previous_status := v_request.status;
+  IF NOT (
+    (v_previous_status = 'pending' AND p_next_status IN ('under_review','rejected','cancelled')) OR
+    (v_previous_status = 'under_review' AND p_next_status IN ('submitted','rejected','cancelled')) OR
+    (v_previous_status = 'submitted' AND p_next_status IN ('rejected','cancelled'))
+  ) THEN
+    RAISE EXCEPTION 'That request status transition is not permitted' USING ERRCODE = '22023';
+  END IF;
+  UPDATE public.vp_transaction_requests
+  SET status = p_next_status, updated_at = now()
+  WHERE id = p_request_id
+  RETURNING * INTO v_request;
+  INSERT INTO public.vp_admin_audit_log (
+    actor_user_id, action, target_type, target_reference, reason, before_state, after_state
+  ) VALUES (
+    p_actor_user_id, 'transaction_request_status_changed', 'transaction_request',
+    v_request.request_reference, btrim(p_reason),
+    jsonb_build_object('status', v_previous_status),
+    jsonb_build_object('status', p_next_status)
+  );
+  RETURN to_jsonb(v_request);
+END;
+$;
+REVOKE EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT, TEXT) TO service_role;
+
 -- Audited admin balance adjustments are posted as balanced, immutable-style ledger
 -- transactions, never as direct edits to a stored balance field. This function
 -- executes atomically and is callable only by the trusted service-role backend.
