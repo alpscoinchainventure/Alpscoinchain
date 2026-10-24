@@ -108,11 +108,11 @@
         clearTimeout(timer);
         error ? reject(error) : resolve();
       };
-      const timer = setTimeout(() => finish(new Error('The authentication library could not load. Check your internet connection or content blocker, then refresh.')), 12000);
+      const timer = setTimeout(() => finish(new Error('Authentication library did not load. Check your internet connection or content blocker, then refresh.')), 12000);
       script.src = 'https://unpkg.com/@supabase/supabase-js@2';
       script.async = true;
       script.onload = () => finish();
-      script.onerror = () => finish(new Error('Both authentication-library sources failed to load. Check your internet connection or content blocker, then refresh.'));
+      script.onerror = () => finish(new Error('Authentication library did not load from either source. Check your internet connection or content blocker, then refresh.'));
       document.head.appendChild(script);
     });
     if (!window.supabase || !window.supabase.createClient) throw new Error('Authentication library loaded without its client. Refresh the page and try again.');
