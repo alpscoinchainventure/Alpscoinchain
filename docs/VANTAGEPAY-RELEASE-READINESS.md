@@ -8,7 +8,7 @@ Release policy: preview first; test the complete candidate; never merge to `main
 - Draft PR #15 remains unmerged: https://github.com/alpscoinchainventure/Alpscoinchain/pull/15
 - The dedicated Vercel project `vantagepay` has a deployment marked READY for commit `2ba1a5ccdcb5f31b0e19f659d37554a280526869`. This confirms deployment status only, not end-to-end functionality.
 - Preview URL aliases include `https://vantagepay.vercel.app` and `https://vantagepay-alpscoinchaininvestmentventures.vercel.app`. Direct runtime/API verification is still outstanding.
-- Vercel project environment variables were empty at last inspection. Required VantagePay secrets/configuration are not set.
+- Dedicated Vercel project now has the public `VANTAGEPAY_NEON_AUTH_URL` and `VANTAGEPAY_NEON_DATA_API_URL` variables set for production, preview, and development. No database connection string, server-side database credential, webhook secret, or admin secret has been configured.
 - A prior Vercel deployment request hit the free-plan daily deployment quota. Do not upgrade or incur costs without explicit approval.
 - The two existing Supabase free projects under Century International Carrier remain untouched. A third free project could not be created because the organization reached its two-active-project limit. Do not pause, delete, or upgrade either existing project without explicit approval.
 - User explicitly approved switching from Turso to Neon PostgreSQL.
@@ -16,7 +16,8 @@ Release policy: preview first; test the complete candidate; never merge to `main
 - Neon Managed Better Auth was enabled for the development branch. Email/password signup is enabled, but email verification is currently disabled by default; production-grade email verification/provider setup remains required.
 - Neon Data API was provisioned at the branch, with public schema configuration and a row cap of 100. The current starter schema tables (`vp_webhook_inbox`, `vp_asset_definitions`, `vp_ledger_transactions`, `vp_ledger_entries`, `vp_payout_requests`) were applied and verified to exist. No assets were seeded/enabled and no money movement was enabled.
 - Trusted auth origins were added for `https://vantagepay.vercel.app`, `https://vintagebanking.cyou`, and `https://www.vintagebanking.cyou`.
-- Important: this provisions infrastructure and starter tables only. The current application API still expects Supabase Auth and Supabase REST/service-role behavior, and the browser auth page still loads Supabase JS. The Neon adapter migration is not yet complete, so do not treat registration, dashboard, or transaction APIs as functional yet.
+- The `vantagepay-auth.html`, `vantagepay-dashboard.html`, and `vantagepay-admin.html` files have been migrated in the working branch to the Neon Auth Supabase-compatible adapter / Neon JS Data API client. `lib/vantagepay-api.js` now reads the Neon Auth URL and verifies bearer sessions through Neon Auth. These code changes are not yet deployed or end-to-end verified.
+- Important: the server-side transaction API still contains Supabase REST/service-role data access and RPC calls. Those data operations have NOT been migrated to Neon PostgreSQL/Data API. The customer-facing Neon Data API also has no reviewed customer RLS policies/grants yet; do not expose account data or enable transactions until row-level access controls are installed and tested. Treat the app as incomplete.
 - `vintagebanking.cyou` is purchased, but custom DNS records are not configured and the domain is not approved for launch.
 
 
@@ -28,9 +29,9 @@ Release policy: preview first; test the complete candidate; never merge to `main
 - No DNS records were changed, and no custom domain was attached. This is intentional until the Neon application adapter is implemented and tested.
 
 ## Required before calling the preview ready
-1. Complete the application migration from Supabase Auth/REST to Neon Managed Auth + the Neon Data API or a server-side PostgreSQL adapter. Never expose database credentials or privileged secrets to browser code.
-2. Configure exact VantagePay environment variables in the dedicated Vercel project only after the code adapter is ready. Do not place secrets in Git or logs.
-3. Review the starter schema and add the missing customer/profile, transaction-request, admin-membership, audit, and notification tables/functions before attempting those application flows.
+1. Finish server-side API data access by replacing Supabase REST/service-role calls and RPCs with secure Neon PostgreSQL operations; do not put database credentials or privileged secrets in browser code.
+2. Add and review RLS policies/grants for each customer-readable table. Admin memberships, audit records, external-account mappings, webhook events, and ledger writes must remain inaccessible to customers.
+3. Reconcile the starter ledger schema with the app's expected fields and add/test the missing database functions, transaction-request workflow, notifications, and audited admin operations.
 6. Test signup, confirmation, login, logout, password reset/recovery, and two-account isolation.
 7. Test customer dashboard, activity, notifications, transaction-request validation, admin permissions/audit trail, mobile layout, and API failure states.
 8. Validate reward-provider signatures and duplicate suppression in a sandbox only after a real provider contract and sandbox credentials exist. Do not auto-credit unverified rewards or enable live money movement.
@@ -47,4 +48,4 @@ Release policy: preview first; test the complete candidate; never merge to `main
 - Do not incur paid upgrades or change/delete existing resources without explicit approval.
 
 ## Current result
-**Not ready for live launch.** A Vercel deployment exists, but backend provisioning and selection, secure auth/database integration, environment configuration, direct API verification, end-to-end tests, and domain DNS remain gated. Next step: finish the Neon application/auth/data-access adapter, then deploy a preview and run end-to-end tests before connecting the custom domain.
+**Not ready for live launch.** Neon Auth and Data API endpoints are configured in Vercel and the frontend auth clients have been migrated in the working branch, but the server-side data API migration, RLS/grants, ledger/RPC compatibility, and end-to-end tests remain incomplete. Vercel's free-plan build-rate limit is still blocking a fresh deployment. Keep the custom domain disconnected and all money movement disabled.
