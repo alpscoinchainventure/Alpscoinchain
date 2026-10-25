@@ -1,258 +1,94 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-
+  <meta name="theme-color" content="#07111f">
+  <title>Sign in | AlpsCoinChain Investment Ventures</title>
   <script>
-    // Keep authentication on the same origin used by admin review pages.
     if (window.location.hostname === 'www.alpscoinchaininvestment.uk') {
-      window.location.replace(
-        'https://alpscoinchaininvestment.uk' +
-        window.location.pathname +
-        window.location.search +
-        window.location.hash
-      );
+      window.location.replace('https://alpscoinchaininvestment.uk' + window.location.pathname + window.location.search + window.location.hash);
     }
   </script>
-  <title>Login | AlpsCoinChain</title>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <style>
-    :root{color-scheme:dark;--ink:#edf5ff;--muted:#9eb1cb;--line:rgba(154,185,226,.2);--blue:#2f83ff}
-    *{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(ellipse at 15% 12%,rgba(35,119,212,.25),transparent 36%),radial-gradient(ellipse at 88% 85%,rgba(25,176,150,.16),transparent 32%),linear-gradient(145deg,#050b14,#0a1a2e 54%,#07101c);color:var(--ink)}
-    .login-container{width:100%;max-width:470px}.brand{text-align:center;margin-bottom:26px}.brand-mark{display:block;width:74px;height:74px;margin:0 auto 14px;filter:drop-shadow(0 8px 20px rgba(47,131,255,.22))}.brand h1{color:#f3f8ff;font-size:clamp(28px,5vw,36px);letter-spacing:-.055em;margin-bottom:8px;font-weight:800;text-shadow:0 0 34px rgba(47,131,255,.25)}.brand p{color:#a8c1e2;letter-spacing:.08em;text-transform:uppercase;font-size:11px;font-weight:700}
-    .login-card{background:linear-gradient(145deg,rgba(18,35,58,.94),rgba(8,22,39,.96));border:1px solid var(--line);border-radius:22px;padding:clamp(22px,5vw,32px);box-shadow:0 28px 80px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.045);backdrop-filter:blur(18px)}
-    .tabs{display:flex;gap:8px;margin-bottom:24px;padding:5px;border:1px solid rgba(154,185,226,.12);background:rgba(3,12,23,.45);border-radius:13px}.tab{flex:1;padding:12px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;font-weight:700;font-family:inherit;transition:all .18s ease}.tab.active{background:linear-gradient(135deg,#2f83ff,#1b5bc3);border-color:rgba(133,186,255,.4);color:#fff;box-shadow:0 6px 18px rgba(30,105,218,.24)}
-    .form-group{margin-bottom:18px}label{display:block;margin-bottom:8px;color:#cbdcf0;font-size:13px;font-weight:650}.password-row{position:relative}input{width:100%;padding:14px;border-radius:11px;border:1px solid rgba(154,185,226,.2);background:rgba(3,12,23,.65);color:white;outline:none;font:inherit;transition:border-color .18s,box-shadow .18s}input:focus{border-color:#438fff;box-shadow:0 0 0 3px rgba(47,131,255,.14)}
-    .submit-btn{width:100%;padding:14px;border:1px solid rgba(144,194,255,.3);border-radius:11px;background:linear-gradient(135deg,#2f83ff,#1c5ec9);color:white;font-size:15px;font-weight:750;cursor:pointer;margin-top:4px;font-family:inherit;box-shadow:0 10px 24px rgba(25,95,202,.2);transition:filter .18s,transform .18s}.submit-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}.submit-btn:disabled{opacity:.6;cursor:wait;transform:none}
-    .forgot{display:block;text-align:right;margin:10px 0 20px;color:#7fb2ff;font-size:13px;cursor:pointer}.message{display:none;padding:12px 13px;border-radius:10px;margin-bottom:18px;font-size:14px;line-height:1.5;overflow-wrap:anywhere}.message.success{display:block;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.28);color:#8de7c0}.message.error{display:block;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.28);color:#ffb0b0}
-    .back-link{display:block;text-align:center;margin-top:22px;color:#a9bdd6;text-decoration:none;font-size:13px}.back-link:hover{color:white}.signup-note{margin-top:18px;color:#8298b5;text-align:center;font-size:12px;line-height:1.6}
-    @media(max-width:480px){body{padding:16px}.login-card{border-radius:18px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}
-  </style></head><body>
-  <main class="login-card">
-    <h1>AlpsCoinChain</h1>
-    <p class="subtitle">Sign in to your account</p><form id="loginForm">
-  <label for="email">Email Address</label>
-  <input
-    id="email"
-    type="email"
-    placeholder="Enter your email"
-    autocomplete="username"
-    required
-  >
-
-  <label for="password">Password</label>
-
-  <div class="password-field">
-    <input
-      id="password"
-      type="password"
-      placeholder="Enter your password"
-      autocomplete="current-password"
-      required
-    >
-
-    <button
-      type="button"
-      id="togglePassword"
-      class="password-toggle"
-      aria-controls="password"
-      aria-pressed="false"
-    >Show</button>
-  </div>
-
-  <div
-    id="message"
-    class="message"
-    role="status"
-    aria-live="polite"
-  ></div>
-
-  <button type="submit" id="loginButton">Sign In</button>
-</form>
-
-<button type="button" class="secondary" id="signupButton">
-  Create Account
-</button>
-
-<div class="links">
-  <button type="button" id="forgotButton">
-    Forgot your password?
-  </button>
-</div>
-
-<a class="back-link" href="/">← Back to AlpsCoinChain</a>
-
-  </main>  <script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{color-scheme:dark;--bg:#07111f;--panel:#0e2034;--ink:#f1f6ff;--muted:#9fb2ca;--line:rgba(154,185,226,.18);--blue:#347fff;--mint:#7be2ca}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;padding:28px 16px;display:grid;place-items:center;background:radial-gradient(ellipse at 12% 10%,rgba(47,131,255,.19),transparent 35%),radial-gradient(ellipse at 88% 90%,rgba(25,176,150,.12),transparent 32%),linear-gradient(145deg,#050b14,#0a1a2e 54%,#07101c);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.55}
+    a{color:inherit;text-decoration:none}.auth-shell{width:min(100%,980px);display:grid;grid-template-columns:1fr 1fr;overflow:hidden;border:1px solid var(--line);border-radius:26px;background:rgba(8,20,35,.82);box-shadow:0 30px 90px rgba(0,0,0,.35)}
+    .intro{padding:clamp(28px,5vw,52px);display:flex;flex-direction:column;justify-content:space-between;gap:38px;background:linear-gradient(150deg,rgba(23,57,89,.92),rgba(7,20,35,.96));border-right:1px solid var(--line)}
+    .brand{display:flex;align-items:center;gap:13px}.brand-mark{width:48px;height:48px;flex:0 0 48px}.brand-name{font-weight:850;font-size:17px;letter-spacing:-.04em;line-height:1.2}.brand-name small{display:block;margin-top:5px;color:#a9c4e4;font-size:9px;letter-spacing:.15em;text-transform:uppercase}
+    .intro-copy .eyebrow{display:inline-flex;align-items:center;gap:8px;margin-bottom:18px;color:#9ae9d7;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.dot{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px rgba(123,226,202,.7)}.intro h1{margin:0 0 16px;font-size:clamp(29px,4vw,43px);line-height:1.1;letter-spacing:-.055em}.intro-copy p{margin:0;color:#b0c3d9;font-size:14px;line-height:1.85}.security-note{padding:15px;border:1px solid rgba(123,226,202,.18);border-radius:13px;background:rgba(123,226,202,.045);color:#b6c9dd;font-size:11px}.security-note strong{display:block;margin-bottom:5px;color:#a5eedf;font-size:12px}
+    .form-panel{padding:clamp(25px,4vw,42px);display:flex;flex-direction:column;justify-content:center}.form-top{margin-bottom:24px}.form-top h2{margin:0 0 7px;font-size:27px;letter-spacing:-.045em}.form-top p{margin:0;color:var(--muted);font-size:13px}.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px;margin-bottom:25px;border:1px solid rgba(154,185,226,.12);border-radius:12px;background:rgba(2,10,20,.38)}.auth-tabs a{text-align:center;padding:10px;border-radius:8px;color:var(--muted);font-size:13px;font-weight:750}.auth-tabs .active{background:linear-gradient(135deg,#347fff,#1c5ec9);color:#fff;box-shadow:0 5px 15px rgba(30,105,218,.22)}
+    .form-group{margin-bottom:17px}label{display:block;margin-bottom:7px;color:#cfdeef;font-size:12px;font-weight:700}input{width:100%;min-height:48px;padding:12px 13px;border:1px solid rgba(154,185,226,.22);border-radius:10px;background:#071422;color:#fff;outline:none;font:inherit;font-size:14px}input::placeholder{color:#7188a4}input:focus{border-color:#438fff;box-shadow:0 0 0 3px rgba(47,131,255,.14)}.password-wrap{position:relative}.password-wrap input{padding-right:67px}.password-toggle{position:absolute;right:8px;top:7px;min-height:34px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;background:#11263d;color:#c9dcf3;font-size:11px;font-weight:750;cursor:pointer}
+    .forgot-row{display:flex;justify-content:flex-end;margin:-5px 0 18px}.text-button{padding:0;border:0;background:none;color:#8dbbff;font:inherit;font-size:12px;cursor:pointer}.text-button:hover,.back-link:hover{text-decoration:underline}.submit-btn{width:100%;min-height:49px;padding:12px;border:1px solid rgba(144,194,255,.3);border-radius:10px;background:linear-gradient(135deg,#347fff,#1c5ec9);color:#fff;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 9px 22px rgba(25,95,202,.2)}.submit-btn:hover{filter:brightness(1.08)}.submit-btn:disabled,.text-button:disabled{opacity:.6;cursor:wait}
+    .message{display:none;margin:0 0 16px;padding:12px 13px;border-radius:10px;font-size:12px;line-height:1.55;overflow-wrap:anywhere}.message.show{display:block}.message.success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.28);color:#8de7c0}.message.error{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.28);color:#ffb0b0}.message.info{display:block;background:rgba(56,137,255,.09);border:1px solid rgba(56,137,255,.25);color:#b9d7ff}
+    .form-bottom{margin-top:22px;text-align:center;color:var(--muted);font-size:12px}.form-bottom a{color:#9ec6ff;font-weight:750}.back-link{display:block;margin-top:23px;text-align:center;color:#8fa7c3;font-size:12px}.footnote{margin-top:20px;text-align:center;color:#7288a3;font-size:10px;line-height:1.65}
+    @media(max-width:720px){.auth-shell{max-width:470px;grid-template-columns:1fr;border-radius:22px}.intro{padding:23px 24px;gap:17px;border-right:0;border-bottom:1px solid var(--line)}.intro-copy .eyebrow{margin-bottom:10px}.intro h1{font-size:27px;margin-bottom:8px}.intro-copy p{font-size:12px;line-height:1.6}.security-note{display:none}.form-panel{padding:25px 24px 28px}.form-top h2{font-size:24px}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="intro" aria-label="AlpsCoinChain account access">
+      <a class="brand" href="/" aria-label="AlpsCoinChain homepage">
+        <svg class="brand-mark" viewBox="0 0 64 64" role="img" aria-label="AlpsCoinChain logo" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#72e5c0"/><stop offset="1" stop-color="#3287ff"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="18" fill="#0b1b30" stroke="#5f9bdb" stroke-opacity=".55"/><circle cx="43" cy="22" r="11" fill="none" stroke="url(#logoGrad)" stroke-width="2.5"/><path d="M10 45 24 25l8 11 6-8 15 17H10Z" fill="url(#logoGrad)" fill-opacity=".2" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linejoin="round"/></svg>
+        <span class="brand-name">AlpsCoinChain<small>Investment Ventures</small></span>
+      </a>
+      <div class="intro-copy"><div class="eyebrow"><span class="dot"></span> Secure client access</div><h1>Your account, clearly in view.</h1><p>Sign in to review your client dashboard, account records, and submitted requests. New here? Create an account using the sign-up option.</p></div>
+      <div class="security-note"><strong>Keep your account secure</strong>We will never ask you to share your password, wallet recovery phrase, or private keys with support.</div>
+    </section>
+    <section class="form-panel" aria-labelledby="formTitle">
+      <div class="form-top"><h2 id="formTitle">Welcome back</h2><p>Enter the email and password associated with your account.</p></div>
+      <nav class="auth-tabs" aria-label="Account access options"><a class="active" href="/login.html" aria-current="page">Sign in</a><a href="/signup.html">Sign up</a></nav>
+      <form id="loginForm" novalidate>
+        <div class="form-group"><label for="email">Email address</label><input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="username" inputmode="email" required></div>
+        <div class="form-group"><label for="password">Password</label><div class="password-wrap"><input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required><button type="button" id="togglePassword" class="password-toggle" aria-controls="password" aria-pressed="false">Show</button></div></div>
+        <div class="forgot-row"><button type="button" id="forgotButton" class="text-button">Forgot password?</button></div>
+        <div id="message" class="message" role="status" aria-live="polite"></div>
+        <button type="submit" id="loginButton" class="submit-btn">Sign in securely</button>
+      </form>
+      <div class="form-bottom">Don't have an account? <a href="/signup.html">Create one</a></div>
+      <a class="back-link" href="/">← Back to public website</a>
+      <p class="footnote">Protected sign-in · Never share your password or wallet recovery details.</p>
+    </section>
+  </main>
+  <script>
     'use strict';
-
-    const SUPABASE_URL =
-      'https://uevofmlzpwrdidjnwxfd.supabase.co';
-
-    const SUPABASE_PUBLISHABLE_KEY =
-      'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
-
-    const supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
-
-    const loginForm = document.getElementById('loginForm');
-    const loginButton = document.getElementById('loginButton');
-    const signupButton = document.getElementById('signupButton');
-    const forgotButton = document.getElementById('forgotButton');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const togglePassword = document.getElementById('togglePassword');
-    const message = document.getElementById('message');
-
-    togglePassword.addEventListener('click', function () {
-      const showPassword = passwordInput.type === 'password';
-
-      passwordInput.type = showPassword ? 'text' : 'password';
-      togglePassword.textContent = showPassword ? 'Hide' : 'Show';
-      togglePassword.setAttribute(
-        'aria-pressed',
-        String(showPassword)
-      );
-
-      passwordInput.focus();
+    const SUPABASE_URL='https://uevofmlzpwrdidjnwxfd.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY='sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+    const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+    const loginForm=document.getElementById('loginForm'),loginButton=document.getElementById('loginButton'),forgotButton=document.getElementById('forgotButton'),emailInput=document.getElementById('email'),passwordInput=document.getElementById('password'),togglePassword=document.getElementById('togglePassword'),message=document.getElementById('message');
+    function showMessage(text,type='error'){message.textContent=text;message.className='message show '+type}
+    togglePassword.addEventListener('click',()=>{const show=passwordInput.type==='password';passwordInput.type=show?'text':'password';togglePassword.textContent=show?'Hide':'Show';togglePassword.setAttribute('aria-pressed',String(show));passwordInput.focus()});
+    loginForm.addEventListener('submit',async event=>{
+      event.preventDefault();const email=emailInput.value.trim(),password=passwordInput.value;
+      if(!email||!password){showMessage('Enter your email address and password to continue.');return}
+      message.className='message';loginButton.disabled=true;loginButton.textContent='Signing you in…';
+      try{
+        const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+        if(error){showMessage('We could not sign you in with those details. Check your email and password, then try again.');return}
+        if(!data.session||!data.user){showMessage('Sign-in did not create a session. Please try again.');return}
+        showMessage('Sign-in successful. Verifying your account permissions…','info');
+        const {data:profile,error:profileError}=await supabaseClient.from('profiles').select('role, account_status, kyc_status').eq('id',data.user.id).maybeSingle();
+        if(profileError){await supabaseClient.auth.signOut();showMessage('We could not verify your account permissions. Please try again or contact support.');console.error('Account role verification failed:',profileError.message);return}
+        if(!profile){await supabaseClient.auth.signOut();showMessage('Your account profile could not be found. Please contact support.');return}
+        if(profile.account_status!=='active'){await supabaseClient.auth.signOut();showMessage('Your account is not active. Please contact support for assistance.');return}
+        if(profile.role==='admin'){window.location.replace('/admin-dashboard.html');return}
+        if(profile.role==='client'){window.location.replace(profile.kyc_status==='approved'?'/client-dashboard.html':'/kyc.html');return}
+        await supabaseClient.auth.signOut();showMessage('Your account role could not be verified. Please contact support.');
+      }catch(error){console.error('Sign-in error:',error);showMessage('We could not complete sign-in right now. Please check your connection and try again.')}
+      finally{loginButton.disabled=false;loginButton.textContent='Sign in securely'}
     });
-
-    loginForm.addEventListener('submit', async function (event) {
-      event.preventDefault();
-
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      message.textContent = '';
-      loginButton.disabled = true;
-      loginButton.textContent = 'Signing in...';
-
-      try {
-        const { data, error } =
-          await supabaseClient.auth.signInWithPassword({
-            email,
-            password
-          });
-
-        if (error) {
-          message.textContent = error.message;
-          return;
-        }
-
-        if (!data.session || !data.user) {
-          message.textContent =
-            'Login succeeded, but no session was created.';
-          return;
-        }
-
-        message.textContent = 'Verifying account permissions...';
-
-        const { data: profile, error: profileError } =
-          await supabaseClient
-            .from('profiles')
-            .select('role, account_status, kyc_status')
-            .eq('id', data.user.id)
-            .maybeSingle();
-
-        if (profileError) {
-          await supabaseClient.auth.signOut();
-
-          message.textContent =
-            'Unable to verify your account role. Please try again or contact support.';
-          console.error(
-            'Account role verification failed:',
-            profileError.message
-          );
-          return;
-        }
-
-        if (!profile) {
-          await supabaseClient.auth.signOut();
-
-          message.textContent =
-            'Your account profile could not be found. Please contact support.';
-          return;
-        }
-
-        if (profile.account_status !== 'active') {
-          await supabaseClient.auth.signOut();
-
-          message.textContent =
-            'Your account is not active. Please contact support.';
-          return;
-        }
-
-        if (profile.role === 'admin') {
-          window.location.replace('/admin-dashboard.html');
-          return;
-        }
-
-        if (profile.role === 'client') {
-          if (profile.kyc_status !== 'approved') {
-            window.location.replace('/kyc.html');
-            return;
-          }
-          window.location.replace('/client-dashboard.html');
-          return;
-        }
-
-        await supabaseClient.auth.signOut();
-
-        message.textContent =
-          'Your account has an unrecognized role. Please contact support.';
-
-      } catch (error) {
-        console.error('Sign-in error:', error);
-
-        message.textContent =
-          'Unable to complete sign-in. Please try again.';
-      } finally {
-        loginButton.disabled = false;
-        loginButton.textContent = 'Sign In';
-      }
+    forgotButton.addEventListener('click',async()=>{
+      const email=emailInput.value.trim();if(!email){showMessage('Enter your email address first.');emailInput.focus();return}
+      showMessage('Requesting a password-reset email…','info');forgotButton.disabled=true;
+      try{const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:'https://alpscoinchaininvestment.uk/reset-password.html'});
+        if(error){showMessage('We could not request a reset email. Please try again later.');console.error('Password reset request failed:',error.message);return}
+        showMessage('If an account is eligible, a password-reset email will be sent. Check your inbox and spam folder.','success');
+      }catch(error){console.error('Password reset error:',error);showMessage('We could not request a reset email right now. Please try again.')}
+      finally{forgotButton.disabled=false}
     });
-
-    signupButton.addEventListener('click', function () {
-      window.location.href = '/signup.html';
-    });
-
-    forgotButton.addEventListener('click', async function () {
-      const email = emailInput.value.trim();
-
-      if (!email) {
-        message.textContent = 'Enter your email address first.';
-        emailInput.focus();
-        return;
-      }
-
-      message.textContent = 'Sending password reset email...';
-      forgotButton.disabled = true;
-
-      try {
-        const { error } =
-          await supabaseClient.auth.resetPasswordForEmail(email, {
-            redirectTo:
-              window.location.origin + '/reset-password.html'
-          });
-
-        if (error) {
-          message.textContent =
-            'Unable to request a reset email. Please try again.';
-          console.error('Password reset request failed:', error.message);
-          return;
-        }
-
-        message.textContent =
-          'If the account is eligible, a password-reset email will be sent. Check your inbox.';
-
-      } catch (error) {
-        console.error('Password reset error:', error);
-
-        message.textContent =
-          'Unable to request a reset email right now. Please try again.';
-      } finally {
-        forgotButton.disabled = false;
-      }
-    });
-  </script></body>
+  </script>
+</body>
 </html>
