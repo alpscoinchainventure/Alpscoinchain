@@ -110,13 +110,24 @@
 
     button,
     select,
-    textarea {
+    textarea,
+    .nav-button {
       font: inherit;
       border-radius: 8px;
       border: 1px solid var(--line);
       padding: 10px 12px;
       background: #24334b;
       color: var(--text);
+    }
+
+    .nav-button {
+      display: inline-block;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .nav-button:hover {
+      background: #31435f;
     }
 
     button {
@@ -210,6 +221,7 @@
     <strong>AlpsCoinChain Investment · Admin</strong>
 
     <div class="toolbar">
+      <a class="nav-button" href="/admin-dashboard.html">Admin dashboard</a>
       <span id="adminEmail" class="small"></span>
       <button id="signOut" type="button">Sign out</button>
     </div>
