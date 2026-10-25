@@ -142,10 +142,10 @@
     const query = new URLSearchParams(window.location.search);
     if (hash.get('type') === 'recovery' || query.get('mode') === 'recovery') { pendingReset=true; setMode('recovery'); }
     else if (query.get('mode') === 'signup') setMode('signup');
-    const {data,error}=await client.auth.getSession();
+    const {data,error}=await client.getSession();
     if (error) showMessage(message, 'Could not check the current session. Please try again.', 'bad');
     if (data && data.session && mode !== 'recovery') showAccount(data.session.user);
-    client.auth.onAuthStateChange((event, session) => {
+    client.onAuthStateChange((event, session) => {
       if (event==='PASSWORD_RECOVERY') { pendingReset=true; showAuth(); setMode('recovery'); }
       else if (event==='SIGNED_OUT') { showAuth(); setMode('login'); }
       else if (event==='SIGNED_IN' && session && mode!=='recovery') showAccount(session.user);
@@ -169,18 +169,18 @@
     lastEmail=email; submit.disabled=true; submit.textContent='Please wait…';
     try {
       if (mode==='signup') {
-        const {data,error}=await client.auth.signUp({email,password,options:{data:{full_name:fullName},emailRedirectTo:redirectUrl()}});
+        const {data,error}=await client.signUp({email,password,options:{data:{full_name:fullName},emailRedirectTo:redirectUrl()}});
         if (error) throw error;
         if (data.session) showMessage(message, 'Account created and signed in. Keep this as a test account until security review is complete.', 'good');
         else showMessage(message, 'Sign-up request accepted. Check your email for the confirmation link. The link must return to VantagePay. If it opens a different product, the VantagePay redirect URL still needs to be allow-listed in the identity provider.', 'good');
       } else if (mode==='login') {
-        const {error}=await client.auth.signInWithPassword({email,password}); if (error) throw error;
-        const {data}=await client.auth.getSession(); if (data.session) showAccount(data.session.user);
+        const {error}=await client.signInWithPassword({email,password}); if (error) throw error;
+        const {data}=await client.getSession(); if (data.session) showAccount(data.session.user);
       } else if (mode==='reset') {
-        const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:redirectUrl()+'?mode=recovery'}); if (error) throw error;
+        const {error}=await client.resetPasswordForEmail(email,{redirectTo:redirectUrl()+'?mode=recovery'}); if (error) throw error;
         showMessage(message, 'If the account can receive recovery email, a password-reset link will be sent. Check your inbox and spam folder.', 'good');
       } else if (mode==='recovery') {
-        const {error}=await client.auth.updateUser({password:newPassword}); if (error) throw error;
+        const {error}=await client.updateUser({password:newPassword}); if (error) throw error;
         pendingReset=false; setMode('login'); showMessage(message, 'Password updated. You can now sign in with your new password.', 'good');
       }
     } catch(error) { showMessage(message, explainAuthError(error), 'bad'); }
@@ -191,17 +191,17 @@
     if (!lastEmail) lastEmail=document.getElementById('email').value.trim().toLowerCase();
     if (!lastEmail) { showMessage(message,'Enter your email address first.','bad'); return; }
     resendButton.disabled=true;
-    try { const {error}=await client.auth.resend({type:'signup',email:lastEmail,options:{emailRedirectTo:redirectUrl()}}); if(error)throw error; showMessage(message,'If confirmation can be resent, a new email has been requested.','good'); }
+    try { const {error}=await client.resend({type:'signup',email:lastEmail,options:{emailRedirectTo:redirectUrl()}}); if(error)throw error; showMessage(message,'If confirmation can be resent, a new email has been requested.','good'); }
     catch(error){showMessage(message,explainAuthError(error),'bad');}
     finally{resendButton.disabled=false;}
   });
   document.getElementById('signout').addEventListener('click',async()=>{
-    const {error}=await client.auth.signOut();
+    const {error}=await client.signOut();
     if(error) showMessage(accountMessage,'Sign-out could not be confirmed. Please retry.','bad');
     else {showAuth();setMode('login');showMessage(message,'You have signed out.','good');}
   });
   document.getElementById('refresh-profile').addEventListener('click',async()=>{
-    const {data,error}=await client.auth.getUser();
+    const {data,error}=await client.getUser();
     if(error)showMessage(accountMessage,'Session check failed. Sign out and sign in again.','bad');
     else if(data.user)showMessage(accountMessage,'Session is valid for '+data.user.email+'. This is identity only; no financial operation is enabled.','good');
     else{showAuth();setMode('login');}
