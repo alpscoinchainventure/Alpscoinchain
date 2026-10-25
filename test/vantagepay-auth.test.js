@@ -136,7 +136,7 @@ test('VantagePay admin operations are server-authorized, audited, and cannot mar
   assert.match(adminPage, /Server will check enabled admin membership/);
   assert.match(adminPage, /does not settle payments or directly edit balances/);
   assert.doesNotThrow(() => new vm.Script(inlineScript(adminPage, 'admin')), 'admin console script must parse');
-  assert.match(vantagepayApi, /app\\.post\\('\/api\/vantagepay\/admin\/balance-adjustments'/);
+  assert.ok(vantagepayApi.includes("app.post('/api/vantagepay/admin/balance-adjustments'"));
   assert.match(vantagepayApi, /VANTAGEPAY_LEDGER_MODEL_NOT_REVIEWED/);
   assert.match(vantagepayApi, /No balance was changed/);
   assert.match(adminPage, /Balance adjustments disabled/);
