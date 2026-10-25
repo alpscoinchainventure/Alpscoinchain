@@ -22,14 +22,13 @@ Status: standalone VantagePay customer-preview phase; keep all changes on `vanta
 - [ ] Confirm the browser console has no uncaught errors and the GitHub Actions validation workflow passes.
 - [ ] Add the purchased domain to the Vercel project, verify DNS/HTTPS, and repeat auth callback tests on the canonical domain.
 
-## Domain lookup (read-only; availability/prices can change)
-- `vantagepay.app`: available at lookup; USD $14.99 for 1 year, renewal listed at USD $15/year.
-- `vantagepay.co`: available at lookup; USD $29.99 for 1 year, renewal listed at USD $24.80/year.
-- `vantagepay.com`: unavailable at lookup.
-- `vantagepay.africa`: unavailable at lookup.
-- `vantagepay.ng`: unavailable at lookup.
+## Domain status (checked 2026-10-24)
+- [x] Domain purchased: `vintagebanking.cyou` through Spaceship.
+- [ ] DNS is not configured yet. The domain currently uses `launch1.spaceship.net` and `launch2.spaceship.net`; registrar status showed propagation in progress and no custom DNS records.
+- [ ] Do not attach the domain or change DNS until a fresh preview is deployed and the dedicated backend is configured and tested.
+- [ ] After approval, add the domain to the dedicated VantagePay Vercel project, follow the exact DNS records Vercel provides, wait for verification/HTTPS, then test auth redirects on the canonical domain.
+- Note: the separate VantagePay Vercel project currently has no successful deployment and no environment variables. The free deployment quota was exceeded on 2026-10-24; no paid upgrade is authorized.
 
-No domain has been purchased or reserved. Confirm the exact domain and budget before registering.
 
 ## New standalone financial-platform foundation (code committed; not yet deployed to a dedicated backend)
 - `docs/vantagepay-standalone-schema.sql` defines isolated customer accounts, provider-token beneficiary records, deposit/withdrawal requests, immutable-ledger foundations, APY source-event records, and admin audit records. It is a design migration and has not been applied to any database.
