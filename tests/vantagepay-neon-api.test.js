@@ -277,7 +277,7 @@ test('balance adjustment remains explicitly disabled and does not call the data 
     }
   });
   const res = makeResponse();
-  await app.handlers.post('POST /api/vantagepay/admin/balance-adjustments')({
+  await app.handlers.get('POST /api/vantagepay/admin/balance-adjustments')({
     headers: { authorization: 'Bearer customer-jwt' },
     body: { user_id: userId, amount_minor_units: '10000', currency_code: 'GBP' }
   }, res);
