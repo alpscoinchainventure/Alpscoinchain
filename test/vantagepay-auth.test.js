@@ -37,7 +37,7 @@ test('VantagePay auth page uses Neon Auth APIs rather than simulating authentica
   for (const api of ['createAuthClient', 'SupabaseAuthAdapter', 'signUp(', 'signInWithPassword(', 'resetPasswordForEmail(', 'updateUser(', 'resend(', 'signOut(', 'getUser(']) {
     assert.ok(html.includes(api), 'missing Neon Auth API: ' + api);
   }
-  assert.match(html, /fetch\\('\/api\/vantagepay\/config'/);
+  assert.ok(html.includes("fetch('/api/vantagepay/config'"));
   assert.doesNotMatch(html, /service_role|SUPABASE_SERVICE_ROLE_KEY|supabase-js@2/);
   assert.match(html, /No real-money operations enabled/);
 });
