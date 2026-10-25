@@ -18,6 +18,21 @@ const resend = process.env.RESEND_API_KEY
 app.use(express.json({ limit: '20kb' }));
 app.use(express.urlencoded({ extended: true, limit: '20kb' }));
 
+// Prevent stale HTML pages from being reused after production design updates.
+// This covers the homepage and all .html routes, including sign-in and sign-up.
+app.use((req, res, next) => {
+  if (req.path === '/' || /\\.html?$/i.test(req.path)) {
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      'CDN-Cache-Control': 'no-store',
+      'Vercel-CDN-Cache-Control': 'no-store',
+      Pragma: 'no-cache',
+      Expires: '0'
+    });
+  }
+  next();
+});
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
