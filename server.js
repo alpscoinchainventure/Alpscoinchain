@@ -145,7 +145,7 @@ app.get('/', (req, res, next) => {
   const host = String(req.headers.host || '').split(':')[0].toLowerCase();
   if (
     host === 'vantagepay.vercel.app' ||
-    /^vantagepay-.+-alpscoinchaininvestmentventures\\.vercel\\.app$/.test(host) ||
+    /^vantagepay-.+-alpscoinchaininvestmentventures\.vercel\.app$/.test(host) ||
     [
       'vantagepay-alpscoinchaininvestmentventures.vercel.app',
       'vintagebanking.cyou',
