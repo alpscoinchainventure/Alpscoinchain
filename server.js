@@ -21,7 +21,11 @@ app.use(express.urlencoded({ extended: true }));
 // VantagePay routes use only dedicated Neon Auth/Data API environment variables.
 // Privileged webhook and admin operations remain fail-closed until a reviewed Neon server adapter exists.
 registerVantagePayApi(app);
-app.use(express.static(__dirname));
+
+// Serve VantagePay at the root of its dedicated Vercel project.
+// AlpsCoinChain remains on its separate production project and main branch.
+app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'vantagepay-home.html')));
+app.use(express.static(__dirname, { index: false }));
 
 // VantagePay has a customer-facing homepage and separate demo/auth/dashboard routes.
 app.get('/vantagepay', (_req, res) => res.sendFile(path.join(__dirname, 'vantagepay-home.html')));
