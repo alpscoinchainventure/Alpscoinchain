@@ -139,8 +139,8 @@ test('VantagePay admin operations are server-authorized, audited, and cannot mar
   assert.match(vantagepayApi, /app\\.post\\('\/api\/vantagepay\/admin\/balance-adjustments'/);
   assert.match(vantagepayApi, /VANTAGEPAY_LEDGER_MODEL_NOT_REVIEWED/);
   assert.match(vantagepayApi, /No balance was changed/);
-  assert.match(adminPage, /Audited balance adjustment/);
-  assert.match(adminPage, /reviewed standalone schema/);
+  assert.match(adminPage, /Balance adjustments disabled/);
+  assert.match(adminPage, /VANTAGEPAY_LEDGER_MODEL_NOT_REVIEWED/);
 });
 
 test('external rewards from the configured partner are signed, mapped, deduplicated, and not auto-credited', () => {
