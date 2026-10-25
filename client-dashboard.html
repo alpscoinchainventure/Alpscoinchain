@@ -205,7 +205,7 @@
     const image=document.getElementById("avatar-preview"),initials=document.getElementById("avatar-initials");
     image.hidden=true;image.removeAttribute("src");initials.hidden=false;
     const label=String(currentUser?.user_metadata?.full_name||currentUser?.user_metadata?.name||currentUser?.email||"AlpsCoinChain Client").trim();
-    initials.textContent=label.split(/\\s+/).filter(Boolean).slice(0,2).map(part=>part[0].toUpperCase()).join("")||"AC";
+    initials.textContent=label.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0].toUpperCase()).join("")||"AC";
   }
   async function loadAvatar(){
     showAvatarFallback();
@@ -245,6 +245,8 @@
       setAvatarStatus("Profile photo uploaded successfully.","success");
     }catch(error){
       console.error("Profile photo upload failed:",error);
+      if(avatarPreviewObjectUrl){URL.revokeObjectURL(avatarPreviewObjectUrl);avatarPreviewObjectUrl=null}
+      await loadAvatar();
       setAvatarStatus(error.message||"Could not upload your photo. Please try again.","error");
     }finally{
       button.disabled=true;
