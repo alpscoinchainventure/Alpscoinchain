@@ -12,12 +12,12 @@ const standaloneSchema = await readFile(new URL('../docs/vantagepay-standalone-s
 const vantagepayApi = await readFile(new URL('../lib/vantagepay-api.js', import.meta.url), 'utf8');
 
 function inlineScript(source, label) {
-  const scripts = [...source.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)];
-  const match = scripts.find(([, attrs, body]) => !/\\bsrc\\s*=/.test(attrs) && body.trim());
+  const scripts = [...source.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
+  const match = scripts.find(([, attrs, body]) => !/\bsrc\s*=/.test(attrs) && body.trim());
   assert.ok(match, label + ': inline script must exist');
   let body = match[2].trim();
-  if (/\\btype=["']module["']/.test(match[1])) {
-    body = body.replace(/^import\\s+[^;]+;\\s*/, '');
+  if (/\btype=["']module["']/.test(match[1])) {
+    body = body.replace(/^import\s+[^;]+;\s*/, '');
   }
   return body;
 }
