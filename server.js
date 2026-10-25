@@ -146,6 +146,8 @@ app.get('/', (req, res, next) => {
   if ([
     'vantagepay.vercel.app',
     'vantagepay-alpscoinchaininvestmentventures.vercel.app',
+    'vantagepay-8r46n5vys-alpscoinchaininvestmentventures.vercel.app',
+    'vantagepay-git-vantagepa-1dd2cd-alpscoinchaininvestmentventures.vercel.app',
     'vintagebanking.cyou',
     'www.vintagebanking.cyou'
   ].includes(host)) {
