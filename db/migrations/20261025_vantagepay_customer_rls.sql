@@ -49,7 +49,9 @@ CREATE POLICY vp_admin_memberships_read_own ON public.vp_admin_memberships
   FOR SELECT TO authenticated USING (user_id = (SELECT auth.user_id()::uuid));
 
 -- Beneficiary details are read-only and isolated by owner until provider linking is reviewed.
-GRANT SELECT ON public.vp_beneficiary_accounts TO authenticated;
+REVOKE SELECT ON public.vp_beneficiary_accounts FROM authenticated;
+GRANT SELECT (id,user_id,beneficiary_name,bank_name,country_code,currency_code,account_last4,verification_status,is_default,created_at,updated_at)
+  ON public.vp_beneficiary_accounts TO authenticated;
 DROP POLICY IF EXISTS vp_beneficiaries_read_own ON public.vp_beneficiary_accounts;
 CREATE POLICY vp_beneficiaries_read_own ON public.vp_beneficiary_accounts
   FOR SELECT TO authenticated USING (user_id = (SELECT auth.user_id()::uuid));
