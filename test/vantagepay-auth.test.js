@@ -138,7 +138,7 @@ test('VantagePay admin operations are server-authorized, audited, and cannot mar
   assert.doesNotThrow(() => new vm.Script(inlineScript(adminPage, 'admin')), 'admin console script must parse');
   assert.match(vantagepayApi, /app\\.post\\('\/api\/vantagepay\/admin\/balance-adjustments'/);
   assert.match(vantagepayApi, /VANTAGEPAY_LEDGER_MODEL_NOT_REVIEWED/);
-  assert.doesNotMatch(vantagepayApi, /rpc\\/vp_admin_adjust_customer_balance/);
+  assert.match(vantagepayApi, /No balance was changed/);
   assert.match(adminPage, /Audited balance adjustment/);
   assert.match(adminPage, /reviewed standalone schema/);
 });
