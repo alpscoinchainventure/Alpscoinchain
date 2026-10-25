@@ -443,9 +443,22 @@ app.post('/api/trade', async (req, res) => {
   }
 });
 
-// Login page.
+// Authentication pages: prevent browsers and intermediary caches from serving stale designs.
+const authPageHeaders = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+  Pragma: 'no-cache',
+  Expires: '0',
+  'Surrogate-Control': 'no-store'
+};
+
 app.get('/login.html', (req, res) => {
+  res.set(authPageHeaders);
   res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get('/signup.html', (req, res) => {
+  res.set(authPageHeaders);
+  res.sendFile(path.join(__dirname, 'signup.html'));
 });
 
 // Password-reset page.
