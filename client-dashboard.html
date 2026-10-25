@@ -17,6 +17,8 @@
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}.card{background:linear-gradient(145deg,rgba(19,36,59,.94),rgba(12,25,43,.94));border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:0 18px 48px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.035);min-width:0;margin-bottom:18px}.grid .card{margin-bottom:0}.card h3{margin:0 0 14px;font-size:18px;letter-spacing:-.02em}.account-line{margin:10px 0;overflow-wrap:anywhere}.balance{font-size:clamp(21px,3vw,27px);font-weight:750;letter-spacing:-.035em;margin:12px 0;padding:14px 16px;border-radius:12px;background:rgba(4,13,25,.58);border:1px solid rgba(123,161,205,.13);overflow-wrap:anywhere;color:#e5f3ff}.status{display:inline-block;border-radius:20px;padding:4px 11px;background:rgba(36,166,119,.15);color:var(--success);font-size:12px;font-weight:750}
     #ledger-balance-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}#ledger-balance-list .asset-card{margin:0;min-height:116px;padding:16px;border-radius:14px;background:linear-gradient(145deg,rgba(5,17,31,.9),rgba(12,29,48,.88));border:1px solid rgba(123,161,205,.2);display:flex;flex-direction:column;gap:7px;overflow-wrap:anywhere}#ledger-balance-list .asset-head{display:flex;align-items:center;gap:10px}#ledger-balance-list .asset-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:50%;font-size:11px;font-weight:800;letter-spacing:-.03em;background:rgba(83,145,229,.16);border:1px solid rgba(123,161,205,.25);color:#cfe5ff}#ledger-balance-list .asset-name{font-weight:750;color:#edf5ff;line-height:1.2}#ledger-balance-list .asset-code{font-size:11px;color:var(--muted);letter-spacing:.08em}#ledger-balance-list .asset-amount{font-size:18px;font-weight:800;letter-spacing:-.03em;line-height:1.3;color:#e5f3ff;overflow-wrap:anywhere}#ledger-balance-list .asset-label{font-size:11px;color:var(--muted)}#ledger-balance-list .asset-pending{color:#e6c889;font-size:14px;font-weight:700}#ledger-balance-list .asset-verified{color:var(--success)}
     .button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.button,button{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(92,157,255,.25);border-radius:10px;padding:11px 15px;background:linear-gradient(135deg,#2b7fff,#1b60cf);color:#fff;text-decoration:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;transition:transform .18s ease,filter .18s ease,background .18s ease}.button:hover,button:hover{filter:brightness(1.12);transform:translateY(-1px)}.button.secondary{background:rgba(137,170,210,.09);border-color:var(--border);color:#d8e8ff}.button.secondary:hover{background:rgba(137,170,210,.16)}button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+    .profile-photo-area{display:flex;align-items:center;gap:16px;padding:15px;margin:0 0 17px;border:1px solid rgba(123,161,205,.2);border-radius:14px;background:linear-gradient(135deg,rgba(5,17,31,.7),rgba(23,48,75,.55))}.avatar-frame{width:92px;height:92px;flex:0 0 92px;border-radius:50%;overflow:hidden;display:grid;place-items:center;border:2px solid rgba(105,224,176,.72);background:linear-gradient(135deg,rgba(43,127,255,.35),rgba(105,224,176,.2));box-shadow:0 0 0 5px rgba(43,127,255,.08)}.avatar-frame img{width:100%;height:100%;object-fit:cover}.avatar-initials{font-size:27px;font-weight:800;letter-spacing:-.04em;color:#e8f6ff}.avatar-copy{min-width:0;flex:1}.avatar-copy h4{margin:0 0 3px;font-size:15px}.avatar-copy p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}.avatar-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.avatar-actions button{padding:9px 12px;font-size:12px}.avatar-status{margin:8px 0 0;font-size:12px;overflow-wrap:anywhere}.avatar-status.success-message{color:var(--success)}.avatar-status.error-message{color:var(--danger)}#avatar-file{display:none}
+
     .table-wrap{overflow-x:auto;width:100%;border:1px solid var(--border);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:620px;font-size:13px}th,td{text-align:left;padding:12px 11px;border-bottom:1px solid var(--border);overflow-wrap:anywhere}th{color:#a9bfd9;background:rgba(3,12,23,.45);font-weight:700}td{color:#e0eaf7}tr:last-child td{border-bottom:0}.empty{color:var(--muted);padding:15px 0}
     label{display:block;margin:12px 0 5px;font-size:14px;font-weight:700;color:#c8d8eb}input,textarea{display:block;width:100%;border:1px solid var(--border);border-radius:10px;padding:12px 13px;font:inherit;background:rgba(3,12,23,.65);color:var(--text)}input:focus,textarea:focus{outline:2px solid rgba(43,127,255,.5);outline-offset:1px}textarea{min-height:110px;resize:vertical}.form-message{margin-top:12px;font-size:14px;overflow-wrap:anywhere}.success-message{color:var(--success)}.error-message{color:var(--danger)}footer{text-align:center;padding:22px 15px;color:#8398b4;font-size:12px;border-top:1px solid var(--border);background:rgba(4,12,22,.45)}[hidden]{display:none!important}
     @media(max-width:700px){header{padding:16px 12px}.brand-lockup{gap:10px}.brand-mark{width:44px;height:44px;flex-basis:44px}.header-home-button{padding:8px 10px;font-size:12px}.grid{grid-template-columns:1fr}main{padding:18px 12px 32px}.card{padding:17px}.welcome h2{font-size:25px}#ledger-balance-list{grid-template-columns:1fr}.button-row .button,.button-row button{flex:1 1 100%}}
@@ -51,6 +53,22 @@
 
   <div class="grid">
     <section class="card"><h3>Account information</h3>
+      <div class="profile-photo-area">
+        <div class="avatar-frame" aria-label="Profile photo preview">
+          <img id="avatar-preview" alt="Your profile photo" hidden>
+          <span class="avatar-initials" id="avatar-initials" aria-hidden="true">AC</span>
+        </div>
+        <div class="avatar-copy">
+          <h4>Profile photo</h4>
+          <p>Add a photo so your account feels personal. JPG, PNG or WebP · up to 5 MB. Your photo is stored privately with your account.</p>
+          <input type="file" id="avatar-file" accept="image/jpeg,image/png,image/webp" aria-label="Choose a profile photo">
+          <div class="avatar-actions">
+            <button type="button" class="secondary" id="choose-avatar-button">Choose photo</button>
+            <button type="button" id="upload-avatar-button" disabled>Upload photo</button>
+          </div>
+          <p id="avatar-status" class="avatar-status muted" role="status" aria-live="polite">No profile photo uploaded yet.</p>
+        </div>
+      </div>
       <p class="account-line"><strong>Email:</strong> <span id="account-email">Loading…</span></p>
       <p class="account-line"><strong>Account ID:</strong> <span id="account-id">Loading…</span></p>
       <p class="account-line"><strong>Account status:</strong> <span id="account-status">Checking…</span></p>
@@ -176,6 +194,77 @@
   function addCell(row,value){const c=document.createElement("td");c.textContent=value===null||value===undefined||value===""?"—":String(value);row.appendChild(c)}
   function showEmptyRows(tbody,message){tbody.replaceChildren();const row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=6;cell.className="empty";cell.textContent=message;row.appendChild(cell);tbody.appendChild(row)}
   function formatAmount(value){const amount=Number(value);if(!Number.isFinite(amount))return"Unavailable";return amount.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:8})}
+
+  let avatarPreviewObjectUrl=null;
+  function setAvatarStatus(message,kind){
+    const el=document.getElementById("avatar-status");
+    el.textContent=message;
+    el.className="avatar-status "+(kind==="success"?"success-message":kind==="error"?"error-message":"muted");
+  }
+  function showAvatarFallback(){
+    const image=document.getElementById("avatar-preview"),initials=document.getElementById("avatar-initials");
+    image.hidden=true;image.removeAttribute("src");initials.hidden=false;
+    const label=String(currentUser?.user_metadata?.full_name||currentUser?.user_metadata?.name||currentUser?.email||"AlpsCoinChain Client").trim();
+    initials.textContent=label.split(/\\s+/).filter(Boolean).slice(0,2).map(part=>part[0].toUpperCase()).join("")||"AC";
+  }
+  async function loadAvatar(){
+    showAvatarFallback();
+    const path=currentUser?.user_metadata?.avatar_path;
+    if(!path){setAvatarStatus("No profile photo uploaded yet. Choose a photo to get started.");return}
+    try{
+      const result=await supabaseClient.storage.from("client-avatars").createSignedUrl(path,86400);
+      if(result.error)throw result.error;
+      const image=document.getElementById("avatar-preview");
+      image.onload=()=>{image.hidden=false;document.getElementById("avatar-initials").hidden=true};
+      image.onerror=()=>{showAvatarFallback();setAvatarStatus("Your saved photo could not be previewed. You can upload it again.","error")};
+      image.src=result.data.signedUrl;
+      setAvatarStatus("Your profile photo is saved securely.");
+    }catch(error){
+      console.error("Could not load profile photo:",error);
+      setAvatarStatus("Your profile photo could not be loaded. You can choose a new one.","error");
+    }
+  }
+  async function uploadAvatar(){
+    const input=document.getElementById("avatar-file"),button=document.getElementById("upload-avatar-button");
+    const file=input.files&&input.files[0];
+    if(!currentUser||!file){setAvatarStatus("Choose a photo before uploading.","error");return}
+    const allowedTypes=["image/jpeg","image/png","image/webp"];
+    if(!allowedTypes.includes(file.type)){setAvatarStatus("Please choose a JPG, PNG or WebP image.","error");return}
+    if(file.size>5*1024*1024){setAvatarStatus("The photo must be 5 MB or smaller.","error");return}
+    const path=currentUser.id+"/profile-photo";
+    button.disabled=true;setAvatarStatus("Uploading your photo securely…");
+    try{
+      const uploaded=await supabaseClient.storage.from("client-avatars").upload(path,file,{cacheControl:"3600",upsert:true,contentType:file.type});
+      if(uploaded.error)throw uploaded.error;
+      const updated=await supabaseClient.auth.updateUser({data:{avatar_path:path}});
+      if(updated.error)throw updated.error;
+      currentUser=updated.data.user||currentUser;
+      input.value="";
+      if(avatarPreviewObjectUrl){URL.revokeObjectURL(avatarPreviewObjectUrl);avatarPreviewObjectUrl=null}
+      await loadAvatar();
+      setAvatarStatus("Profile photo uploaded successfully.","success");
+    }catch(error){
+      console.error("Profile photo upload failed:",error);
+      setAvatarStatus(error.message||"Could not upload your photo. Please try again.","error");
+    }finally{
+      button.disabled=true;
+      input.value="";
+    }
+  }
+  document.getElementById("choose-avatar-button").addEventListener("click",()=>document.getElementById("avatar-file").click());
+  document.getElementById("avatar-file").addEventListener("change",event=>{
+    const file=event.target.files&&event.target.files[0],button=document.getElementById("upload-avatar-button");
+    if(!file){button.disabled=true;return}
+    if(!["image/jpeg","image/png","image/webp"].includes(file.type)){button.disabled=true;setAvatarStatus("Please choose a JPG, PNG or WebP image.","error");return}
+    if(file.size>5*1024*1024){button.disabled=true;setAvatarStatus("The photo must be 5 MB or smaller.","error");return}
+    if(avatarPreviewObjectUrl)URL.revokeObjectURL(avatarPreviewObjectUrl);
+    avatarPreviewObjectUrl=URL.createObjectURL(file);
+    const image=document.getElementById("avatar-preview");
+    image.onload=()=>{image.hidden=false;document.getElementById("avatar-initials").hidden=true};
+    image.src=avatarPreviewObjectUrl;button.disabled=false;
+    setAvatarStatus("Photo selected. Tap Upload photo to save it.");
+  });
+  document.getElementById("upload-avatar-button").addEventListener("click",uploadAvatar);
 
   async function loadProfile(){
     const result=await supabaseClient.from("profiles").select("role, account_status, kyc_status").eq("id",currentUser.id).maybeSingle();
@@ -327,7 +416,7 @@
     supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
     try{
       const result=await supabaseClient.auth.getSession();if(result.error)throw result.error;const session=result.data.session;if(!session||!session.user){window.location.replace("/login");return}
-      currentUser=session.user;setText("account-email",currentUser.email);setText("account-id",currentUser.id);showPageMessage("You are signed in.");const profileReady=await loadProfile();if(!profileReady)return;await Promise.all([loadLedgerBalances(),loadRequestHistory()]);
+      currentUser=session.user;setText("account-email",currentUser.email);setText("account-id",currentUser.id);showPageMessage("You are signed in.");const profileReady=await loadProfile();if(!profileReady)return;await loadAvatar();await Promise.all([loadLedgerBalances(),loadRequestHistory()]);
     }catch(error){console.error("Dashboard initialization failed:",error);showPageMessage("We could not load your account. Please refresh or sign in again.")}
   }
 
