@@ -12,15 +12,14 @@ const standaloneSchema = await readFile(new URL('../docs/vantagepay-standalone-s
 const vantagepayApi = await readFile(new URL('../lib/vantagepay-api.js', import.meta.url), 'utf8');
 
 function inlineScript(source, label) {
-  const sdkTag = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>';
-  const sdkIndex = source.indexOf(sdkTag);
-  assert.ok(sdkIndex >= 0, label + ': Supabase SDK script tag must exist');
-  const startTag = source.indexOf('<script>', sdkIndex + sdkTag.length);
-  assert.ok(startTag >= 0, label + ': inline script must exist after the SDK tag');
-  const start = startTag + '<script>'.length;
-  const end = source.indexOf('</script>', start);
-  assert.ok(end > start, label + ': inline script must be closed');
-  return source.slice(start, end);
+  const scripts = [...source.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)];
+  const match = scripts.find(([, attrs, body]) => !/\\bsrc\\s*=/.test(attrs) && body.trim());
+  assert.ok(match, label + ': inline script must exist');
+  let body = match[2].trim();
+  if (/\\btype=["']module["']/.test(match[1])) {
+    body = body.replace(/^import\\s+[^;]+;\\s*/, '');
+  }
+  return body;
 }
 
 test('VantagePay auth page includes account access modes and dashboard link', () => {
@@ -34,12 +33,12 @@ test('VantagePay auth page includes account access modes and dashboard link', ()
   }
 });
 
-test('VantagePay auth page calls Supabase auth APIs rather than simulating authentication', () => {
-  for (const api of ['createClient', 'signUp(', 'signInWithPassword(', 'resetPasswordForEmail(', 'updateUser(', 'resend(', 'signOut(', 'getUser(']) {
-    assert.ok(html.includes(api), 'missing Supabase auth API: ' + api);
+test('VantagePay auth page uses Neon Auth APIs rather than simulating authentication', () => {
+  for (const api of ['createAuthClient', 'SupabaseAuthAdapter', 'signUp(', 'signInWithPassword(', 'resetPasswordForEmail(', 'updateUser(', 'resend(', 'signOut(', 'getUser(']) {
+    assert.ok(html.includes(api), 'missing Neon Auth API: ' + api);
   }
-  assert.match(html, /fetch\('\/api\/vantagepay\/config'/);
-  assert.doesNotMatch(html, /service_role|SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(html, /fetch\\('\/api\/vantagepay\/config'/);
+  assert.doesNotMatch(html, /service_role|SUPABASE_SERVICE_ROLE_KEY|supabase-js@2/);
   assert.match(html, /No real-money operations enabled/);
 });
 
@@ -137,12 +136,11 @@ test('VantagePay admin operations are server-authorized, audited, and cannot mar
   assert.match(adminPage, /Server will check enabled admin membership/);
   assert.match(adminPage, /does not settle payments or directly edit balances/);
   assert.doesNotThrow(() => new vm.Script(inlineScript(adminPage, 'admin')), 'admin console script must parse');
-  assert.match(vantagepayApi, /app\.post\('\/api\/vantagepay\/admin\/balance-adjustments'/);
-  assert.match(vantagepayApi, /rpc\/vp_admin_adjust_customer_balance/);
-  assert.match(standaloneSchema, /CREATE OR REPLACE FUNCTION public\.vp_admin_adjust_customer_balance/);
-  assert.match(standaloneSchema, /GRANT EXECUTE ON FUNCTION public\.vp_admin_adjust_customer_balance/);
-  assert.match(standaloneSchema, /customer_balance_adjustment/);
+  assert.match(vantagepayApi, /app\\.post\\('\/api\/vantagepay\/admin\/balance-adjustments'/);
+  assert.match(vantagepayApi, /VANTAGEPAY_LEDGER_MODEL_NOT_REVIEWED/);
+  assert.doesNotMatch(vantagepayApi, /rpc\\/vp_admin_adjust_customer_balance/);
   assert.match(adminPage, /Audited balance adjustment/);
+  assert.match(adminPage, /reviewed standalone schema/);
 });
 
 test('external rewards from the configured partner are signed, mapped, deduplicated, and not auto-credited', () => {
