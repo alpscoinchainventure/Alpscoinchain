@@ -4,7 +4,7 @@ Working branch: `vantagepay-integration-plan`
 Release policy: preview first; test the complete candidate; never merge to `main` or change production without explicit approval.
 
 ## Verified current state
-- GitHub working branch latest known commit: `2ba1a5ccdcb5f31b0e19f659d37554a280526869`.
+- GitHub working branch contains follow-on Neon migration, RLS, and test commits beyond the original deployment baseline `2ba1a5ccdcb5f31b0e19f659d37554a280526869`; PR #15 remains the review point for the latest branch head.
 - Draft PR #15 remains unmerged: https://github.com/alpscoinchainventure/Alpscoinchain/pull/15
 - The dedicated Vercel project `vantagepay` has a deployment marked READY for commit `2ba1a5ccdcb5f31b0e19f659d37554a280526869`. This confirms deployment status only, not end-to-end functionality.
 - Preview URL aliases include `https://vantagepay.vercel.app` and `https://vantagepay-alpscoinchaininvestmentventures.vercel.app`. Direct runtime/API verification is still outstanding.
@@ -48,4 +48,4 @@ Release policy: preview first; test the complete candidate; never merge to `main
 - Do not incur paid upgrades or change/delete existing resources without explicit approval.
 
 ## Current result
-**Not ready for live launch.** Neon Auth/Data API frontend wiring and a restrictive RLS/grant baseline are committed/applied to the dedicated development branch. Customer API calls now use the user's Neon JWT, but runtime calls have not been tested and privileged webhook storage/admin RPCs remain intentionally disabled or incomplete. Ledger/RPC compatibility, full test coverage, and end-to-end checks remain outstanding. Vercel's free-plan build-rate limit is still blocking a fresh deployment. Keep the custom domain disconnected and all money movement disabled.
+**Not ready for live launch.** Neon Auth/Data API frontend wiring and a restrictive RLS/grant baseline are committed/applied to the dedicated development branch. Customer API calls now use the user's Neon JWT, but runtime calls have not been tested. Privileged webhook routes are hard-disabled in code until a reviewed server-side Neon adapter exists; admin RPCs and cross-customer admin queue access remain incomplete and fail closed. Ledger/RPC compatibility, full test coverage, and end-to-end checks remain outstanding. Vercel's free-plan build-rate limit is still blocking a fresh deployment. Keep the custom domain disconnected and all money movement disabled.
