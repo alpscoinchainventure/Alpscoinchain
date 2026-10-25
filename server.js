@@ -18,8 +18,8 @@ app.use(express.json({ verify(req, _res, buf) {
 } }));
 app.use(express.urlencoded({ extended: true }));
 
-// VantagePay routes use only its dedicated backend environment variables.
-// They fail closed until a separate VantagePay Supabase project is configured.
+// VantagePay routes use only dedicated Neon Auth/Data API environment variables.
+// Privileged webhook and admin operations remain fail-closed until a reviewed Neon server adapter exists.
 registerVantagePayApi(app);
 app.use(express.static(__dirname));
 
