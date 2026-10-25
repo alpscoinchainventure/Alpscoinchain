@@ -16,6 +16,14 @@ Release policy: preview first; test the complete candidate; never merge to `main
 - Neon is a PostgreSQL-compatible alternative that may reduce database-schema rewrite work, but it is a different provider choice and must not be silently substituted for Turso.
 - `vintagebanking.cyou` is purchased, but custom DNS records are not configured and the domain is not approved for launch.
 
+
+## Direct runtime checks (2026-10-24)
+- A live fetch of `https://vantagepay.vercel.app/vantagepay-home.html` returned HTTP 200 and the VantagePay standalone landing page.
+- A live fetch of `https://vantagepay.vercel.app/api/vantagepay/config` returned HTTP 503 with code `VANTAGEPAY_BACKEND_NOT_CONFIGURED`. This confirms the application backend is not configured; authentication-dependent flows cannot pass yet.
+- The project root URL `https://vantagepay.vercel.app/` currently returns the repository's AlpsCoinChain homepage. Do **not** point `vintagebanking.cyou` at this project/root until the root route is corrected or explicitly routed to VantagePay. Otherwise the custom domain could show the wrong product.
+- Vercel team-scope API calls currently return 403/not-authorized, so the custom-domain list could not be inspected or changed from this session.
+- No DNS records were changed, and no domain was attached. This is intentional until the target route and backend are corrected.
+
 ## Required before calling the preview ready
 1. Confirm/provision the chosen standalone backend on a no-cost plan; verify plan limits before creating resources.
 2. Decide whether to continue with Turso (larger migration) or explicitly switch to a PostgreSQL-compatible provider such as Neon (closer schema fit).
