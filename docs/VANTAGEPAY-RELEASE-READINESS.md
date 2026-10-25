@@ -48,6 +48,12 @@ Release policy: preview first; test the complete candidate; never merge to `main
 - Never print service-role keys, database URLs, webhook secrets, SMTP credentials, or other environment-variable values in logs or docs.
 - Do not incur paid upgrades or change/delete existing resources without explicit approval.
 
+## Latest work (2026-10-25)
+- Installed the admin queue and metadata-only request-status SQL functions on the dedicated Neon development database. Catalog checks confirmed SECURITY DEFINER and authenticated-only execution; anonymous execution is denied.
+- Routed the admin queue API through the SQL function and made the balance-adjustment endpoint explicitly fail closed until the ledger accounting model is reviewed.
+- Added regression tests for admin queue RPC routing, audited status RPC routing, and the disabled balance-adjustment endpoint. Added a GitHub Actions Node test workflow at `.github/workflows/vantagepay-branch-tests.yml`. The test suite has not yet been observed passing; the available workflow-run query returned no runs, and Vercel still reports the free-plan build-rate limit.
+- Current branch updates are not present in the latest READY Vercel preview, which is behind the branch head. No deployment or end-to-end runtime verification is claimed.
+
 ## Latest work (2026-10-24)
 - Added regression tests for expired Neon sessions, privileged APY webhook fail-closed behavior, and unauthenticated admin access. Commit: `5fc6b1aa487653d72f4d4bf372532efb6316deb0`.
 - These tests are committed but have not been executed in this environment. No test pass is claimed.
