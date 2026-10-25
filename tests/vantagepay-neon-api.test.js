@@ -167,3 +167,43 @@ test('admin operation rejects unauthenticated requests', async () => {
   assert.equal(res.statusCode, 401);
   assert.equal(calls.length, 0);
 });
+
+
+test('admin request queue uses the SQL RPC after checking the signed-in admin membership', async () => {
+  const app = makeApp();
+  const calls = [];
+  const userId = 'c3a9f4a1-1a9b-4b6e-8d10-8fd2c5d3b1a2';
+  registerVantagePayApi(app, {
+    env: {
+      VANTAGEPAY_NEON_AUTH_URL: 'https://auth.example.test/neondb/auth',
+      VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
+    },
+    fetchImpl: async (url, options = {}) => {
+      calls.push({ url: String(url), options });
+      if (String(url).endsWith('/get-session')) {
+        return { ok: true, json: async () => ({ user: { id: userId } }) };
+      }
+      if (String(url).includes('/vp_admin_memberships?')) {
+        return { ok: true, status: 200, text: async () => JSON.stringify([{ admin_role: 'operations', enabled: true }]) };
+      }
+      if (String(url).endsWith('/rpc/vp_admin_list_transaction_requests')) {
+        return { ok: true, status: 200, text: async () => JSON.stringify([{ id: 'request-row' }]) };
+      }
+      throw new Error('unexpected API call: ' + url);
+    }
+  });
+
+  const res = makeResponse();
+  await app.handlers.get('GET /api/vantagepay/admin/transaction-requests')({
+    headers: { authorization: 'Bearer admin-jwt' }
+  }, res);
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.payload.success, true);
+  assert.deepEqual(res.payload.requests, [{ id: 'request-row' }]);
+  const rpcCall = calls.find(call => call.url.endsWith('/rpc/vp_admin_list_transaction_requests'));
+  assert.ok(rpcCall, 'expected the cross-customer queue to use the SQL RPC');
+  assert.equal(rpcCall.options.method, 'POST');
+  assert.equal(rpcCall.options.headers.Authorization, 'Bearer admin-jwt');
+  assert.deepEqual(JSON.parse(rpcCall.options.body), { p_actor_user_id: userId });
+});
