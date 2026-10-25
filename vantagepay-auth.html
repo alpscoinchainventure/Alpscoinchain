@@ -99,7 +99,7 @@
   async function ensureNeonAuthLibrary() {
     if (window.neonAuthLib && window.neonAuthLib.createAuthClient && window.neonAuthLib.SupabaseAuthAdapter) return;
     try {
-      window.neonAuthLib = await import('https://esm.sh/@neondatabase/auth@0.2.0');
+      window.neonAuthLib = await import('https://esm.sh/@neondatabase/auth@latest');
     } catch {
       throw new Error('Neon authentication library could not load. Check your internet connection or content blocker, then refresh.');
     }
