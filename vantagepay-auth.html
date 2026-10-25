@@ -99,12 +99,20 @@
   async function ensureNeonAuthLibrary() {
     if (window.neonAuthLib && window.neonAuthLib.createAuthClient && window.neonAuthLib.SupabaseAuthAdapter) return;
     try {
-      window.neonAuthLib = await import('https://esm.sh/@neondatabase/auth@latest');
+      const [authModule, adapterModule] = await Promise.all([
+        import('https://esm.sh/@neondatabase/auth@latest'),
+        import('https://esm.sh/@neondatabase/auth@latest/vanilla/adapters')
+      ]);
+      window.neonAuthLib = {
+        ...authModule,
+        ...adapterModule
+      };
     } catch {
-      throw new Error('Neon authentication library could not load. Check your internet connection or content blocker, then refresh.');
+      throw new Error('Neon authentication library or its Supabase-compatible adapter could not load. Check your connection and refresh.');
     }
-    if (!window.neonAuthLib || !window.neonAuthLib.createAuthClient || !window.neonAuthLib.SupabaseAuthAdapter) {
-      throw new Error('Neon authentication library loaded without the required adapter. Refresh and try again.');
+    if (!window.neonAuthLib || typeof window.neonAuthLib.createAuthClient !== 'function' ||
+        typeof window.neonAuthLib.SupabaseAuthAdapter !== 'function') {
+      throw new Error('Neon authentication loaded, but the Supabase-compatible adapter export is unavailable. No account was created. Please retry after the auth bundle is corrected.');
     }
   }
   function explainAuthError(error) {
