@@ -100,3 +100,70 @@ test('customer account query rejects missing session before touching the data AP
   assert.equal(res.statusCode, 401);
   assert.equal(calls.length, 0);
 });
+
+
+test('invalid or expired Neon session is rejected before querying customer data', async () => {
+  const app = makeApp();
+  const calls = [];
+  registerVantagePayApi(app, {
+    env: {
+      VANTAGEPAY_NEON_AUTH_URL: 'https://auth.example.test/neondb/auth',
+      VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
+    },
+    fetchImpl: async (url) => {
+      calls.push(String(url));
+      return { ok: false, status: 401, json: async () => ({}) };
+    }
+  });
+  const res = makeResponse();
+  await app.handlers.get('GET /api/vantagepay/account')({
+    headers: { authorization: 'Bearer expired-jwt' }
+  }, res);
+  assert.equal(res.statusCode, 401);
+  assert.equal(calls.length, 1);
+  assert.ok(calls[0].endsWith('/get-session'));
+  assert.equal(calls.some(url => url.includes('/vp_customer_accounts?')), false);
+});
+
+test('privileged webhook remains disabled even when webhook credentials are supplied', async () => {
+  const app = makeApp();
+  registerVantagePayApi(app, {
+    env: {
+      VANTAGEPAY_NEON_AUTH_URL: 'https://auth.example.test/neondb/auth',
+      VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1',
+      VANTAGEPAY_APY_WEBHOOK_SECRET: 'x'.repeat(40),
+      VANTAGEPAY_APY_PROVIDER_CODE: 'sandbox-provider'
+    },
+    fetchImpl: async () => { throw new Error('disabled webhook must not access the data API'); }
+  });
+  const res = makeResponse();
+  await app.handlers.get('POST /api/vantagepay/webhooks/apy')({
+    body: {},
+    rawBody: Buffer.from('{}'),
+    headers: {},
+    get() { return ''; }
+  }, res);
+  assert.equal(res.statusCode, 503);
+  assert.equal(res.payload.success, false);
+});
+
+test('admin operation rejects unauthenticated requests', async () => {
+  const app = makeApp();
+  const calls = [];
+  registerVantagePayApi(app, {
+    env: {
+      VANTAGEPAY_NEON_AUTH_URL: 'https://auth.example.test/neondb/auth',
+      VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
+    },
+    fetchImpl: async (url) => {
+      calls.push(String(url));
+      throw new Error('unexpected network call');
+    }
+  });
+  const res = makeResponse();
+  await app.handlers.get('GET /api/vantagepay/admin/transaction-requests')({
+    headers: {}
+  }, res);
+  assert.equal(res.statusCode, 401);
+  assert.equal(calls.length, 0);
+});
