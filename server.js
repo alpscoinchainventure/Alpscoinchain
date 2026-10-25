@@ -141,6 +141,19 @@ app.post('/api/trade', async (req, res) => {
   }
 });
 
+app.get('/', (req, res, next) => {
+  const host = String(req.headers.host || '').split(':')[0].toLowerCase();
+  if ([
+    'vantagepay.vercel.app',
+    'vantagepay-alpscoinchaininvestmentventures.vercel.app',
+    'vintagebanking.cyou',
+    'www.vintagebanking.cyou'
+  ].includes(host)) {
+    return res.sendFile(path.join(__dirname, 'vantagepay-home.html'));
+  }
+  return next();
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
