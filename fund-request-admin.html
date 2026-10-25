@@ -224,10 +224,11 @@
 
     <div class="notice warning">
       <strong>Important:</strong>
-      Reviewing, approving, or rejecting a request updates its request record only.
-      It does not transfer funds, validate a wallet, or change any balance.
-      Any accounting entry must be handled separately through the authorized
-      accounting process.
+      Marking a request under review only updates its review status.
+      Approving a request may create an accounting ledger entry and change the
+      platform's internal balance after required verification. It does not send
+      a withdrawal payout or independently verify a blockchain transaction.
+      Rejecting a request records the decision and reason only.
     </div>
 
     <div id="sessionNotice" class="notice" role="status">
@@ -592,13 +593,13 @@
 
       const messages = {
         under_review:
-          'Mark this request as under review? No money will move.',
+          'Mark this request as under review? This changes only the request status.',
 
         approved:
-          'Approve this request record? No funds will transfer and no balance will change.',
+          'Approve this request? This may create an accounting entry and change the platform internal balance. It will not send a withdrawal payout. Confirm only after independently verifying the transaction and supporting evidence.',
 
         rejected:
-          'Reject this request record using the note provided? No funds will move.'
+          'Reject this request using the note provided? This records the decision but does not send or return funds.'
       };
 
       if (!confirm(messages[status])) {
@@ -633,18 +634,18 @@
         }
 
         /*
-         * Verify the documented RPC response.
-         * Supabase should return the exact fields confirmed
-         * in the database function definition.
+         * Verify the RPC response against the actual workflow:
+         * approval may post an internal accounting entry; no payout is sent.
          */
+        const expectedBalanceChanged = status === 'approved';
         if (
           !data ||
           data.success !== true ||
           String(data.request_id).toLowerCase() !==
             String(request.id).toLowerCase() ||
           String(data.status).toLowerCase() !== status ||
-          data.money_moved !== false ||
-          data.balance_changed !== false
+          data.balance_changed !== expectedBalanceChanged ||
+          data.payout_sent !== false
         ) {
           console.error(
             'Unexpected review RPC response:',
