@@ -274,7 +274,7 @@ test('client profiles are stored in the standalone VantagePay schema with row ow
   assert.match(profileMigration, /auth\.uid\(\)\) = user_id/);
   assert.match(profileMigration, /GRANT SELECT, INSERT, UPDATE ON public\.vp_customer_profiles TO authenticated/);
   assert.match(vantagepayApi, /app\.get\('\/api\/vantagepay\/client-profile'/);
-  assert.match(vantagepayApi, /app\.put\('\/api\/vantagepay\/client-profile'/);
+  assert.match(vantagepayApi, /app\.post\('\/api\/vantagepay\/client-profile'/);
   assert.match(vantagepayApi, /VANTAGEPAY_CLIENT_PROFILE_MIGRATION_REQUIRED/);
   assert.match(vantagepayApi, /avatarUrl.length > 2048/);
   assert.match(dashboardHtml, /id="client-profile-form"/);
