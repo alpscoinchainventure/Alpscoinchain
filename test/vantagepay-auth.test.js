@@ -160,6 +160,8 @@ test('customer dashboard requires a real session and uses user-scoped read-only 
   assert.match(vantagepayApi, /rpc\/vp_ensure_customer_account/);
   assert.match(standaloneSchema, /FUNCTION public\.vp_ensure_customer_account/);
   assert.match(dashboardHtml, /vp_ledger_transactions/);
+  assert.match(dashboardHtml, /function formatMoneyMinorUnits\(units,currency\)/);
+  assert.match(dashboardHtml, /cell\(formatMoneyMinorUnits\(e\.amount_minor_units,e\.currency_code\)\)/);
   assert.match(dashboardHtml, /\/api\/vantagepay\/transaction-requests/);
   assert.match(dashboardHtml, /Deposit and withdrawal requests are review-only/i);
   assert.doesNotMatch(dashboardHtml, /\.insert\(|\.upsert\(|\.update\(|\.delete\(/);
