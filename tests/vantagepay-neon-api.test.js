@@ -82,6 +82,35 @@ test('customer account query uses the user JWT against Neon Data API', async () 
   assert.equal(String(dataCall.url).startsWith('https://data.example.test/neondb/rest/v1/'), true);
 });
 
+test('unverified Neon Auth sessions are denied before any customer data query', async () => {
+  const app = makeApp();
+  const calls = [];
+  registerVantagePayApi(app, {
+    env: {
+      VANTAGEPAY_NEON_AUTH_URL: 'https://auth.example.test/neondb/auth',
+      VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
+    },
+    fetchImpl: async (url) => {
+      calls.push(String(url));
+      if (String(url).endsWith('/get-session')) {
+        return { ok: true, json: async () => ({ user: {
+          id: 'c3a9f4a1-1a9b-4b6e-8d10-8fd2c5d3b1a2',
+          emailVerified: false
+        } }) };
+      }
+      throw new Error('unverified user must not query customer data');
+    }
+  });
+  const res = makeResponse();
+  await app.handlers.get('GET /api/vantagepay/account')({
+    headers: { authorization: 'Bearer unverified-jwt' }
+  }, res);
+  assert.equal(res.statusCode, 403);
+  assert.equal(res.payload.code, 'VANTAGEPAY_EMAIL_VERIFICATION_REQUIRED');
+  assert.equal(calls.length, 1);
+  assert.ok(calls[0].endsWith('/get-session'));
+});
+
 test('customer account query rejects missing session before touching the data API', async () => {
   const app = makeApp();
   const calls = [];
