@@ -83,6 +83,8 @@ test('signup requires a verification code and does not expose unverified session
 test('unverified login automatically requests a fresh verification code', () => {
   assert.match(html, /This account is not verified\. We requested a fresh verification code for /);
   assert.match(html, /await requestVerificationCode\(email\)/);
+  assert.match(html, /A fresh verification-code request was accepted for /);
+  assert.match(html, /This account must verify its email before sign-in, but the code request failed:/);
   assert.match(html, /we could not request a new code:/);
   assert.match(html, /savePendingVerification\(email\)/);
 });
