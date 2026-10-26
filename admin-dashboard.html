@@ -190,7 +190,7 @@
     if(!filtered.length){setNotice("accountsNotice",visibleProfiles.length?"No visible accounts match your search.":"No profiles are visible under the current database function.",visibleProfiles.length?"":"warning");return}
     for(const profile of filtered){
       const row=document.createElement("tr");
-      for(const value of [profile.full_name||"Name not provided",profile.email||"—",profile.id,profile.role,profile.account_status]){
+      for(const value of [profile.full_name||profile.email||"Name not provided",profile.email||"—",profile.id,profile.role,profile.account_status]){
         const cell=document.createElement("td");cell.textContent=value||"—";row.appendChild(cell)
       }
       const actionCell=document.createElement("td");
