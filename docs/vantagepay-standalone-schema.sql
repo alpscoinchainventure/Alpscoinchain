@@ -548,7 +548,7 @@ BEGIN
   RETURN to_jsonb(v_row);
 END;
 $$;
-REVOKE EXECUTE ON FUNCTION public.vp_submit_kyc_profile(TEXT, DATE, TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.vp_submit_kyc_profile(TEXT, DATE, TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.vp_submit_kyc_profile(TEXT, DATE, TEXT, TEXT, TEXT, TEXT, TEXT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.vp_admin_list_kyc()
@@ -575,7 +575,7 @@ BEGIN
   ), '[]'::jsonb);
 END;
 $$;
-REVOKE EXECUTE ON FUNCTION public.vp_admin_list_kyc() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.vp_admin_list_kyc() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.vp_admin_list_kyc() TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.vp_admin_review_kyc(
@@ -629,7 +629,7 @@ BEGIN
   RETURN to_jsonb(v_row);
 END;
 $$;
-REVOKE EXECUTE ON FUNCTION public.vp_admin_review_kyc(UUID, TEXT, TEXT) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.vp_admin_review_kyc(UUID, TEXT, TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.vp_admin_review_kyc(UUID, TEXT, TEXT) TO authenticated;
 
 -- Permit the authenticated, server-validated admin endpoint to call the existing
@@ -689,5 +689,5 @@ BEGIN
   RETURN to_jsonb(v_request);
 END;
 $$;
-REVOKE EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT, TEXT) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT, TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT, TEXT) TO authenticated;
