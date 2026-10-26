@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { validateTransactionRequest } from '../lib/vantagepay-api.js';
 
 const html = await readFile(new URL('../vantagepay-auth.html', import.meta.url), 'utf8');
+const homeHtml = await readFile(new URL('../vantagepay-home.html', import.meta.url), 'utf8');
 const dashboardHtml = await readFile(new URL('../vantagepay-dashboard.html', import.meta.url), 'utf8');
 const server = await readFile(new URL('../server.js', import.meta.url), 'utf8');
 const standaloneSchema = await readFile(new URL('../docs/vantagepay-standalone-schema.sql', import.meta.url), 'utf8');
@@ -20,6 +21,17 @@ function inlineScript(source, label) {
   }
   return body;
 }
+
+
+test('VantagePay is independently branded and preview data is clearly disclosed', () => {
+  assert.match(homeHtml, /VantagePay is an independent account and ledger platform in development/i);
+  assert.match(homeHtml, /sample data displayed is illustrative and invented/i);
+  assert.match(homeHtml, /not a bank/i);
+  assert.match(homeHtml, /not investment advice or an offer/i);
+  assert.doesNotMatch(homeHtml, /AlpsCoinChain Investment Ventures|Alpscoinchainventure/i);
+  assert.doesNotMatch(homeHtml, /Vintage Banking/i);
+  assert.doesNotMatch(vantagepayApi, /separate AlpsCoinChain Investment Ventures/i);
+});
 
 test('VantagePay auth page includes account access modes and dashboard link', () => {
   for (const mode of ['login', 'signup', 'reset']) {
