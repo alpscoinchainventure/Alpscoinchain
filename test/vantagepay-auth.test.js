@@ -183,6 +183,8 @@ test('VantagePay request lifecycle creates customer notifications and supports r
   assert.match(standaloneSchema, /vp_customer_notifications_user_date_idx/);
   assert.match(vantagepayApi, /app\.get\('\/api\/vantagepay\/notifications'/);
   assert.match(vantagepayApi, /app\.patch\('\/api\/vantagepay\/notifications\/:id\/read'/);
+  assert.match(vantagepayApi, /rpc\/vp_mark_notification_read/);
+  assert.match(standaloneSchema, /FUNCTION public\.vp_mark_notification_read/);
   assert.match(dashboardHtml, /<h2>Notifications<\/h2>/);
   assert.match(dashboardHtml, /loadNotifications\(\)/);
 });
