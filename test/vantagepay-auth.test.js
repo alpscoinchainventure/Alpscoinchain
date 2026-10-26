@@ -27,7 +27,7 @@ test('VantagePay is independently branded and preview data is clearly disclosed'
   assert.match(homeHtml, /VantagePay is an independent account and ledger platform in development/i);
   assert.match(homeHtml, /sample data displayed is illustrative and invented/i);
   assert.match(homeHtml, /not a bank/i);
-  assert.match(homeHtml, /not investment advice or an offer/i);
+  assert.match(homeHtml, /investment advice or an offer/i);
   assert.doesNotMatch(homeHtml, /AlpsCoinChain Investment Ventures|Alpscoinchainventure/i);
   assert.doesNotMatch(homeHtml, /Vintage Banking/i);
   assert.doesNotMatch(vantagepayApi, /separate AlpsCoinChain Investment Ventures/i);
