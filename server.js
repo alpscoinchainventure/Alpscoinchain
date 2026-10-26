@@ -34,9 +34,6 @@ app.get('/vantagepay-home.html', (_req, res) => res.sendFile(path.join(__dirname
 app.get('/vantagepay/login', (_req, res) => res.redirect(302, '/vantagepay-auth.html'));
 app.get('/vantagepay/dashboard', (_req, res) => res.redirect(302, '/vantagepay-dashboard.html'));
 app.get('/vantagepay/admin', (_req, res) => res.sendFile(path.join(__dirname, 'vantagepay-admin.html')));
-app.get('/vantagepay-preview.html', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'vantagepay-preview.html'));
-});
 app.get('/vantagepay-auth.html', (_req, res) => {
   res.sendFile(path.join(__dirname, 'vantagepay-auth.html'));
 });
