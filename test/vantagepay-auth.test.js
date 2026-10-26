@@ -80,6 +80,13 @@ test('signup requires a verification code and does not expose unverified session
   assert.match(vantagepayApi, /VANTAGEPAY_EMAIL_VERIFICATION_REQUIRED/);
 });
 
+test('unverified login automatically requests a fresh verification code', () => {
+  assert.match(html, /This account is not verified\. We requested a fresh verification code for /);
+  assert.match(html, /await requestVerificationCode\(email\)/);
+  assert.match(html, /we could not request a new code:/);
+  assert.match(html, /savePendingVerification\(email\)/);
+});
+
 test('email verification screen lets users restart verification at a new email address', () => {
   assert.match(html, /id="change-email-toggle"[^>]*>Update email address/);
   assert.match(html, /id="replacement-email" type="email"/);
