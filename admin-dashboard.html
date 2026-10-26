@@ -153,6 +153,27 @@
     <div id="apyAssignmentNotice" class="notice" role="status" aria-live="polite">Load accounts to configure assignments.</div>
     <div class="table-wrap"><table><thead><tr><th>Agent</th><th>Beneficiary</th><th>Status</th><th>Assigned</th></tr></thead><tbody id="apyAssignmentRows"></tbody></table></div>
 
+    <h3 style="margin-top:25px">Record Client APY Activity</h3>
+    <p class="muted small">Record a client's activity and any verified APY figures directly. New records enter the review queue; approve and publish them below before they appear on the client's dashboard.</p>
+    <form id="apyAdminRecordForm">
+      <div class="form-grid">
+        <div><label for="apyRecordBeneficiarySelect">Client account</label><select id="apyRecordBeneficiarySelect" required><option value="">Load accounts first</option></select></div>
+        <div><label for="apyRecordOccurredAt">Activity date and time</label><input id="apyRecordOccurredAt" type="datetime-local" required></div>
+        <div><label for="apyRecordPeriodStart">Reporting period start</label><input id="apyRecordPeriodStart" type="date" required></div>
+        <div><label for="apyRecordPeriodEnd">Reporting period end</label><input id="apyRecordPeriodEnd" type="date" required></div>
+        <div><label for="apyRecordRate">APY rate (%) — leave blank if unverified</label><input id="apyRecordRate" type="number" min="0" max="1000000" step="0.000001" placeholder="Optional verified APY"></div>
+        <div><label for="apyRecordReturn">Recorded return amount — leave blank if unverified</label><input id="apyRecordReturn" type="number" min="0" max="9999999999999999" step="0.00000001" placeholder="Optional verified return"></div>
+        <div><label for="apyRecordAsset">Asset code (if applicable)</label><input id="apyRecordAsset" type="text" maxlength="20" placeholder="e.g. USDT"></div>
+        <div><label for="apyRecordType">Activity type</label><select id="apyRecordType" required><option value="progress_review">Progress review</option><option value="progression_attempt">Progression attempt</option><option value="performance_note">Performance note</option><option value="follow_up">Follow-up</option></select></div>
+        <div><label for="apyRecordOutcome">Activity outcome</label><select id="apyRecordOutcome" required><option value="completed">Completed</option><option value="pending">Pending</option><option value="unsuccessful">Unsuccessful</option><option value="needs_review" selected>Needs review</option></select></div>
+        <div><label for="apyRecordEvidence">Evidence / supporting reference</label><input id="apyRecordEvidence" type="text" maxlength="500" placeholder="Optional reference ID or document reference"></div>
+      </div>
+      <label for="apyRecordSummary">Report summary</label><textarea id="apyRecordSummary" maxlength="4000" required placeholder="Describe the reporting period and the basis for any recorded figures. Do not enter unverified returns as confirmed."></textarea>
+      <label for="apyRecordDetails">Client activity details</label><textarea id="apyRecordDetails" maxlength="3000" required placeholder="Describe the activity, what was observed, and any next steps."></textarea>
+      <div class="button-row"><button class="primary" id="apyRecordSubmitButton" type="submit">Save client APY activity</button><button id="apyRecordResetButton" type="reset">Clear form</button></div>
+    </form>
+    <div id="apyRecordNotice" class="notice" role="status" aria-live="polite">Choose a client and enter the activity details to create a report for review.</div>
+
     <h3 style="margin-top:25px">Submitted APY reports</h3>
     <div id="apyAdminReportsNotice" class="notice" role="status" aria-live="polite">APY reports have not been loaded.</div>
     <div class="table-wrap"><table><thead><tr><th>Beneficiary</th><th>Agent</th><th>Reporting period</th><th>Recorded APY / return</th><th>Status</th><th>Review actions</th></tr></thead><tbody id="apyAdminReportRows"></tbody></table></div>
@@ -347,6 +368,7 @@
   function apyStatusLabel(status){return ({submitted:"Submitted",approved:"Approved · awaiting publication",published:"Published",changes_requested:"Changes requested",rejected:"Rejected"})[status]||String(status||"Unknown")}
   function apyCell(row,value){const cell=document.createElement("td");cell.textContent=value===null||value===undefined||value===""?"—":String(value);row.appendChild(cell);return cell}
   function fillApyAccountSelects(){
+    fillApyRecordBeneficiaries();
     for(const id of ["apyAgentSelect","apyBeneficiarySelect"]){
       const select=$(id),previous=select.value;select.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent=id==="apyAgentSelect"?"Select an agent account":"Select a beneficiary account";select.appendChild(placeholder);
       for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()!=="admin"&&String(p.account_status||"").toLowerCase()==="active")){
@@ -354,6 +376,44 @@
       }
       if(previous&&Array.from(select.options).some(o=>o.value===previous))select.value=previous;
     }
+  }
+  function fillApyRecordBeneficiaries(){
+    const select=$("apyRecordBeneficiarySelect"),previous=select.value;select.replaceChildren();
+    const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select a client account";select.appendChild(placeholder);
+    for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client"&&String(p.account_status||"").toLowerCase()==="active")){
+      const option=document.createElement("option");option.value=profile.id;option.textContent=(profile.full_name||profile.email||"Name not provided")+" · "+(profile.email||profile.id);select.appendChild(option);
+    }
+    if(previous&&Array.from(select.options).some(o=>o.value===previous))select.value=previous;
+  }
+  async function recordClientApyActivity(event){
+    event.preventDefault();
+    const button=$("apyRecordSubmitButton"),clientId=$("apyRecordBeneficiarySelect").value;
+    const start=$("apyRecordPeriodStart").value,end=$("apyRecordPeriodEnd").value,occurred=$("apyRecordOccurredAt").value;
+    const summary=$("apyRecordSummary").value.trim(),details=$("apyRecordDetails").value.trim();
+    const optionalNumber=id=>{const raw=$(id).value.trim();return raw===""?null:Number(raw)};
+    const rate=optionalNumber("apyRecordRate"),amount=optionalNumber("apyRecordReturn");
+    if(!clientId||!start||!end||end<start||!occurred||!summary||!details){setNotice("apyRecordNotice","Complete the client, activity date, valid reporting period, summary, and activity details.","error");return}
+    if((rate!==null&&(!Number.isFinite(rate)||rate<0||rate>1000000))||(amount!==null&&(!Number.isFinite(amount)||amount<0))){setNotice("apyRecordNotice","Enter valid non-negative figures or leave them blank if unverified.","error");return}
+    if(!window.confirm("Save this APY activity for administrator review? It will not appear on the client's dashboard until it is approved and published."))return;
+    button.disabled=true;setNotice("apyRecordNotice","Saving client APY activity…");
+    try{
+      const {data,error}=await client.rpc("apy_admin_record_client_activity",{
+        p_beneficiary_user_id:clientId,
+        p_reporting_period_start:start,p_reporting_period_end:end,
+        p_apy_rate:rate,p_return_amount:amount,
+        p_asset_code:$("apyRecordAsset").value.trim().toUpperCase()||null,
+        p_summary:summary,p_activity_type:$("apyRecordType").value,
+        p_outcome:$("apyRecordOutcome").value,p_activity_details:details,
+        p_evidence_reference:$("apyRecordEvidence").value.trim()||null,
+        p_activity_occurred_at:new Date(occurred).toISOString()
+      });
+      if(error)throw error;
+      if(!data||data.success!==true)throw new Error("The APY activity was not saved.");
+      $("apyAdminRecordForm").reset();
+      setNotice("apyRecordNotice","Client APY activity saved to the review queue. Review it below, then approve and publish when the figures and evidence are verified.","success");
+      await loadApyAdminReports();
+    }catch(error){console.error("Admin APY activity record failed:",error);setNotice("apyRecordNotice",error.message||"Could not save client APY activity.","error")}
+    finally{button.disabled=false}
   }
   async function loadApyAssignments(){
     const body=$("apyAssignmentRows");body.replaceChildren();setNotice("apyAssignmentNotice","Loading agent assignments…");
@@ -441,6 +501,8 @@
   $("previewBalanceButton").addEventListener("click",previewClientBalance);
   $("refreshAuditButton").addEventListener("click",loadBalanceAdjustments);
   $("apyAssignmentForm").addEventListener("submit",saveApyAssignment);
+  $("apyAdminRecordForm").addEventListener("submit",recordClientApyActivity);
+  $("apyRecordResetButton").addEventListener("click",()=>setNotice("apyRecordNotice","Form cleared."));
   $("refreshApyAdminButton").addEventListener("click",loadApyAdminData);
 
   (async()=>{const ok=await verifySession();if(ok){await loadAccounts();await loadWalletAddresses();await loadBalanceAdjustments();await loadApyAdminData()}})();
