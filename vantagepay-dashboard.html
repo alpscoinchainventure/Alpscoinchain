@@ -17,7 +17,7 @@
 <script type="module">
 import { createClient, SupabaseAuthAdapter } from 'https://esm.sh/@neondatabase/neon-js@latest';
 (function(){'use strict';
-const message=document.getElementById('message'),dashboard=document.getElementById('dashboard'),activityMessage=document.getElementById('activity-message'),activityWrap=document.getElementById('activity-wrap'),activityRows=document.getElementById('activity-rows'),activitySearch=document.getElementById('activity-search'),exportActivity=document.getElementById('export-activity');let client,currentEntries=[],currentSession=null,currentBeneficiaries=[];
+const message=document.getElementById('message'),dashboard=document.getElementById('dashboard'),activityMessage=document.getElementById('activity-message'),activityWrap=document.getElementById('activity-wrap'),activityRows=document.getElementById('activity-rows'),activitySearch=document.getElementById('activity-search'),exportActivity=document.getElementById('export-activity');let client,currentEntries=[],currentBalances=[],currentSession=null,currentBeneficiaries=[];
 function status(text,kind){message.textContent=text;message.className='message'+(kind?' '+kind:'');}
 function cell(text){const td=document.createElement('td');td.textContent=text==null||text===''?'—':String(text);return td;}
 function date(value){if(!value)return '—';const d=new Date(value);return Number.isNaN(d.getTime())?'—':d.toLocaleString();}
@@ -39,32 +39,39 @@ else if(!profile){document.getElementById('customer-name').textContent='there';d
 else{document.getElementById('customer-name').textContent=profile.display_name||'there';document.getElementById('account-status').textContent=profile.account_status||'Pending';document.getElementById('member-since').textContent=profile.created_at?new Date(profile.created_at).toLocaleDateString():'—';status('Signed in. Profile details loaded through your authenticated session.','good');}
 await loadClientProfile();
 activityMessage.textContent='Loading account activity…';activityMessage.classList.remove('hidden');activityWrap.classList.add('hidden');activityRows.replaceChildren();
-const {data:entries,error:entriesError}=await client.from('vp_ledger_transactions').select('transaction_type,amount_minor_units,currency_code,transaction_reference,description,status,created_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50);
-if(entriesError){currentEntries=[];activityMessage.textContent='Activity is unavailable for this account. No balance is shown.';return;}
-currentEntries=Array.isArray(entries)?entries:[];renderActivity();
-await loadBalances(user.id);
+try {
+ const snapshot=await apiRequest('/api/vantagepay/account-activity');
+ currentEntries=Array.isArray(snapshot.transactions)?snapshot.transactions:[];
+ currentBalances=Array.isArray(snapshot.balances)?snapshot.balances:[];
+ renderActivity();
+ await loadBalances();
+} catch(error) {
+ currentEntries=[];currentBalances=[];
+ activityMessage.textContent=error.message||'Account activity is unavailable. No balance is shown.';
+ activityWrap.classList.add('hidden');
+ document.getElementById('balances-grid').innerHTML='<div class="empty">Balance data is unavailable. No estimate has been substituted.</div>';
+}
 await loadKyc();
 await loadBeneficiaries();
 await loadTransactionRequests();
 await loadNotifications();
 }
 function setMessage(id,text,kind){const el=document.getElementById(id);if(!el)return;el.textContent=text;el.className='message'+(kind?' '+kind:'');}
-function minorUnitsToDisplay(units){const s=String(units||'0');const padded=s.padStart(3,'0');return padded.slice(0,-2)+'.'+padded.slice(-2);}
-async function loadBalances(userId){
+function formatLedgerUnits(units,scale){
+ const n=Number(units||0), places=Math.max(0,Math.min(8,Number(scale)||0));
+ if(!Number.isFinite(n))return '—';
+ return (n/Math.pow(10,places)).toLocaleString(undefined,{minimumFractionDigits:places,maximumFractionDigits:places});
+}
+async function loadBalances(){
  const grid=document.getElementById('balances-grid');grid.replaceChildren();
- try{
-  const {data:posted,error}=await client.from('vp_ledger_transactions').select('id').eq('user_id',userId).eq('status','posted').limit(500);
-  if(error)throw error;
-  const ids=(posted||[]).map(x=>x.id);
-  if(!ids.length){grid.innerHTML='<div class="empty">No posted balance entries are available yet.</div>';return;}
-  const {data:entries,error:entryError}=await client.from('vp_ledger_entries').select('side,amount_minor_units,currency_code').eq('account_code','customer:'+userId).in('transaction_id',ids);
-  if(entryError)throw entryError;
-  const balances={};
-  for(const e of entries||[]){const currency=e.currency_code;const amount=BigInt(String(e.amount_minor_units));balances[currency]=(balances[currency]||0n)+(e.side==='credit'?amount:-amount);}
-  const currencies=Object.keys(balances);
-  if(!currencies.length){grid.innerHTML='<div class="empty">No posted customer balance entries are available yet.</div>';return;}
-  for(const currency of currencies){const value=balances[currency];const card=document.createElement('div');card.className='stat';const label=document.createElement('div');label.className='label';label.textContent='Posted '+currency+' balance';const amount=document.createElement('div');amount.className='value';amount.textContent=(value<0n?'-':'')+currency+' '+minorUnitsToDisplay((value<0n?-value:value).toString());card.append(label,amount);grid.append(card);}
- }catch{grid.innerHTML='<div class="empty">Balance data is unavailable. No estimate has been substituted.</div>';}
+ if(!currentBalances.length){grid.innerHTML='<div class="empty">No posted customer balance entries are available yet.</div>';return;}
+ for(const item of currentBalances){
+  const card=document.createElement('div');card.className='stat';
+  const label=document.createElement('div');label.className='label';label.textContent='Posted '+String(item.asset_code||'asset')+' balance';
+  const amount=document.createElement('div');amount.className='value';
+  const value=Number(item.balance_units||0);amount.textContent=(value<0?'-':'')+String(item.asset_code||'')+' '+formatLedgerUnits(Math.abs(value),item.minor_unit_scale);
+  card.append(label,amount);grid.append(card);
+ }
 }
 async function apiRequest(path,options={}){
  if(!currentSession||!currentSession.access_token)throw new Error('Your VantagePay session is not available. Sign in again.');
@@ -199,16 +206,16 @@ return (negative?'-':'')+String(currency||'')+' '+major+'.'+fraction;
 function renderActivity(){
 activityRows.replaceChildren();
 const q=(activitySearch.value||'').trim().toLowerCase();
-const filtered=currentEntries.filter(e=>[e.transaction_type,e.amount_minor_units,e.currency_code,e.transaction_reference,e.description,e.status,e.created_at].some(v=>String(v??'').toLowerCase().includes(q)));
+const filtered=currentEntries.filter(e=>[e.transaction_type,e.amount_units,e.asset_code,e.transaction_reference,e.description,e.status,e.created_at].some(v=>String(v??'').toLowerCase().includes(q)));
 if(!filtered.length){activityWrap.classList.add('hidden');activityMessage.classList.remove('hidden');activityMessage.textContent=q?'No activity matches your search.':'No ledger entries are available for this account yet.';return;}
-for(const e of filtered){const tr=document.createElement('tr');tr.append(cell(date(e.created_at)),cell(e.transaction_type),cell(formatMoneyMinorUnits(e.amount_minor_units,e.currency_code)),cell(e.transaction_reference),cell((e.description||'')+' · '+String(e.status||'pending')));activityRows.append(tr);}
+for(const e of filtered){const tr=document.createElement('tr');const amount=e.amount_units==null?'—':String(e.asset_code||'')+' '+formatLedgerUnits(e.amount_units,e.minor_unit_scale);tr.append(cell(date(e.created_at)),cell(e.transaction_type),cell(amount),cell(e.transaction_reference),cell((e.description||'')+' · '+String(e.status||'pending')));activityRows.append(tr);}
 activityMessage.classList.add('hidden');activityWrap.classList.remove('hidden');
 }
 activitySearch.addEventListener('input',renderActivity);
 exportActivity.addEventListener('click',()=>{
 const q=(activitySearch.value||'').trim().toLowerCase();
-const rows=currentEntries.filter(e=>[e.transaction_type,e.amount_minor_units,e.currency_code,e.transaction_reference,e.description,e.status,e.created_at].some(v=>String(v??'').toLowerCase().includes(q)));
-const csv=[['Date','Type','Amount','Currency','Reference','Status','Description'],...rows.map(e=>[e.created_at,e.transaction_type,formatMoneyMinorUnits(e.amount_minor_units,e.currency_code),e.currency_code,e.transaction_reference,e.status,e.description])].map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+const rows=currentEntries.filter(e=>[e.transaction_type,e.amount_units,e.asset_code,e.transaction_reference,e.description,e.status,e.created_at].some(v=>String(v??'').toLowerCase().includes(q)));
+const csv=[['Date','Type','Amount','Currency','Reference','Status','Description'],...rows.map(e=>[e.created_at,e.transaction_type,(e.amount_units==null?'—':String(e.asset_code||'')+' '+formatLedgerUnits(e.amount_units,e.minor_unit_scale)),e.asset_code,e.transaction_reference,e.status,e.description])].map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
 const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='vantagepay-account-activity.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
 document.getElementById('refresh').addEventListener('click',()=>load().catch(()=>status('Could not refresh the account. Try again.','bad')));
