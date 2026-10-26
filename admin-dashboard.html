@@ -130,6 +130,28 @@
     <div id="dashboardNotice" class="notice" role="status" aria-live="polite">Dashboard data has not been refreshed yet.</div>
   </section>
 
+
+  <section class="panel" aria-labelledby="apyAdminHeading">
+    <h2 id="apyAdminHeading">APY Reports &amp; Agent Activities</h2>
+    <p class="muted small">Assign agents to beneficiary accounts, review submitted performance reports, and publish verified reports to beneficiary dashboards. APY reports do not post or alter financial ledger entries.</p>
+    <h3>Agent assignments</h3>
+    <form id="apyAssignmentForm">
+      <div class="form-grid">
+        <div><label for="apyAgentSelect">Agent account</label><select id="apyAgentSelect" required><option value="">Load accounts first</option></select></div>
+        <div><label for="apyBeneficiarySelect">Beneficiary account</label><select id="apyBeneficiarySelect" required><option value="">Load accounts first</option></select></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px"><input id="apyAssignmentActive" type="checkbox" checked style="width:auto;min-height:0"> Assignment active</label>
+      <div class="button-row"><button class="primary" id="saveApyAssignmentButton" type="submit">Save assignment</button><button id="refreshApyAdminButton" type="button">Refresh APY data</button></div>
+    </form>
+    <div id="apyAssignmentNotice" class="notice" role="status" aria-live="polite">Load accounts to configure assignments.</div>
+    <div class="table-wrap"><table><thead><tr><th>Agent</th><th>Beneficiary</th><th>Status</th><th>Assigned</th></tr></thead><tbody id="apyAssignmentRows"></tbody></table></div>
+
+    <h3 style="margin-top:25px">Submitted APY reports</h3>
+    <div id="apyAdminReportsNotice" class="notice" role="status" aria-live="polite">APY reports have not been loaded.</div>
+    <div class="table-wrap"><table><thead><tr><th>Beneficiary</th><th>Agent</th><th>Reporting period</th><th>Recorded APY / return</th><th>Status</th><th>Review actions</th></tr></thead><tbody id="apyAdminReportRows"></tbody></table></div>
+    <div id="apyAuditPanel" class="notice" hidden></div>
+  </section>
+
   <section class="panel">
     <h2>Management controls</h2>
     <div class="management-grid">
@@ -278,8 +300,89 @@
     }catch(error){console.error("Adjustment audit lookup failed:",error);setNotice("auditNotice","Could not load adjustment audit. "+(error.message||""),"error")}
   }
 
+
+  function apyStatusLabel(status){return ({submitted:"Submitted",approved:"Approved · awaiting publication",published:"Published",changes_requested:"Changes requested",rejected:"Rejected"})[status]||String(status||"Unknown")}
+  function apyCell(row,value){const cell=document.createElement("td");cell.textContent=value===null||value===undefined||value===""?"—":String(value);row.appendChild(cell);return cell}
+  function fillApyAccountSelects(){
+    for(const id of ["apyAgentSelect","apyBeneficiarySelect"]){
+      const select=$(id),previous=select.value;select.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent=id==="apyAgentSelect"?"Select an agent account":"Select a beneficiary account";select.appendChild(placeholder);
+      for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()!=="admin"&&String(p.account_status||"").toLowerCase()==="active")){
+        const option=document.createElement("option");option.value=profile.id;option.textContent=(profile.full_name||"Name not provided")+" · "+profile.id;select.appendChild(option)
+      }
+      if(previous&&Array.from(select.options).some(o=>o.value===previous))select.value=previous;
+    }
+  }
+  async function loadApyAssignments(){
+    const body=$("apyAssignmentRows");body.replaceChildren();setNotice("apyAssignmentNotice","Loading agent assignments…");
+    try{
+      const {data,error}=await client.rpc("apy_list_agent_assignments");if(error)throw error;
+      const rows=Array.isArray(data)?data:[];
+      if(!rows.length){setNotice("apyAssignmentNotice","No agent-beneficiary assignments have been configured.");return}
+      for(const item of rows){const row=document.createElement("tr");apyCell(row,item.agent_name);apyCell(row,item.beneficiary_name);apyCell(row,item.active?"Active":"Inactive");apyCell(row,item.created_at?new Date(item.created_at).toLocaleString():"—");body.appendChild(row)}
+      setNotice("apyAssignmentNotice",rows.length+" assignment record(s) loaded.");
+    }catch(error){console.error("APY assignments failed:",error);setNotice("apyAssignmentNotice","Could not load assignments. Ensure the APY migration is applied and administrator permissions are active.","error")}
+  }
+  async function saveApyAssignment(event){
+    event.preventDefault();const agent=$("apyAgentSelect").value,beneficiary=$("apyBeneficiarySelect").value,active=$("apyAssignmentActive").checked;
+    if(!agent||!beneficiary||agent===beneficiary){setNotice("apyAssignmentNotice","Select two different active accounts.","error");return}
+    const button=$("saveApyAssignmentButton");button.disabled=true;setNotice("apyAssignmentNotice","Saving assignment…");
+    try{
+      const {data,error}=await client.rpc("apy_admin_save_assignment",{p_agent_user_id:agent,p_beneficiary_user_id:beneficiary,p_active:active});
+      if(error)throw error;if(!data||data.success!==true)throw new Error("Assignment was not saved.");
+      setNotice("apyAssignmentNotice","Agent assignment saved. The agent workspace will show this beneficiary after refresh.","success");await loadApyAssignments();
+    }catch(error){console.error("APY assignment save failed:",error);setNotice("apyAssignmentNotice",error.message||"Could not save assignment.","error")}
+    finally{button.disabled=false}
+  }
+  async function reviewApyReport(report,action,notes,button){
+    if(action==="publish"&&!window.confirm("Publish this approved report to the beneficiary dashboard? Verify all figures and evidence first."))return;
+    button.disabled=true;setNotice("apyAdminReportsNotice","Updating report status…");
+    try{
+      const {data,error}=await client.rpc("apy_admin_review_report",{p_report_id:report.report_id,p_action:action,p_admin_notes:notes});
+      if(error)throw error;if(!data||data.success!==true)throw new Error("Report review action was not completed.");
+      setNotice("apyAdminReportsNotice","Report status updated to "+apyStatusLabel(data.status)+".","success");await loadApyAdminReports();
+    }catch(error){console.error("APY report review failed:",error);setNotice("apyAdminReportsNotice",error.message||"Could not update report.","error")}
+    finally{button.disabled=false}
+  }
+  async function showApyReportAudit(report,button){
+    const panel=$("apyAuditPanel");panel.hidden=false;panel.textContent="Loading audit history…";button.disabled=true;
+    try{
+      const {data,error}=await client.rpc("apy_list_report_audit",{p_report_id:report.report_id});if(error)throw error;
+      panel.replaceChildren();const title=document.createElement("strong");title.textContent="Audit history · "+report.report_id;panel.appendChild(title);
+      const rows=Array.isArray(data)?data:[];
+      if(!rows.length){panel.appendChild(document.createTextNode(" No audit entries found."));return}
+      for(const item of rows){const p=document.createElement("p");p.textContent=(item.created_at?new Date(item.created_at).toLocaleString():"—")+" · "+item.actor_name+" · "+item.action+" · "+(item.old_status||"—")+" → "+(item.new_status||"—")+(item.notes?" · "+item.notes:"");panel.appendChild(p)}
+    }catch(error){panel.textContent="Could not load audit history: "+(error.message||"Unknown error")}
+    finally{button.disabled=false}
+  }
+  async function loadApyAdminReports(){
+    const body=$("apyAdminReportRows");body.replaceChildren();setNotice("apyAdminReportsNotice","Loading APY reports…");
+    try{
+      const {data,error}=await client.rpc("apy_list_dashboard_reports");if(error)throw error;
+      const reports=Array.isArray(data)?data:[];
+      if(!reports.length){setNotice("apyAdminReportsNotice","No APY reports have been submitted.");return}
+      for(const report of reports){
+        const row=document.createElement("tr");apyCell(row,report.beneficiary_name);apyCell(row,report.agent_name);
+        apyCell(row,report.reporting_period_start+" to "+report.reporting_period_end);
+        apyCell(row,(report.apy_rate===null?"APY not recorded":String(report.apy_rate)+"%")+" / "+(report.return_amount===null?"return not recorded":String(report.return_amount)+(report.asset_code?" "+report.asset_code:"")));
+        apyCell(row,apyStatusLabel(report.status));
+        const actions=apyCell(row,"");actions.replaceChildren();
+        const notes=document.createElement("textarea");notes.maxLength=4000;notes.rows=2;notes.placeholder="Review notes (optional)";notes.setAttribute("aria-label","Administrator review notes for "+report.beneficiary_name);
+        const addAction=(label,action)=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.style.margin="3px";b.addEventListener("click",()=>reviewApyReport(report,action,notes.value,b));actions.appendChild(b)};
+        if(["submitted","changes_requested"].includes(report.status))addAction("Approve","approve");
+        if(report.status==="approved")addAction("Publish","publish");
+        if(["submitted","approved"].includes(report.status))addAction("Request changes","request_changes");
+        if(["submitted","changes_requested"].includes(report.status))addAction("Reject","reject");
+        const audit=document.createElement("button");audit.type="button";audit.textContent="Audit history";audit.style.margin="3px";audit.addEventListener("click",()=>showApyReportAudit(report,audit));actions.appendChild(audit);
+        const noteWrap=document.createElement("div");noteWrap.style.minWidth="170px";noteWrap.appendChild(notes);actions.appendChild(noteWrap);
+        body.appendChild(row);
+      }
+      setNotice("apyAdminReportsNotice",reports.length+" APY report(s) loaded. Only approved reports can be published.","success");
+    }catch(error){console.error("APY reports admin load failed:",error);setNotice("apyAdminReportsNotice","Could not load APY reports. Ensure the APY migration is applied.","error")}
+  }
+  async function loadApyAdminData(){fillApyAccountSelects();await Promise.all([loadApyAssignments(),loadApyAdminReports()])}
+
   async function refreshDashboard(){
-    setNotice("dashboardNotice","Refreshing administrator data…");const ok=await verifySession();if(!ok)return;await loadAccounts();await loadWalletAddresses();await loadBalanceAdjustments();setNotice("dashboardNotice","Administrator dashboard refreshed.","success")
+    setNotice("dashboardNotice","Refreshing administrator data…");const ok=await verifySession();if(!ok)return;await loadAccounts();await loadWalletAddresses();await loadBalanceAdjustments();await loadApyAdminData();setNotice("dashboardNotice","Administrator dashboard refreshed.","success")
   }
 
   $("signOutButton").addEventListener("click",async()=>{const button=$("signOutButton");button.disabled=true;try{const {error}=await client.auth.signOut();if(error)throw error;window.location.replace("/login")}catch(error){console.error(error);button.disabled=false;setNotice("sessionNotice","Could not sign out. Please try again.","error")}});
@@ -292,8 +395,10 @@
   $("refreshButton").addEventListener("click",refreshDashboard);
   $("previewBalanceButton").addEventListener("click",previewClientBalance);
   $("refreshAuditButton").addEventListener("click",loadBalanceAdjustments);
+  $("apyAssignmentForm").addEventListener("submit",saveApyAssignment);
+  $("refreshApyAdminButton").addEventListener("click",loadApyAdminData);
 
-  (async()=>{const ok=await verifySession();if(ok){await loadAccounts();await loadWalletAddresses();await loadBalanceAdjustments()}})();
+  (async()=>{const ok=await verifySession();if(ok){await loadAccounts();await loadWalletAddresses();await loadBalanceAdjustments();await loadApyAdminData()}})();
 })();
 </script>
 </body>
