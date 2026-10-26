@@ -136,7 +136,7 @@
     if (/failed to fetch|networkerror|load failed|network request failed/i.test(raw)) {
       return 'Could not reach the authentication service. Check mobile data/Wi-Fi, disable content blockers or VPN temporarily, and try again. If it continues, the browser cannot reach Neon Auth.';
     }
-    if (/redirect.*(allow|whitelist|not allowed)|not allowed.*redirect/i.test(raw)) {
+    if (/invalid origin|redirect.*(allow|whitelist|not allowed)|not allowed.*redirect/i.test(raw)) {
       return 'The account request reached authentication, but this page URL is not on Neon Auth’s trusted-domain list. Add this page origin in Neon Auth trusted domains, then retry.';
     }
     if (/email.*(rate limit|sending limit)|rate limit.*email|too many requests/i.test(raw)) {
