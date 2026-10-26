@@ -262,3 +262,24 @@ test('external rewards from the configured partner are signed, mapped, deduplica
   assert.match(vantagepayApi, /No balance has been credited/);
   assert.match(vantagepayApi, /on_conflict=provider_code,source_event_id/);
 });
+
+
+test('client profiles are stored in the standalone VantagePay schema with row ownership policies', async () => {
+  const profileMigration = await readFile(new URL('../docs/vantagepay-client-profile-migration.sql', import.meta.url), 'utf8');
+  assert.match(profileMigration, /CREATE TABLE IF NOT EXISTS public\\.vp_customer_profiles/);
+  assert.match(profileMigration, /PRIMARY KEY REFERENCES neon_auth\\."user"\\(id\\)/);
+  assert.match(profileMigration, /vp_customer_profile_select_own/);
+  assert.match(profileMigration, /vp_customer_profile_insert_own/);
+  assert.match(profileMigration, /vp_customer_profile_update_own/);
+  assert.match(profileMigration, /auth\\.uid\\(\\) = user_id/);
+  assert.match(profileMigration, /GRANT SELECT, INSERT, UPDATE ON public\\.vp_customer_profiles TO authenticated/);
+  assert.match(vantagepayApi, /app\\.get\\('\\/api\\/vantagepay\\/client-profile'/);
+  assert.match(vantagepayApi, /app\\.put\\('\\/api\\/vantagepay\\/client-profile'/);
+  assert.match(vantagepayApi, /VANTAGEPAY_CLIENT_PROFILE_MIGRATION_REQUIRED/);
+  assert.match(vantagepayApi, /!\\/^https:/);
+  assert.match(dashboardHtml, /id="client-profile-form"/);
+  assert.match(dashboardHtml, /id="client-avatar"/);
+  assert.match(dashboardHtml, /await loadClientProfile\\(\\)/);
+  assert.match(dashboardHtml, /Profile picture HTTPS URL/);
+  assert.doesNotMatch(profileMigration, /AlpsCoinChain.*(DATABASE|TABLE|SCHEMA)/i);
+});
