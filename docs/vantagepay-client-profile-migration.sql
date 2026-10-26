@@ -23,11 +23,14 @@ CREATE TABLE IF NOT EXISTS public.vp_customer_profiles (
 
 ALTER TABLE public.vp_customer_profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS vp_customer_profile_select_own ON public.vp_customer_profiles;
+DROP POLICY IF EXISTS vp_customer_profile_select_own ON public.vp_customer_profiles;
 CREATE POLICY vp_customer_profile_select_own ON public.vp_customer_profiles
   FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
 DROP POLICY IF EXISTS vp_customer_profile_insert_own ON public.vp_customer_profiles;
+DROP POLICY IF EXISTS vp_customer_profile_insert_own ON public.vp_customer_profiles;
 CREATE POLICY vp_customer_profile_insert_own ON public.vp_customer_profiles
   FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid()) = user_id);
+DROP POLICY IF EXISTS vp_customer_profile_update_own ON public.vp_customer_profiles;
 DROP POLICY IF EXISTS vp_customer_profile_update_own ON public.vp_customer_profiles;
 CREATE POLICY vp_customer_profile_update_own ON public.vp_customer_profiles
   FOR UPDATE TO authenticated USING ((SELECT auth.uid()) = user_id)
