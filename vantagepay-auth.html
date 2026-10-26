@@ -386,8 +386,12 @@
       document.getElementById('verification-code').value='';
       savePendingVerification(email);
       setMode('verify');
-      startResendCooldown();
-      showMessage(message,'Verification has been restarted for '+email+'. Check that inbox and its spam folder for the newest code. If an account already exists for that address, sign in to it instead.','good');
+      try {
+        await requestVerificationCode(email);
+        showMessage(message,'A verification-code request was accepted for '+email+'. Check that inbox and its spam folder. If no email arrives, the authentication provider may have blocked delivery.','good');
+      } catch (sendError) {
+        showMessage(message,'The email address was updated for this verification attempt, but a code could not be requested: '+explainAuthError(sendError),'bad');
+      }
     }catch(error){showMessage(message,explainAuthError(error),'bad');}
     finally{updateEmailSubmit.disabled=false;updateEmailSubmit.textContent='Update email & send code';}
   });
