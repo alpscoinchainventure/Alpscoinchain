@@ -45,7 +45,7 @@ test('VantagePay auth page uses Neon Auth APIs rather than simulating authentica
 test('auth and dashboard inline scripts parse', () => {
   assert.doesNotThrow(() => new vm.Script(inlineScript(html, 'auth')), 'auth script must parse');
   assert.doesNotThrow(() => new vm.Script(inlineScript(dashboardHtml, 'dashboard')), 'dashboard script must parse');
-  assert.match(html, /Neon authentication library could not load/i);
+  assert.match(html, /Neon authentication library(?: or its Supabase-compatible adapter)? could not load/i);
   assert.match(html, /emailRedirectTo/);
   assert.match(html, /redirectTo/);
 });
