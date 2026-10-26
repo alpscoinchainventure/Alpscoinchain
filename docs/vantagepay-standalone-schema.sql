@@ -521,6 +521,11 @@ BEGIN
     updated_at = now()
   RETURNING * INTO v_row;
 
+  INSERT INTO public.vp_customer_notifications(user_id, notification_type, title, message)
+  VALUES (
+    v_user_id, 'security', 'KYC profile submitted',
+    'Your identity profile was submitted for review. The profile is not yet verified and no financial service was activated.'
+  );
   RETURN to_jsonb(v_row);
 END;
 $$;
@@ -706,3 +711,30 @@ END;
 $$;
 REVOKE EXECUTE ON FUNCTION public.vp_ensure_customer_account() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.vp_ensure_customer_account() TO authenticated;
+
+
+CREATE OR REPLACE FUNCTION public.vp_mark_notification_read(p_notification_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_row public.vp_customer_notifications%ROWTYPE;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'A signed-in user is required' USING ERRCODE = '42501';
+  END IF;
+  UPDATE public.vp_customer_notifications
+  SET read_at = COALESCE(read_at, now())
+  WHERE id = p_notification_id AND user_id = v_user_id
+  RETURNING * INTO v_row;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Notification not found' USING ERRCODE = 'P0002';
+  END IF;
+  RETURN to_jsonb(v_row);
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.vp_mark_notification_read(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.vp_mark_notification_read(UUID) TO authenticated;
