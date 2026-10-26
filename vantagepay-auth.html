@@ -177,10 +177,10 @@
     lastEmail=email; submit.disabled=true; submit.textContent='Please wait…';
     try {
       if (mode==='signup') {
-        const {data,error}=await client.signUp({email,password,options:{data:{full_name:fullName},emailRedirectTo:redirectUrl()}});
+        const {data,error}=await client.signUp({email,password,options:{data:{full_name:fullName}}});
         if (error) throw error;
         if (data.session) showMessage(message, 'Account created and signed in. Banking features remain unavailable until verification and provider approvals are complete.', 'good');
-        else showMessage(message, 'Sign-up request accepted. Check your email for the confirmation link. The link must return to VantagePay. If it opens a different product, the VantagePay redirect URL still needs to be allow-listed in the identity provider.', 'good');
+        else showMessage(message, 'Sign-up request accepted. If the identity provider asks you to confirm your email, follow its message. This request no longer sends an unsupported callbackURL parameter. Banking features remain locked until email verification is actually enabled and confirmed.', 'good');
       } else if (mode==='login') {
         const {error}=await client.signInWithPassword({email,password}); if (error) throw error;
         const {data}=await client.getSession(); if (data.session) showAccount(data.session.user);
