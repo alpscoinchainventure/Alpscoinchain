@@ -482,7 +482,7 @@ ALTER TABLE public.vp_customer_kyc ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS vp_customer_reads_own_kyc ON public.vp_customer_kyc;
 CREATE POLICY vp_customer_reads_own_kyc ON public.vp_customer_kyc
   FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
-REVOKE ALL ON public.vp_customer_kyc FROM anon, authenticated;
+REVOKE ALL ON public.vp_customer_kyc FROM authenticated;
 GRANT SELECT ON public.vp_customer_kyc TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.vp_submit_kyc_profile(
