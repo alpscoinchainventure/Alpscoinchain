@@ -35,7 +35,14 @@
       <button id="refreshAccountsButton" type="button">Refresh accounts</button>
     </div>
     <div id="accountsNotice" class="notice" role="status" aria-live="polite">Client accounts have not been loaded yet.</div>
-    <div class="table-wrap"><table><thead><tr><th>Client name</th><th>Account ID</th><th>Role</th><th>Account status</th></tr></thead><tbody id="accountRows"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Client name</th><th>Email</th><th>Account ID</th><th>Role</th><th>Account status</th><th>Action</th></tr></thead><tbody id="accountRows"></tbody></table></div>
+    <form id="clientProfileEditForm" class="notice" hidden>
+      <h3>Edit client profile</h3><p class="small muted">Only display name and account status are editable here. Email, role, KYC decisions, and financial records are protected.</p>
+      <input id="editClientId" type="hidden">
+      <div class="form-grid"><div><label for="editClientName">Client display name</label><input id="editClientName" minlength="2" maxlength="100" required></div><div><label for="editClientStatus">Account status</label><select id="editClientStatus" required><option value="active">Active</option><option value="pending">Pending</option><option value="suspended">Suspended</option></select></div></div>
+      <div class="button-row"><button class="primary" id="saveClientProfileButton" type="submit">Save client profile</button><button id="cancelClientProfileEditButton" type="button">Cancel</button></div>
+      <div id="clientProfileEditNotice" role="status" aria-live="polite"></div>
+    </form>
   </section>
 
   <section class="panel" aria-labelledby="ledgerHeading">
@@ -176,22 +183,58 @@
 
   function renderAccounts(){
     const query=$("accountSearch").value.trim().toLowerCase(),body=$("accountRows");body.replaceChildren();
-    const filtered=visibleProfiles.filter(profile=>String(profile.full_name||"").toLowerCase().includes(query)||normalizeId(profile.id).includes(query)||String(profile.role||"").toLowerCase().includes(query)||String(profile.account_status||"").toLowerCase().includes(query));
+    const filtered=visibleProfiles.filter(profile=>[profile.full_name,profile.email,profile.id,profile.role,profile.account_status].some(value=>String(value||"").toLowerCase().includes(query)));
     const select=$("ledgerClient");select.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select a client account";select.appendChild(placeholder);
     for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client")){const option=document.createElement("option");option.value=profile.id;option.textContent=(profile.full_name||"Name not provided")+" · "+profile.id+" · "+(profile.account_status||"status unavailable");select.appendChild(option)}
     const balanceSelect=$("balanceClient");if(balanceSelect){balanceSelect.replaceChildren();const balancePlaceholder=document.createElement("option");balancePlaceholder.value="";balancePlaceholder.textContent="Select a client account";balanceSelect.appendChild(balancePlaceholder);for(const profile of visibleProfiles.filter(p=>String(p.role||"").toLowerCase()==="client")){const option=document.createElement("option");option.value=profile.id;option.textContent=(profile.full_name||"Name not provided")+" · ID: "+profile.id+" · "+(profile.account_status||"status unavailable");balanceSelect.appendChild(option)}}
     if(!filtered.length){setNotice("accountsNotice",visibleProfiles.length?"No visible accounts match your search.":"No profiles are visible under the current database function.",visibleProfiles.length?"":"warning");return}
-    for(const profile of filtered){const row=document.createElement("tr");for(const value of [profile.full_name||"Name not provided",profile.id,profile.role,profile.account_status]){const cell=document.createElement("td");cell.textContent=value||"—";row.appendChild(cell)}body.appendChild(row)}
-    setNotice("accountsNotice","Showing "+filtered.length+" of "+visibleProfiles.length+" visible profiles.");
+    for(const profile of filtered){
+      const row=document.createElement("tr");
+      for(const value of [profile.full_name||"Name not provided",profile.email||"—",profile.id,profile.role,profile.account_status]){
+        const cell=document.createElement("td");cell.textContent=value||"—";row.appendChild(cell)
+      }
+      const actionCell=document.createElement("td");
+      if(String(profile.role||"").toLowerCase()==="client"){
+        const edit=document.createElement("button");edit.type="button";edit.textContent="Edit";edit.addEventListener("click",()=>openClientProfileEditor(profile));actionCell.appendChild(edit);
+      }else{actionCell.textContent="—"}
+      row.appendChild(actionCell);body.appendChild(row)
+    }
+    setNotice("accountsNotice","Showing "+filtered.length+" of "+visibleProfiles.length+" visible profiles. Client edits are audited.");
   }
 
   async function loadAccounts(){
     if(profileLoadInProgress||!client)return;profileLoadInProgress=true;const button=$("refreshAccountsButton");button.disabled=true;setNotice("accountsNotice","Loading client accounts…");
-    try{const {data,error}=await client.rpc("admin_list_profiles");if(error){console.error("Profile query failed:",error);setNotice("accountsNotice","Profiles could not be loaded. Check the administrator database function and permissions.","error");return}visibleProfiles=(Array.isArray(data)?data:[]).filter(profile=>profile&&typeof profile.id==="string"&&typeof profile.role==="string");renderAccounts();if(!visibleProfiles.length)setNotice("accountsNotice","The profile function returned no usable account records.","warning");}
+    try{const {data,error}=await client.rpc("admin_list_profiles_for_management");if(error){console.error("Profile query failed:",error);setNotice("accountsNotice","Profiles could not be loaded. Apply the client-profile-editing migration and check administrator permissions.","error");return}visibleProfiles=(Array.isArray(data)?data:[]).filter(profile=>profile&&typeof profile.id==="string"&&typeof profile.role==="string");renderAccounts();if(!visibleProfiles.length)setNotice("accountsNotice","The profile function returned no usable account records.","warning");}
     catch(error){console.error(error);setNotice("accountsNotice","An unexpected error occurred while loading profiles.","error")}
     finally{profileLoadInProgress=false;button.disabled=false}
   }
 
+  function openClientProfileEditor(profile){
+    if(!profile||String(profile.role||"").toLowerCase()!=="client")return;
+    $("editClientId").value=profile.id;
+    $("editClientName").value=profile.full_name||"";
+    $("editClientStatus").value=String(profile.account_status||"active").toLowerCase();
+    $("clientProfileEditForm").hidden=false;
+    $("clientProfileEditNotice").textContent="Editing "+(profile.email||profile.id)+".";
+    $("clientProfileEditForm").scrollIntoView({behavior:"smooth",block:"center"});
+  }
+
+  async function saveClientProfile(event){
+    event.preventDefault();
+    const id=$("editClientId").value,name=$("editClientName").value.trim(),status=$("editClientStatus").value;
+    if(!id||name.length<2||name.length>100){$("clientProfileEditNotice").textContent="Enter a client name between 2 and 100 characters.";return}
+    if(!window.confirm("Save profile changes for this client? Account status changes may affect their access."))return;
+    const button=$("saveClientProfileButton");button.disabled=true;$("clientProfileEditNotice").textContent="Saving client profile…";
+    try{
+      const {data,error}=await client.rpc("admin_update_client_profile",{p_client_id:id,p_full_name:name,p_account_status:status});
+      if(error)throw error;if(!data||data.success!==true)throw new Error("The profile changes were not saved.");
+      $("clientProfileEditNotice").textContent="Client profile saved successfully.";
+      $("clientProfileEditForm").hidden=true;
+      await loadAccounts();
+      setNotice("accountsNotice","Client profile updated and audit logged.","success");
+    }catch(error){console.error("Client profile update failed:",error);$("clientProfileEditNotice").textContent=error.message||"Could not update the client profile."}
+    finally{button.disabled=false}
+  }
   async function verifySession(){
     if(!window.supabase||!window.supabase.createClient){setNotice("sessionNotice","The account service did not load. Refresh and try again.","error");return false}
     client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
@@ -389,6 +432,8 @@
   $("refreshAccountsButton").addEventListener("click",loadAccounts);
   $("refreshLedgerDataButton").addEventListener("click",async()=>{const button=$("refreshLedgerDataButton");button.disabled=true;setNotice("ledgerNotice","Refreshing client accounts and supported assets…");try{await loadAccounts();setNotice("ledgerNotice","Client accounts and supported asset list refreshed. Verify the selected client, asset, reference, and supporting records before posting.","success")}catch(error){setNotice("ledgerNotice","Refresh failed. "+(error.message||""),"error")}finally{button.disabled=false}});
   $("accountSearch").addEventListener("input",renderAccounts);
+  $("clientProfileEditForm").addEventListener("submit",saveClientProfile);
+  $("cancelClientProfileEditButton").addEventListener("click",()=>{$("clientProfileEditForm").hidden=true});
   $("ledgerForm").addEventListener("submit",postLedgerEntry);
   $("walletForm").addEventListener("submit",saveWalletAddress);
   $("walletForm").addEventListener("reset",()=>{delete $("walletForm").dataset.editId;delete $("walletForm").dataset.originalAsset;delete $("walletForm").dataset.originalNetwork});
