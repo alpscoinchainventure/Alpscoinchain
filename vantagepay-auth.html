@@ -212,7 +212,12 @@
         const {error}=await client.updateUser({password:newPassword}); if (error) throw error;
         pendingReset=false; setMode('login'); showMessage(message, 'Password updated. You can now sign in with your new password.', 'good');
       }
-    } catch(error) { showMessage(message, explainAuthError(error), 'bad'); }
+    } catch(error) {
+      const raw=String((error&&error.message)||'');
+      if(mode==='login' && /email.*(verif|confirm)|not verified|verification required/i.test(raw)){
+        lastEmail=email;setMode('verify');showMessage(message,'This account must verify its email before sign-in. Request a code below and enter it here.','bad');
+      } else showMessage(message, explainAuthError(error), 'bad');
+    }
     finally { submit.disabled=false; submit.textContent=(modes[mode]||modes.login).button; }
   });
   async function requestVerificationCode(email) {
@@ -243,7 +248,7 @@
     if (!lastEmail) lastEmail=document.getElementById('email').value.trim().toLowerCase();
     if (!lastEmail) { showMessage(message,'Enter your email address first.','bad'); return; }
     resendButton.disabled=true;
-    try { await requestVerificationCode(lastEmail); showMessage(message,'A new verification code was requested. Check your inbox and spam folder.','good'); }
+    try { await requestVerificationCode(lastEmail); setMode('verify'); showMessage(message,'A new verification code was requested. Check your inbox and spam folder.','good'); }
     catch(error){showMessage(message,explainAuthError(error),'bad');}
     finally{resendButton.disabled=false;}
   });
