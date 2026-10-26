@@ -456,6 +456,7 @@ ALTER TABLE public.vp_transaction_requests
 CREATE TABLE IF NOT EXISTS public.vp_customer_kyc (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES neon_auth."user"(id) ON DELETE RESTRICT,
+  customer_email TEXT,
   legal_name TEXT NOT NULL,
   date_of_birth DATE NOT NULL,
   country_code CHAR(2) NOT NULL,
@@ -500,11 +501,13 @@ SET search_path = ''
 AS $$
 DECLARE
   v_user_id UUID := auth.uid();
+  v_email TEXT;
   v_row public.vp_customer_kyc%ROWTYPE;
 BEGIN
   IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'A signed-in user is required' USING ERRCODE = '42501';
   END IF;
+  SELECT u.email INTO v_email FROM neon_auth."user" AS u WHERE u.id = v_user_id;
   IF p_legal_name IS NULL OR length(btrim(p_legal_name)) NOT BETWEEN 2 AND 160
      OR p_date_of_birth IS NULL OR p_date_of_birth >= CURRENT_DATE
      OR p_date_of_birth < DATE '1900-01-01'
@@ -517,15 +520,16 @@ BEGIN
   END IF;
 
   INSERT INTO public.vp_customer_kyc (
-    user_id, legal_name, date_of_birth, country_code, address_line1, city,
+    user_id, customer_email, legal_name, date_of_birth, country_code, address_line1, city,
     postal_code, identity_document_type, kyc_status, review_note, submitted_at,
     reviewed_at, reviewer_user_id, created_at, updated_at
   ) VALUES (
-    v_user_id, btrim(p_legal_name), p_date_of_birth, p_country_code,
+    v_user_id, v_email, btrim(p_legal_name), p_date_of_birth, p_country_code,
     btrim(p_address_line1), btrim(p_city), NULLIF(btrim(coalesce(p_postal_code, '')), ''),
     p_identity_document_type, 'pending', NULL, now(), NULL, NULL, now(), now()
   )
   ON CONFLICT (user_id) DO UPDATE SET
+    customer_email = EXCLUDED.customer_email,
     legal_name = EXCLUDED.legal_name,
     date_of_birth = EXCLUDED.date_of_birth,
     country_code = EXCLUDED.country_code,
