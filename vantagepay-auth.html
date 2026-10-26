@@ -73,10 +73,79 @@
   let lastEmail = '';
   let pendingReset = false;
   let client = null;
+  const PENDING_AUTH_KEY = 'vantagepay.pending-email-verification.v1';
+  const RESEND_COOLDOWN_KEY = 'vantagepay.otp-resend-after.v1';
+  const RESEND_COOLDOWN_MS = 45000;
+  let resendAvailableAt = 0;
+  let resendCooldownTimer = null;
+  function safeStorageGet(key) { try { return window.sessionStorage.getItem(key); } catch { return null; } }
+  function safeStorageSet(key, value) { try { window.sessionStorage.setItem(key, value); } catch {} }
+  function safeStorageRemove(key) { try { window.sessionStorage.removeItem(key); } catch {} }
+  function savePendingVerification(email) {
+    if (!email) return;
+    safeStorageSet(PENDING_AUTH_KEY, JSON.stringify({ email, savedAt: Date.now() }));
+  }
+  function readPendingVerification() {
+    try {
+      const saved = JSON.parse(safeStorageGet(PENDING_AUTH_KEY) || 'null');
+      if (!saved || typeof saved.email !== 'string' || !saved.email.includes('@')) return null;
+      if (Date.now() - Number(saved.savedAt || 0) > 24 * 60 * 60 * 1000) {
+        safeStorageRemove(PENDING_AUTH_KEY);
+        return null;
+      }
+      return saved;
+    } catch { return null; }
+  }
+  function clearPendingVerification() {
+    safeStorageRemove(PENDING_AUTH_KEY);
+    safeStorageRemove(RESEND_COOLDOWN_KEY);
+    resendAvailableAt = 0;
+    if (resendCooldownTimer) clearInterval(resendCooldownTimer);
+    resendCooldownTimer = null;
+    updateResendButtons();
+  }
+  function updateResendButtons() {
+    const remaining = Math.max(0, Math.ceil((resendAvailableAt - Date.now()) / 1000));
+    [resendCodeButton, resendButton].forEach(button => {
+      if (!button) return;
+      button.disabled = remaining > 0;
+      if (button === resendCodeButton) button.textContent = remaining > 0 ? 'Send a new code (' + remaining + 's)' : 'Send a new code';
+      else button.textContent = remaining > 0 ? 'Resend confirmation (' + remaining + 's)' : 'Resend confirmation';
+    });
+    if (remaining <= 0 && resendCooldownTimer) {
+      clearInterval(resendCooldownTimer);
+      resendCooldownTimer = null;
+    }
+  }
+  function startResendCooldown() {
+    resendAvailableAt = Date.now() + RESEND_COOLDOWN_MS;
+    safeStorageSet(RESEND_COOLDOWN_KEY, String(resendAvailableAt));
+    if (resendCooldownTimer) clearInterval(resendCooldownTimer);
+    updateResendButtons();
+    resendCooldownTimer = setInterval(updateResendButtons, 1000);
+  }
+  function restoreResendCooldown() {
+    const saved = Number(safeStorageGet(RESEND_COOLDOWN_KEY) || 0);
+    resendAvailableAt = Number.isFinite(saved) ? saved : 0;
+    if (resendAvailableAt > Date.now()) {
+      if (resendCooldownTimer) clearInterval(resendCooldownTimer);
+      resendCooldownTimer = setInterval(updateResendButtons, 1000);
+    } else {
+      resendAvailableAt = 0;
+      safeStorageRemove(RESEND_COOLDOWN_KEY);
+    }
+    updateResendButtons();
+  }
   function showMessage(node, text, kind) { node.textContent=text; node.className='msg show'+(kind?' '+kind:''); }
   function clearMessage(node) { node.textContent=''; node.className='msg'; }
   function setMode(next) {
     mode = next;
+    if (next === 'verify') {
+      const email = lastEmail || document.getElementById('email').value.trim().toLowerCase();
+      if (email) savePendingVerification(email);
+    } else if (next === 'login' || next === 'signup' || next === 'reset') {
+      if (next !== 'signup') safeStorageRemove(PENDING_AUTH_KEY);
+    }
     const config = modes[next] || modes.login;
     form.classList.toggle('hidden', next === 'verify');
     verifyForm.classList.toggle('hidden', next !== 'verify');
@@ -96,6 +165,7 @@
       button.setAttribute('aria-selected', String(button.dataset.mode === next));
     });
     clearMessage(message); resendButton.hidden = next !== 'signup';
+    restoreResendCooldown();
   }
   // Always return auth emails to the VantagePay account page, never another product home/dashboard.
   const redirectUrl = () => new URL('/vantagepay-auth.html', window.location.origin).toString();
@@ -106,6 +176,7 @@
       showMessage(message, 'Verify your email address before opening your VantagePay account.', 'bad');
       return;
     }
+    clearPendingVerification();
     authView.classList.add('hidden'); accountView.classList.remove('hidden');
     document.getElementById('signed-in-as').textContent = user && user.email ? 'Signed in as ' + user.email : 'Your identity session is active.';
   }
@@ -139,6 +210,9 @@
     if (/invalid origin|redirect.*(allow|whitelist|not allowed)|not allowed.*redirect/i.test(raw)) {
       return 'The account request reached authentication, but this page URL is not on Neon Auth’s trusted-domain list. Add this page origin in Neon Auth trusted domains, then retry.';
     }
+    if (/(otp|verification).*(expired|invalid)|invalid.*(otp|verification code|token)|token.*expired/i.test(raw)) {
+      return 'That code may be incorrect or expired. Check the newest verification email. Your email address is saved; wait for the resend timer or request a fresh code.';
+    }
     if (/email.*(rate limit|sending limit)|rate limit.*email|too many requests/i.test(raw)) {
       return raw + status + code + '. Email sending may be rate-limited; wait before retrying or configure production SMTP in Neon Auth.';
     }
@@ -164,11 +238,20 @@
     const query = new URLSearchParams(window.location.search);
     if (hash.get('type') === 'recovery' || query.get('mode') === 'recovery') { pendingReset=true; setMode('recovery'); }
     else if (query.get('mode') === 'signup') setMode('signup');
+    const pendingVerification = readPendingVerification();
+    if (pendingVerification) {
+      lastEmail = pendingVerification.email;
+      document.getElementById('email').value = lastEmail;
+    }
+    restoreResendCooldown();
     const {data,error}=await client.getSession();
     if (error) showMessage(message, 'Could not check the current session. Please try again.', 'bad');
     if (data && data.session && mode !== 'recovery') {
       if (data.session.user && data.session.user.emailVerified === true) showAccount(data.session.user);
-      else { lastEmail=(data.session.user&&data.session.user.email)||''; if(lastEmail)document.getElementById('email').value=lastEmail; setMode('verify'); showMessage(message,'Email verification is required before you can access account features. Enter the code sent to your email or request a new one.','bad'); }
+      else { lastEmail=(data.session.user&&data.session.user.email)||lastEmail; if(lastEmail)document.getElementById('email').value=lastEmail; setMode('verify'); showMessage(message,'Email verification is required before you can access account features. Your email is saved if this page reloads. Enter the code sent to your email or request a new one.','bad'); }
+    } else if (pendingVerification && mode !== 'recovery') {
+      setMode('verify');
+      showMessage(message, 'Continue email verification for ' + lastEmail + '. Your email is saved if this page reloads. Enter the latest six-digit code, or request a new one when the timer ends.', 'good');
     }
     client.onAuthStateChange((event, session) => {
       if (event==='PASSWORD_RECOVERY') { pendingReset=true; showAuth(); setMode('recovery'); }
@@ -191,7 +274,9 @@
     if (mode==='signup' && !fullName) { showMessage(message, 'Enter your name.', 'bad'); return; }
     if (mode==='signup' && password!==confirm) { showMessage(message, 'The two passwords do not match.', 'bad'); return; }
     if (mode==='recovery' && newPassword.length<8) { showMessage(message, 'Use a new password with at least 8 characters.', 'bad'); return; }
-    lastEmail=email; submit.disabled=true; submit.textContent='Please wait…';
+    lastEmail=email;
+    if (mode === 'signup') savePendingVerification(email);
+    submit.disabled=true; submit.textContent='Please wait…';
     try {
       if (mode==='signup') {
         const {data,error}=await client.signUp({email,password,options:{data:{full_name:fullName}}});
@@ -199,7 +284,7 @@
         if (data && data.session) await client.signOut();
         setMode('verify');
         const sent=await requestVerificationCode(email);
-        showMessage(message, sent ? 'Account created. A verification code has been requested for your email. Enter it below; banking features remain locked until verification succeeds.' : 'Account created, but the verification email could not be confirmed as sent. Use “Send a new code” after the provider is configured.', sent?'good':'bad');
+        showMessage(message, sent ? 'Account created. The authentication service accepted a verification-code request. Check your inbox and spam folder; banking features remain locked until verification succeeds.' : 'Account created, but the verification email could not be confirmed as sent. Use “Send a new code” after the resend timer ends.', sent?'good':'bad');
       } else if (mode==='login') {
         const {error}=await client.signInWithPassword({email,password}); if (error) throw error;
         const {data}=await client.getSession();
@@ -223,6 +308,8 @@
   async function requestVerificationCode(email) {
     const {error}=await client.resend({type:'signup',email});
     if(error) throw error;
+    savePendingVerification(email);
+    startResendCooldown();
     return true;
   }
   verifyForm.addEventListener('submit',async event=>{
@@ -234,23 +321,33 @@
     try{
       const {data,error}=await client.verifyOtp({email,token,type:'signup'});if(error)throw error;
       const user=data&&(data.user||(data.session&&data.session.user));
-      if(user&&user.emailVerified===true){showMessage(message,'Email verified successfully. Your VantagePay account is ready for profile setup; financial services remain disabled.','good');showAccount(user);}
-      else {const {data:sessionData}=await client.getSession();if(sessionData&&sessionData.session&&sessionData.session.user&&sessionData.session.user.emailVerified===true)showAccount(sessionData.session.user);else{setMode('login');showMessage(message,'Email verification was accepted. Sign in to continue.','good');}}
+      if(user&&user.emailVerified===true){clearPendingVerification();showMessage(message,'Email verified successfully. Your VantagePay account is ready for profile setup; financial services remain disabled.','good');showAccount(user);}
+      else {const {data:sessionData}=await client.getSession();if(sessionData&&sessionData.session&&sessionData.session.user&&sessionData.session.user.emailVerified===true){clearPendingVerification();showAccount(sessionData.session.user);}else{setMode('login');showMessage(message,'Email verification was accepted. Sign in to continue.','good');}}
     }catch(error){showMessage(message,explainAuthError(error),'bad');}
     finally{verifySubmit.disabled=false;verifySubmit.textContent='Verify email';}
   });
   resendCodeButton.addEventListener('click',async()=>{
     const email=lastEmail||document.getElementById('email').value.trim().toLowerCase();if(!email){showMessage(message,'Enter your email address first.','bad');return;}
-    resendCodeButton.disabled=true;try{await requestVerificationCode(email);showMessage(message,'A new verification code was requested. Check your inbox and spam folder.','good');}catch(error){showMessage(message,explainAuthError(error),'bad');}finally{resendCodeButton.disabled=false;}
+    if (Date.now() < resendAvailableAt) { updateResendButtons(); showMessage(message,'Please wait for the resend timer before requesting another code.','bad'); return; }
+    resendCodeButton.disabled=true;resendCodeButton.textContent='Requesting…';
+    try {
+      await requestVerificationCode(email);
+      showMessage(message,'The authentication service accepted the request. Check your inbox and spam folder. If it does not arrive within a minute, request another code after the timer ends. Use the newest code you receive.','good');
+    } catch(error) { showMessage(message,explainAuthError(error),'bad'); }
+    finally { updateResendButtons(); }
   });
   resendButton.addEventListener('click',async()=>{
     if (!client) return;
     if (!lastEmail) lastEmail=document.getElementById('email').value.trim().toLowerCase();
     if (!lastEmail) { showMessage(message,'Enter your email address first.','bad'); return; }
+    if (Date.now() < resendAvailableAt) { updateResendButtons(); showMessage(message,'Please wait for the resend timer before requesting another code.','bad'); return; }
     resendButton.disabled=true;
-    try { await requestVerificationCode(lastEmail); setMode('verify'); showMessage(message,'A new verification code was requested. Check your inbox and spam folder.','good'); }
-    catch(error){showMessage(message,explainAuthError(error),'bad');}
-    finally{resendButton.disabled=false;}
+    try {
+      await requestVerificationCode(lastEmail);
+      setMode('verify');
+      showMessage(message,'The authentication service accepted the request. Check your inbox and spam folder, and use the newest code you receive.','good');
+    } catch(error){showMessage(message,explainAuthError(error),'bad');}
+    finally{updateResendButtons();}
   });
   document.getElementById('signout').addEventListener('click',async()=>{
     const {error}=await client.signOut();
