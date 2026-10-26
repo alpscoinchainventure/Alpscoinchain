@@ -107,3 +107,33 @@ revoke all on function public.admin_list_profiles_for_management() from public, 
 revoke all on function public.admin_update_client_profile(uuid, text, text) from public, anon;
 grant execute on function public.admin_list_profiles_for_management() to authenticated;
 grant execute on function public.admin_update_client_profile(uuid, text, text) to authenticated;
+
+-- Clients may edit only their own display name.
+create or replace function public.client_update_own_profile_name(p_full_name text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_user_id uuid := auth.uid();
+  v_name text := nullif(trim(p_full_name), '');
+begin
+  if v_user_id is null then
+    raise exception 'Authentication required' using errcode = '42501';
+  end if;
+  if v_name is null or char_length(v_name) < 1 or char_length(v_name) > 100 then
+    raise exception 'Display name must be between 1 and 100 characters';
+  end if;
+  update public.profiles
+  set full_name = v_name, updated_at = now()
+  where id = v_user_id and lower(coalesce(role, '')) = 'client';
+  if not found then
+    raise exception 'Client profile not found';
+  end if;
+  return jsonb_build_object('success', true, 'full_name', v_name);
+end;
+$function$;
+
+revoke all on function public.client_update_own_profile_name(text) from public, anon;
+grant execute on function public.client_update_own_profile_name(text) to authenticated;
