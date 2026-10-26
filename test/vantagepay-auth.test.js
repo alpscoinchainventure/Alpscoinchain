@@ -116,7 +116,9 @@ test('operations console exposes an audited KYC review queue', () => {
 test('customer dashboard requires a real session and uses user-scoped read-only queries', () => {
   assert.match(dashboardHtml, /client\.auth\.getUser\(\)/);
   assert.match(dashboardHtml, /\.eq\('user_id',user\.id\)/);
-  assert.match(dashboardHtml, /vp_customer_accounts/);
+  assert.match(dashboardHtml, /apiRequest\('\/api\/vantagepay\/account'/);
+  assert.match(vantagepayApi, /rpc\/vp_ensure_customer_account/);
+  assert.match(standaloneSchema, /FUNCTION public\.vp_ensure_customer_account/);
   assert.match(dashboardHtml, /vp_ledger_transactions/);
   assert.match(dashboardHtml, /\/api\/vantagepay\/transaction-requests/);
   assert.match(dashboardHtml, /Deposit and withdrawal requests are review-only/i);
