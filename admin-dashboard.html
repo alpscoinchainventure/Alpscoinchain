@@ -61,7 +61,7 @@
         </div>
         <div>
           <label for="ledgerAsset">Asset symbol</label>
-          <input id="ledgerAsset" type="text" minlength="2" maxlength="12" pattern="[A-Za-z0-9]{2,12}" placeholder="Example: USDT" autocomplete="off" required>
+          <select id="ledgerAsset" required><option value="USDT">USDT</option><option value="USDC">USDC</option><option value="BTC">BTC</option><option value="ETH">ETH</option><option value="BNB">BNB</option><option value="SOL">SOL</option><option value="LTC">LTC</option><option value="XRP">XRP</option></select>
         </div>
         <div>
           <label for="ledgerReference">Unique reference</label>
@@ -73,7 +73,7 @@
         </div>
       </div>
       <div class="button-row">
-        <button id="submitLedgerButton" class="primary" type="submit">Post ledger entry</button>
+        <button id="submitLedgerButton" class="primary" type="submit">Post ledger entry</button><button id="refreshLedgerDataButton" type="button">Refresh clients & assets</button>
         <button id="resetLedgerButton" type="reset">Clear form</button>
       </div>
     </form>
@@ -284,6 +284,7 @@
 
   $("signOutButton").addEventListener("click",async()=>{const button=$("signOutButton");button.disabled=true;try{const {error}=await client.auth.signOut();if(error)throw error;window.location.replace("/login")}catch(error){console.error(error);button.disabled=false;setNotice("sessionNotice","Could not sign out. Please try again.","error")}});
   $("refreshAccountsButton").addEventListener("click",loadAccounts);
+  $("refreshLedgerDataButton").addEventListener("click",async()=>{const button=$("refreshLedgerDataButton");button.disabled=true;setNotice("ledgerNotice","Refreshing client accounts and supported assets…");try{await loadAccounts();setNotice("ledgerNotice","Client accounts and supported asset list refreshed. Verify the selected client, asset, reference, and supporting records before posting.","success")}catch(error){setNotice("ledgerNotice","Refresh failed. "+(error.message||""),"error")}finally{button.disabled=false}});
   $("accountSearch").addEventListener("input",renderAccounts);
   $("ledgerForm").addEventListener("submit",postLedgerEntry);
   $("walletForm").addEventListener("submit",saveWalletAddress);
