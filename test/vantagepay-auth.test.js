@@ -80,6 +80,17 @@ test('signup requires a verification code and does not expose unverified session
   assert.match(vantagepayApi, /VANTAGEPAY_EMAIL_VERIFICATION_REQUIRED/);
 });
 
+test('email verification screen lets users restart verification at a new email address', () => {
+  assert.match(html, /id="change-email-toggle"[^>]*>Update email address/);
+  assert.match(html, /id="replacement-email" type="email"/);
+  assert.match(html, /id="replacement-password" type="password"/);
+  assert.match(html, /id="update-email-submit"[^>]*>Update email &amp; send code/);
+  assert.match(html, /client\.signUp\(\{email,password,options:\{data:fullName\?\{full_name:fullName\}:\{\}\}\}\)/);
+  assert.match(html, /savePendingVerification\(email\)/);
+  assert.match(html, /Verification has been restarted for /);
+  assert.match(html, /aria-expanded/);
+});
+
 test('OTP verification survives page reload without persisting the OTP itself', () => {
   assert.match(html, /vantagepay\.pending-email-verification\.v1/);
   assert.match(html, /function savePendingVerification\(email\)/);
