@@ -73,7 +73,15 @@
       <p class="account-line"><strong>Account ID:</strong> <span id="account-id">Loading…</span></p>
       <p class="account-line"><strong>Account status:</strong> <span id="account-status">Checking…</span></p>
       <p class="account-line"><strong>Account role:</strong> <span id="account-role">Checking…</span></p>
-      <div class="button-row"><a class="button secondary" href="/">Homepage</a><button type="button" id="sign-out-button">Sign out</button></div>
+      <div class="button-row"><button type="button" class="secondary" id="edit-profile-button" aria-expanded="false" aria-controls="profile-edit-panel">Edit profile</button><a class="button secondary" href="/">Homepage</a><button type="button" id="sign-out-button">Sign out</button></div>
+      <form id="profile-edit-panel" hidden>
+        <h4>Edit your profile</h4>
+        <p class="muted">Update the display name shown for your account. Your email, account role, KYC status, and balances cannot be changed here.</p>
+        <label for="profile-display-name">Display name</label>
+        <input id="profile-display-name" name="display_name" maxlength="100" autocomplete="name" required>
+        <div class="button-row"><button type="submit" id="save-profile-button">Save changes</button><button type="button" class="secondary" id="cancel-profile-edit-button">Cancel</button></div>
+        <p id="profile-edit-message" class="form-message" role="status" aria-live="polite"></p>
+      </form>
     </section>
 
     <section class="card portfolio-card"><h3>Portfolio overview</h3>
@@ -304,6 +312,46 @@
     setAvatarStatus("Photo selected. Tap Upload photo to save it.");
   });
   document.getElementById("upload-avatar-button").addEventListener("click",uploadAvatar);
+
+  function setProfileEditMessage(message,kind){
+    const el=document.getElementById("profile-edit-message");
+    el.textContent=message;
+    el.className="form-message "+(kind==="success"?"success-message":kind==="error"?"error-message":"muted");
+  }
+  function openProfileEditor(){
+    const form=document.getElementById("profile-edit-panel"),button=document.getElementById("edit-profile-button");
+    document.getElementById("profile-display-name").value=String(currentUser?.user_metadata?.full_name||currentUser?.user_metadata?.name||"").trim();
+    form.hidden=false;button.setAttribute("aria-expanded","true");
+    document.getElementById("profile-display-name").focus();
+  }
+  function closeProfileEditor(){
+    document.getElementById("profile-edit-panel").hidden=true;
+    document.getElementById("edit-profile-button").setAttribute("aria-expanded","false");
+    setProfileEditMessage("",""); 
+  }
+  async function saveClientProfile(event){
+    event.preventDefault();
+    const input=document.getElementById("profile-display-name"),button=document.getElementById("save-profile-button");
+    const displayName=input.value.trim();
+    if(!displayName||displayName.length>100){setProfileEditMessage("Enter a display name between 1 and 100 characters.","error");return}
+    if(!currentUser){setProfileEditMessage("Your session expired. Please sign in again.","error");return}
+    button.disabled=true;setProfileEditMessage("Saving your profile…");
+    try{
+      const profileUpdate=await supabaseClient.rpc("client_update_own_profile_name",{p_full_name:displayName});
+      if(profileUpdate.error)throw profileUpdate.error;
+      if(!profileUpdate.data||profileUpdate.data.success!==true)throw new Error("The profile update could not be confirmed.");
+      const {data,error}=await supabaseClient.auth.updateUser({data:{full_name:displayName}});
+      if(error)throw error;
+      if(!data?.user)throw new Error("The profile update could not be confirmed. Please refresh and check again.");
+      currentUser=data.user;
+      showAvatarFallback();
+      setProfileEditMessage("Your display name was updated successfully.","success");
+      window.setTimeout(closeProfileEditor,1200);
+    }catch(error){
+      console.error("Client profile update failed:",error);
+      setProfileEditMessage(error.message||"Could not save your profile. Please try again.","error");
+    }finally{button.disabled=false}
+  }
 
   async function loadProfile(){
     const result=await supabaseClient.from("profiles").select("role, account_status, kyc_status").eq("id",currentUser.id).maybeSingle();
@@ -537,6 +585,9 @@
 
   startLiveMarket();
   document.getElementById("sign-out-button").addEventListener("click",signOut);
+  document.getElementById("edit-profile-button").addEventListener("click",openProfileEditor);
+  document.getElementById("cancel-profile-edit-button").addEventListener("click",closeProfileEditor);
+  document.getElementById("profile-edit-panel").addEventListener("submit",saveClientProfile);
   document.getElementById("refresh-balances-button").addEventListener("click",loadLedgerBalances);
   document.getElementById("refresh-requests-button").addEventListener("click",loadRequestHistory);
   document.getElementById("refresh-apy-reports-button").addEventListener("click",loadApyReports);
