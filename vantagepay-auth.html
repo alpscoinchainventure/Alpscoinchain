@@ -73,6 +73,7 @@
   let lastEmail = '';
   let pendingReset = false;
   let client = null;
+  let nativeAuthClient = null;
   const PENDING_AUTH_KEY = 'vantagepay.pending-email-verification.v1';
   const RESEND_COOLDOWN_KEY = 'vantagepay.otp-resend-after.v1';
   const RESEND_COOLDOWN_MS = 45000;
@@ -228,6 +229,7 @@
       if (!configResponse.ok) throw new Error('VantagePay standalone authentication is not configured yet. It will not use another product’s accounts.');
       const config = await configResponse.json();
       if (!config.neonAuthUrl) throw new Error('VantagePay Neon authentication is not configured yet.');
+      nativeAuthClient = window.neonAuthLib.createAuthClient(config.neonAuthUrl);
       client = window.neonAuthLib.createAuthClient(config.neonAuthUrl, { adapter: window.neonAuthLib.SupabaseAuthAdapter() });
     } catch (error) {
       showMessage(message, explainAuthError(error), 'bad');
@@ -327,8 +329,12 @@
     finally { submit.disabled=false; submit.textContent=(modes[mode]||modes.login).button; }
   });
   async function requestVerificationCode(email) {
-    const {error}=await client.resend({type:'signup',email});
-    if(error) throw error;
+    if (!nativeAuthClient || !nativeAuthClient.emailOtp ||
+        typeof nativeAuthClient.emailOtp.sendVerificationOtp !== 'function') {
+      throw new Error('Neon Auth email-OTP API is unavailable in the loaded SDK. No verification request was sent. Refresh and try again.');
+    }
+    const result = await nativeAuthClient.emailOtp.sendVerificationOtp({ email, type: 'email-verification' });
+    if (result && result.error) throw result.error;
     savePendingVerification(email);
     startResendCooldown();
     return true;
@@ -340,10 +346,16 @@
     if(!email||!/^[0-9]{6}$/.test(token)){showMessage(message,'Enter the six-digit code sent to your email.','bad');return;}
     verifySubmit.disabled=true;verifySubmit.textContent='Verifying…';
     try{
-      const {data,error}=await client.verifyOtp({email,token,type:'signup'});if(error)throw error;
-      const user=data&&(data.user||(data.session&&data.session.user));
+      if (!nativeAuthClient || !nativeAuthClient.emailOtp || typeof nativeAuthClient.emailOtp.verifyEmail !== 'function') {
+        throw new Error('Neon Auth email-OTP verification API is unavailable in the loaded SDK. Refresh and try again.');
+      }
+      const verificationResult = await nativeAuthClient.emailOtp.verifyEmail({ email, otp: token });
+      if (verificationResult && verificationResult.error) throw verificationResult.error;
+      const {data:sessionData,error:sessionError}=await client.getSession();
+      if(sessionError)throw sessionError;
+      const user=sessionData&&sessionData.session&&sessionData.session.user;
       if(user&&user.emailVerified===true){clearPendingVerification();showMessage(message,'Email verified successfully. Your VantagePay account is ready for profile setup; financial services remain disabled.','good');showAccount(user);}
-      else {const {data:sessionData}=await client.getSession();if(sessionData&&sessionData.session&&sessionData.session.user&&sessionData.session.user.emailVerified===true){clearPendingVerification();showAccount(sessionData.session.user);}else{setMode('login');showMessage(message,'Email verification was accepted. Sign in to continue.','good');}}
+      else {clearPendingVerification();setMode('login');showMessage(message,'Email verification was accepted. Sign in to continue.','good');}
     }catch(error){showMessage(message,explainAuthError(error),'bad');}
     finally{verifySubmit.disabled=false;verifySubmit.textContent='Verify email';}
   });
