@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#071321">
-<title>VantagePay | Account Access Preview</title>
+<title>VantagePay | Secure Account Access</title>
 <style>
 :root{color-scheme:dark;--bg:#071321;--panel:#102238;--line:#263b52;--ink:#f4f8ff;--muted:#a9bbcf;--mint:#85e4ce;--warn:#ffe4a7}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 80% 0,#163b5d 0,transparent 42%),var(--bg);color:var(--ink);font:15px/1.6 system-ui,-apple-system,Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;padding:18px}.shell{width:min(100%,520px)}header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 22px}.brand{font-size:24px;font-weight:800;letter-spacing:-.04em}.brand span{color:var(--mint)}.badge{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#081b22;background:var(--mint);border-radius:99px;padding:6px 10px}.panel{background:linear-gradient(145deg,var(--panel),#0b1b2d);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,5vw,32px);box-shadow:0 24px 60px #0003}h1{font-size:clamp(26px,6vw,34px);letter-spacing:-.04em;line-height:1.15;margin:0 0 9px}p{color:var(--muted);margin:0 0 18px}.tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin:22px 0}.tab,button{font:inherit;cursor:pointer;border:1px solid #3e6c81;background:#143448;color:#e8fbff;border-radius:10px;padding:10px 12px;font-weight:700}.tab[aria-selected=true]{background:var(--mint);color:#071d24;border-color:var(--mint)}label{display:block;color:var(--muted);font-size:13px;margin:14px 0 6px}input{display:block;width:100%;min-width:0;background:#071321;border:1px solid var(--line);border-radius:10px;padding:12px;color:var(--ink);font:inherit}input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--mint);outline-offset:3px}.primary{width:100%;margin-top:20px;background:var(--mint);color:#071d24;border-color:var(--mint)}.quiet{background:transparent;border-color:transparent;color:var(--mint);padding:8px 0}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.msg{display:none;border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-top:15px;color:var(--muted);overflow-wrap:anywhere}.msg.show{display:block}.msg.good{border-color:#356b62;background:#143b35;color:#a7f2dc}.msg.bad{border-color:#8b6b34;background:#382c19;color:var(--warn)}.hint{font-size:12px}.hidden{display:none!important}.account{margin-top:18px}.account h2{margin:0 0 6px}.account-card{border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}.account-actions{display:flex;gap:9px;flex-wrap:wrap}.account-actions button,.dashboard-link{flex:1}.dashboard-link{display:inline-flex;align-items:center;justify-content:center;background:var(--mint);color:#071d24;border:1px solid var(--mint);border-radius:10px;padding:10px 12px;font-weight:700;text-decoration:none}.notice{margin-top:16px;padding:12px;border:1px solid #8b6b34;background:#382c19;border-radius:12px;color:var(--warn);font-size:12px}.back{display:inline-block;margin:18px 0;color:var(--mint);text-decoration:none}.foot{text-align:center;margin-top:14px;color:var(--muted);font-size:12px}@media(max-width:390px){header{align-items:flex-start;flex-direction:column}.tabs{grid-template-columns:1fr}.tab{padding:8px}}
 </style>
 </head>
 <body>
 <main class="shell">
-<header><div class="brand">Vantage<span>Pay</span></div><div class="badge">Authentication preview</div></header>
+<header><div class="brand">Vantage<span>Pay</span></div><div class="badge">Secure account access</div></header>
 <section class="panel">
 <div id="auth-view">
 <h1 id="title">Welcome back</h1>
-<p id="subtitle">Sign in to access your VantagePay preview account.</p>
+<p id="subtitle">Sign in to access your VantagePay account.</p>
 <div class="tabs" role="tablist" aria-label="Account access options">
 <button class="tab" type="button" data-mode="login" aria-selected="true">Sign in</button>
 <button class="tab" type="button" data-mode="signup" aria-selected="false">Create account</button>
@@ -40,9 +40,9 @@
 <div class="account-actions"><a class="dashboard-link" href="/vantagepay-dashboard.html">Open customer dashboard</a><button id="refresh-profile" type="button">Refresh session</button><button id="signout" type="button">Sign out</button></div>
 <div id="account-message" class="msg" role="status" aria-live="polite"></div>
 </div>
-<div class="notice"><strong>Preview notice:</strong> VantagePay uses a dedicated-backend configuration and fails closed until its own authentication and database are configured. No other product account is used. Use test accounts only. Do not enter bank details or identity documents. No live financial account, deposits, withdrawals, or APY return is active.</div>
+<div class="notice"><strong>Service status:</strong> Account access is separate from live banking services. Email verification and security checks must pass. Live deposits, withdrawals, transfers, and balances are not active yet. Never enter bank account details or identity documents on this page.</div>
 </section>
-<a class="back" href="/vantagepay-preview.html">← Back to VantagePay demo</a>
+
 <div class="foot">Secure identity provider · No real-money operations enabled</div>
 </main>
 <!-- Authentication is provided by the dedicated Neon Auth adapter below. -->
@@ -59,7 +59,7 @@
   const resendButton = document.getElementById('resend');
   const accountMessage = document.getElementById('account-message');
   const modes = {
-    login: {title:'Welcome back', subtitle:'Sign in to access your VantagePay preview account.', button:'Sign in', note:'New here? Create an account to begin.'},
+    login: {title:'Welcome back', subtitle:'Sign in to access your VantagePay account.', button:'Sign in', note:'New here? Create an account to begin.'},
     signup: {title:'Create your account', subtitle:'Use an email address you can access. Email confirmation may be required.', button:'Create account', note:'You will need to verify your email if confirmations are enabled.'},
     reset: {title:'Reset your password', subtitle:'We will send a password reset link if this email can receive one.', button:'Send reset email', note:'Use the email link to return here and choose a new password.'},
     recovery: {title:'Choose a new password', subtitle:'Set a new password for your account.', button:'Update password', note:'After updating your password, sign in again.'}
@@ -89,7 +89,7 @@
     });
     clearMessage(message); resendButton.hidden = next !== 'signup';
   }
-  // Always return auth emails to the VantagePay auth page, never another product home/dashboard.
+  // Always return auth emails to the VantagePay account page, never another product home/dashboard.
   const redirectUrl = () => new URL('/vantagepay-auth.html', window.location.origin).toString();
   function showAccount(user) {
     authView.classList.add('hidden'); accountView.classList.remove('hidden');
@@ -179,7 +179,7 @@
       if (mode==='signup') {
         const {data,error}=await client.signUp({email,password,options:{data:{full_name:fullName},emailRedirectTo:redirectUrl()}});
         if (error) throw error;
-        if (data.session) showMessage(message, 'Account created and signed in. Keep this as a test account until security review is complete.', 'good');
+        if (data.session) showMessage(message, 'Account created and signed in. Banking features remain unavailable until verification and provider approvals are complete.', 'good');
         else showMessage(message, 'Sign-up request accepted. Check your email for the confirmation link. The link must return to VantagePay. If it opens a different product, the VantagePay redirect URL still needs to be allow-listed in the identity provider.', 'good');
       } else if (mode==='login') {
         const {error}=await client.signInWithPassword({email,password}); if (error) throw error;
