@@ -445,3 +445,245 @@ COMMIT;
 --    browser input or a webhook alone. Reconcile duplicates and reversals.
 -- 6) Add provider sandbox tests, backups, monitoring, incident procedures, legal review,
 --    and independent security review before real funds are accepted or moved.
+
+
+-- VantagePay email notification + customer KYC workflow migration.
+-- This migration is additive and is for the dedicated VantagePay Neon branch only.
+-- It never stores full identity-document numbers or uploaded document bytes.
+ALTER TABLE public.vp_transaction_requests
+  ADD COLUMN IF NOT EXISTS customer_email TEXT;
+
+CREATE TABLE IF NOT EXISTS public.vp_customer_kyc (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES neon_auth."user"(id) ON DELETE RESTRICT,
+  legal_name TEXT NOT NULL,
+  date_of_birth DATE NOT NULL,
+  country_code CHAR(2) NOT NULL,
+  address_line1 TEXT NOT NULL,
+  city TEXT NOT NULL,
+  postal_code TEXT,
+  identity_document_type TEXT NOT NULL CHECK (identity_document_type IN ('passport','national_id','drivers_license','residence_permit')),
+  kyc_status TEXT NOT NULL DEFAULT 'pending' CHECK (kyc_status IN ('pending','requires_information','approved','rejected')),
+  review_note TEXT,
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reviewed_at TIMESTAMPTZ,
+  reviewer_user_id UUID REFERENCES neon_auth."user"(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (length(btrim(legal_name)) BETWEEN 2 AND 160),
+  CHECK (length(btrim(address_line1)) BETWEEN 5 AND 200),
+  CHECK (length(btrim(city)) BETWEEN 2 AND 100)
+);
+CREATE INDEX IF NOT EXISTS vp_customer_kyc_status_date_idx
+  ON public.vp_customer_kyc(kyc_status, submitted_at);
+
+ALTER TABLE public.vp_customer_kyc ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS vp_customer_reads_own_kyc ON public.vp_customer_kyc;
+CREATE POLICY vp_customer_reads_own_kyc ON public.vp_customer_kyc
+  FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
+REVOKE ALL ON public.vp_customer_kyc FROM anon, authenticated;
+GRANT SELECT ON public.vp_customer_kyc TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.vp_submit_kyc_profile(
+  p_legal_name TEXT,
+  p_date_of_birth DATE,
+  p_country_code TEXT,
+  p_address_line1 TEXT,
+  p_city TEXT,
+  p_postal_code TEXT,
+  p_identity_document_type TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_row public.vp_customer_kyc%ROWTYPE;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'A signed-in user is required' USING ERRCODE = '42501';
+  END IF;
+  IF p_legal_name IS NULL OR length(btrim(p_legal_name)) NOT BETWEEN 2 AND 160
+     OR p_date_of_birth IS NULL OR p_date_of_birth >= CURRENT_DATE
+     OR p_date_of_birth < DATE '1900-01-01'
+     OR p_country_code IS NULL OR p_country_code !~ '^[A-Z]{2}$'
+     OR p_address_line1 IS NULL OR length(btrim(p_address_line1)) NOT BETWEEN 5 AND 200
+     OR p_city IS NULL OR length(btrim(p_city)) NOT BETWEEN 2 AND 100
+     OR (p_postal_code IS NOT NULL AND length(p_postal_code) > 20)
+     OR p_identity_document_type NOT IN ('passport','national_id','drivers_license','residence_permit') THEN
+    RAISE EXCEPTION 'KYC profile fields are invalid' USING ERRCODE = '22023';
+  END IF;
+
+  INSERT INTO public.vp_customer_kyc (
+    user_id, legal_name, date_of_birth, country_code, address_line1, city,
+    postal_code, identity_document_type, kyc_status, review_note, submitted_at,
+    reviewed_at, reviewer_user_id, created_at, updated_at
+  ) VALUES (
+    v_user_id, btrim(p_legal_name), p_date_of_birth, p_country_code,
+    btrim(p_address_line1), btrim(p_city), NULLIF(btrim(coalesce(p_postal_code, '')), ''),
+    p_identity_document_type, 'pending', NULL, now(), NULL, NULL, now(), now()
+  )
+  ON CONFLICT (user_id) DO UPDATE SET
+    legal_name = EXCLUDED.legal_name,
+    date_of_birth = EXCLUDED.date_of_birth,
+    country_code = EXCLUDED.country_code,
+    address_line1 = EXCLUDED.address_line1,
+    city = EXCLUDED.city,
+    postal_code = EXCLUDED.postal_code,
+    identity_document_type = EXCLUDED.identity_document_type,
+    kyc_status = 'pending',
+    review_note = NULL,
+    submitted_at = now(),
+    reviewed_at = NULL,
+    reviewer_user_id = NULL,
+    updated_at = now()
+  RETURNING * INTO v_row;
+
+  RETURN to_jsonb(v_row);
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.vp_submit_kyc_profile(TEXT, DATE, TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.vp_submit_kyc_profile(TEXT, DATE, TEXT, TEXT, TEXT, TEXT, TEXT) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.vp_admin_list_kyc()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_role TEXT;
+BEGIN
+  SELECT m.admin_role INTO v_role
+  FROM public.vp_admin_memberships AS m
+  WHERE m.user_id = v_user_id AND m.enabled = TRUE
+  LIMIT 1;
+  IF v_user_id IS NULL OR v_role NOT IN ('support','operations','finance','super_admin') THEN
+    RAISE EXCEPTION 'Enabled VantagePay admin access is required' USING ERRCODE = '42501';
+  END IF;
+  RETURN COALESCE((
+    SELECT jsonb_agg(to_jsonb(k) ORDER BY k.submitted_at ASC)
+    FROM public.vp_customer_kyc AS k
+    WHERE k.kyc_status IN ('pending','requires_information')
+  ), '[]'::jsonb);
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.vp_admin_list_kyc() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.vp_admin_list_kyc() TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.vp_admin_review_kyc(
+  p_kyc_id UUID,
+  p_next_status TEXT,
+  p_reason TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_actor UUID := auth.uid();
+  v_role TEXT;
+  v_row public.vp_customer_kyc%ROWTYPE;
+  v_previous_status TEXT;
+BEGIN
+  SELECT m.admin_role INTO v_role
+  FROM public.vp_admin_memberships AS m
+  WHERE m.user_id = v_actor AND m.enabled = TRUE
+  LIMIT 1;
+  IF v_actor IS NULL OR v_role NOT IN ('support','operations','finance','super_admin') THEN
+    RAISE EXCEPTION 'Enabled VantagePay admin access is required' USING ERRCODE = '42501';
+  END IF;
+  IF p_next_status NOT IN ('approved','requires_information','rejected') THEN
+    RAISE EXCEPTION 'Invalid KYC review status' USING ERRCODE = '22023';
+  END IF;
+  IF p_reason IS NULL OR length(btrim(p_reason)) < 8 OR length(p_reason) > 500 THEN
+    RAISE EXCEPTION 'A review reason of 8 to 500 characters is required' USING ERRCODE = '22023';
+  END IF;
+  SELECT * INTO v_row FROM public.vp_customer_kyc WHERE id = p_kyc_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'KYC record not found' USING ERRCODE = 'P0002'; END IF;
+  v_previous_status := v_row.kyc_status;
+  UPDATE public.vp_customer_kyc
+  SET kyc_status = p_next_status, review_note = btrim(p_reason),
+      reviewed_at = now(), reviewer_user_id = v_actor, updated_at = now()
+  WHERE id = p_kyc_id RETURNING * INTO v_row;
+  INSERT INTO public.vp_admin_audit_log (
+    actor_user_id, action, target_type, target_reference, reason, before_state, after_state
+  ) VALUES (
+    v_actor, 'kyc_status_changed', 'customer_kyc', v_row.user_id::text, btrim(p_reason),
+    jsonb_build_object('status', v_previous_status),
+    jsonb_build_object('status', p_next_status)
+  );
+  INSERT INTO public.vp_customer_notifications(user_id, notification_type, title, message)
+  VALUES (
+    v_row.user_id, 'security', 'KYC review updated',
+    'Your identity profile review status is now ' || replace(v_row.kyc_status, '_', ' ') || '. Check your VantagePay dashboard for details.'
+  );
+  RETURN to_jsonb(v_row);
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.vp_admin_review_kyc(UUID, TEXT, TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.vp_admin_review_kyc(UUID, TEXT, TEXT) TO authenticated;
+
+-- Permit the authenticated, server-validated admin endpoint to call the existing
+-- request status RPC; the function itself verifies the JWT actor below.
+CREATE OR REPLACE FUNCTION public.vp_admin_update_request_status(
+  p_actor_user_id UUID,
+  p_request_id UUID,
+  p_next_status TEXT,
+  p_reason TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_role TEXT;
+  v_request public.vp_transaction_requests%ROWTYPE;
+  v_previous_status TEXT;
+BEGIN
+  IF auth.uid() IS NULL OR auth.uid() <> p_actor_user_id THEN
+    RAISE EXCEPTION 'Actor does not match authenticated session' USING ERRCODE = '42501';
+  END IF;
+  IF p_next_status NOT IN ('under_review','submitted','rejected','cancelled') THEN
+    RAISE EXCEPTION 'This status requires a provider settlement workflow or is not allowed' USING ERRCODE = '22023';
+  END IF;
+  IF p_reason IS NULL OR length(btrim(p_reason)) < 8 OR length(p_reason) > 500 THEN
+    RAISE EXCEPTION 'An audit reason of 8 to 500 characters is required' USING ERRCODE = '22023';
+  END IF;
+  SELECT m.admin_role INTO v_role FROM public.vp_admin_memberships AS m
+  WHERE m.user_id = p_actor_user_id AND m.enabled = TRUE LIMIT 1;
+  IF v_role NOT IN ('operations','finance','super_admin') OR v_role IS NULL THEN
+    RAISE EXCEPTION 'Enabled operations, finance, or super-admin membership is required' USING ERRCODE = '42501';
+  END IF;
+  SELECT * INTO v_request FROM public.vp_transaction_requests WHERE id = p_request_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Transaction request not found' USING ERRCODE = 'P0002'; END IF;
+  v_previous_status := v_request.status;
+  IF NOT (
+    (v_previous_status = 'pending' AND p_next_status IN ('under_review','rejected','cancelled')) OR
+    (v_previous_status = 'under_review' AND p_next_status IN ('submitted','rejected','cancelled')) OR
+    (v_previous_status = 'submitted' AND p_next_status IN ('rejected','cancelled'))
+  ) THEN
+    RAISE EXCEPTION 'That request status transition is not permitted' USING ERRCODE = '22023';
+  END IF;
+  UPDATE public.vp_transaction_requests
+  SET status = p_next_status, updated_at = now()
+  WHERE id = p_request_id
+  RETURNING * INTO v_request;
+  INSERT INTO public.vp_admin_audit_log (
+    actor_user_id, action, target_type, target_reference, reason, before_state, after_state
+  ) VALUES (
+    p_actor_user_id, 'transaction_request_status_changed', 'transaction_request',
+    v_request.request_reference, btrim(p_reason),
+    jsonb_build_object('status', v_previous_status),
+    jsonb_build_object('status', p_next_status)
+  );
+  RETURN to_jsonb(v_request);
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT, TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT, TEXT) TO authenticated;
