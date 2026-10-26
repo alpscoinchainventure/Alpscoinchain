@@ -107,7 +107,7 @@ document.getElementById('client-profile-form').addEventListener('submit',async e
  event.preventDefault();const button=document.getElementById('client-profile-save');button.disabled=true;setMessage('client-profile-status','Saving your VantagePay client profile…');
  try{
   const payload={display_name:document.getElementById('client-display-name').value.trim(),phone_number:document.getElementById('client-phone').value.trim(),city:document.getElementById('client-city').value.trim(),country_code:document.getElementById('client-country').value.trim().toUpperCase(),avatar_url:document.getElementById('client-avatar-url').value.trim()};
-  const result=await apiRequest('/api/vantagepay/client-profile',{method:'PUT',body:JSON.stringify(payload)});
+  const result=await apiRequest('/api/vantagepay/client-profile',{method:'POST',body:JSON.stringify(payload)});
   setMessage('client-profile-status',result.message||'Profile saved.','good');await loadClientProfile();
  }catch(error){setMessage('client-profile-status',error.message,'bad');}
  finally{button.disabled=false;}
