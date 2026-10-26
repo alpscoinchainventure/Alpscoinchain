@@ -312,7 +312,16 @@
     } catch(error) {
       const raw=String((error&&error.message)||'');
       if(mode==='login' && /email.*(verif|confirm)|not verified|verification required/i.test(raw)){
-        lastEmail=email;setMode('verify');showMessage(message,'This account must verify its email before sign-in. Request a code below and enter it here.','bad');
+        lastEmail=email;
+        document.getElementById('email').value=email;
+        savePendingVerification(email);
+        setMode('verify');
+        try {
+          await requestVerificationCode(email);
+          showMessage(message,'This account must verify its email before sign-in. A fresh verification-code request was accepted for '+email+'. Check your inbox and spam folder; if no email arrives, the request may have been blocked by the authentication provider.','good');
+        } catch(resendError) {
+          showMessage(message,'This account must verify its email before sign-in, but the code request failed: '+explainAuthError(resendError),'bad');
+        }
       } else showMessage(message, explainAuthError(error), 'bad');
     }
     finally { submit.disabled=false; submit.textContent=(modes[mode]||modes.login).button; }
