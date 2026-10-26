@@ -18,6 +18,10 @@ app.use(express.json({ verify(req, _res, buf) {
 } }));
 app.use(express.urlencoded({ extended: true }));
 
+// Public demo URLs are retired; direct users to real VantagePay account access.
+app.get('/vantagepay/demo', (_req, res) => res.redirect(302, '/vantagepay/login'));
+app.get('/vantagepay-preview.html', (_req, res) => res.redirect(302, '/vantagepay/login'));
+
 // VantagePay routes use only dedicated Neon Auth/Data API environment variables.
 // Privileged webhook and admin operations remain fail-closed until a reviewed Neon server adapter exists.
 registerVantagePayApi(app);
@@ -29,7 +33,6 @@ app.use(express.static(__dirname, { index: false }));
 
 // VantagePay has a customer-facing homepage and separate demo/auth/dashboard routes.
 app.get('/vantagepay', (_req, res) => res.sendFile(path.join(__dirname, 'vantagepay-home.html')));
-app.get('/vantagepay/demo', (_req, res) => res.redirect(302, '/vantagepay-preview.html'));
 app.get('/vantagepay-home.html', (_req, res) => res.sendFile(path.join(__dirname, 'vantagepay-home.html')));
 app.get('/vantagepay/login', (_req, res) => res.redirect(302, '/vantagepay-auth.html'));
 app.get('/vantagepay/dashboard', (_req, res) => res.redirect(302, '/vantagepay-dashboard.html'));
