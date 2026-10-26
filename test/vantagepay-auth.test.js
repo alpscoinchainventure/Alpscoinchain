@@ -65,8 +65,52 @@ test('auth and dashboard inline scripts parse', () => {
   assert.doesNotThrow(() => new vm.Script(inlineScript(html, 'auth')), 'auth script must parse');
   assert.doesNotThrow(() => new vm.Script(inlineScript(dashboardHtml, 'dashboard')), 'dashboard script must parse');
   assert.match(html, /Neon authentication library.*could not load/i);
-  assert.match(html, /emailRedirectTo/);
+  assert.match(html, /verifyOtp\(/);
+  assert.match(html, /requestVerificationCode\(/);
+  assert.doesNotMatch(html, /emailRedirectTo/);
   assert.match(html, /redirectTo/);
+});
+
+test('signup requires a verification code and does not expose unverified sessions', () => {
+  assert.match(html, /Email verification is required/);
+  assert.match(html, /id="verify-form"/);
+  assert.match(html, /id="verification-code"/);
+  assert.match(html, /client\.verifyOtp\(\{email,token,type:'signup'\}\)/);
+  assert.match(html, /user\.emailVerified !== true/);
+  assert.match(vantagepayApi, /VANTAGEPAY_EMAIL_VERIFICATION_REQUIRED/);
+});
+
+test('customer KYC profile is linked to the authenticated VantagePay account', () => {
+  assert.match(dashboardHtml, /id="kyc-form"/);
+  assert.match(dashboardHtml, /apiRequest\('\/api\/vantagepay\/kyc'/);
+  assert.match(dashboardHtml, /Update and resubmit KYC/);
+  assert.match(vantagepayApi, /app\.get\('\/api\/vantagepay\/kyc'/);
+  assert.match(vantagepayApi, /app\.post\('\/api\/vantagepay\/kyc'/);
+  assert.match(standaloneSchema, /CREATE TABLE IF NOT EXISTS public\.vp_customer_kyc/);
+  assert.match(standaloneSchema, /FUNCTION public\.vp_submit_kyc_profile/);
+  assert.match(standaloneSchema, /FUNCTION public\.vp_admin_review_kyc/);
+  assert.match(standaloneSchema, /vp_customer_reads_own_kyc/);
+  assert.match(standaloneSchema, /reviewer_user_id UUID REFERENCES neon_auth\."user"\(id\)/);
+  assert.match(dashboardHtml, /Secure document collection requires an approved KYC provider/);
+});
+
+test('transaction and KYC emails fail safely without credentials and never claim money moved', () => {
+  assert.match(vantagepayApi, /VANTAGEPAY_RESEND_API_KEY/);
+  assert.match(vantagepayApi, /VANTAGEPAY_EMAIL_FROM/);
+  assert.match(vantagepayApi, /https:\/\/api\.resend\.com\/emails/);
+  assert.match(vantagepayApi, /emailStatusMessage\(emailStatus\)/);
+  assert.match(vantagepayApi, /customer_email: context\.user\.email/);
+  assert.match(vantagepayApi, /app\.patch\('\/api\/vantagepay\/admin\/kyc\/:id\/status'/);
+  assert.match(standaloneSchema, /ADD COLUMN IF NOT EXISTS customer_email TEXT/);
+  assert.match(standaloneSchema, /vp_admin_update_request_status/);
+});
+
+test('operations console exposes an audited KYC review queue', () => {
+  assert.match(server, /\/vantagepay\/admin/);
+  assert.match(vantagepayApi, /app\.get\('\/api\/vantagepay\/admin\/kyc'/);
+  assert.match(vantagepayApi, /app\.patch\('\/api\/vantagepay\/admin\/kyc\/:id\/status'/);
+  assert.match(standaloneSchema, /kyc_status_changed/);
+  assert.match(standaloneSchema, /FUNCTION public\.vp_admin_list_kyc/);
 });
 
 test('customer dashboard requires a real session and uses user-scoped read-only queries', () => {
