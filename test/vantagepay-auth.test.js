@@ -55,7 +55,7 @@ test('customer dashboard requires a real session and uses user-scoped read-only 
   assert.match(dashboardHtml, /vp_customer_accounts/);
   assert.match(dashboardHtml, /vp_ledger_transactions/);
   assert.match(dashboardHtml, /\/api\/vantagepay\/transaction-requests/);
-  assert.match(dashboardHtml, /Deposit and withdrawal requests remain review-only/i);
+  assert.match(dashboardHtml, /Deposit and withdrawal requests are review-only/i);
   assert.doesNotMatch(dashboardHtml, /\.insert\(|\.upsert\(|\.update\(|\.delete\(/);
   assert.match(server, /app\.get\('\/vantagepay-dashboard\.html'/);
 });
