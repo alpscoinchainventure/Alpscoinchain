@@ -52,7 +52,7 @@ test('customer account query uses the user JWT against Neon Data API', async () 
       if (String(url).endsWith('/get-session')) {
         return {
           ok: true,
-          json: async () => ({ user: { id: userId } })
+          json: async () => ({ user: { id: userId, emailVerified: true } })
         };
       }
       return {
@@ -181,7 +181,7 @@ test('admin request queue uses the SQL RPC after checking the signed-in admin me
     fetchImpl: async (url, options = {}) => {
       calls.push({ url: String(url), options });
       if (String(url).endsWith('/get-session')) {
-        return { ok: true, json: async () => ({ user: { id: userId } }) };
+        return { ok: true, json: async () => ({ user: { id: userId, emailVerified: true } }) };
       }
       if (String(url).includes('/vp_admin_memberships?')) {
         return { ok: true, status: 200, text: async () => JSON.stringify([{ admin_role: 'operations', enabled: true }]) };
@@ -222,7 +222,7 @@ test('admin status change is delegated to the audited SQL RPC and never writes r
     fetchImpl: async (url, options = {}) => {
       calls.push({ url: String(url), options });
       if (String(url).endsWith('/get-session')) {
-        return { ok: true, json: async () => ({ user: { id: userId } }) };
+        return { ok: true, json: async () => ({ user: { id: userId, emailVerified: true } }) };
       }
       if (String(url).includes('/vp_admin_memberships?')) {
         return { ok: true, status: 200, text: async () => JSON.stringify([{ admin_role: 'finance', enabled: true }]) };
@@ -271,7 +271,7 @@ test('balance adjustment remains explicitly disabled and does not call the data 
     fetchImpl: async (url) => {
       calls.push(String(url));
       if (String(url).endsWith('/get-session')) {
-        return { ok: true, json: async () => ({ user: { id: userId } }) };
+        return { ok: true, json: async () => ({ user: { id: userId, emailVerified: true } }) };
       }
       throw new Error('balance endpoint must not access the data API');
     }
