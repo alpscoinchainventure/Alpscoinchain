@@ -75,8 +75,8 @@ test('customer account query uses the user JWT against Neon Data API', async () 
   assert.equal(res.statusCode, 200);
   assert.equal(res.payload.success, true);
   assert.equal(res.payload.account.user_id, userId);
-  const dataCall = calls.find(call => String(call.url).includes('/vp_customer_accounts?'));
-  assert.ok(dataCall, 'expected a Neon Data API request');
+  const dataCall = calls.find(call => String(call.url).includes('/rpc/vp_ensure_customer_account'));
+  assert.ok(dataCall, 'expected the authenticated account-provisioning RPC');
   assert.equal(dataCall.options.headers.Authorization, 'Bearer customer-jwt');
   assert.equal('apikey' in dataCall.options.headers, false);
   assert.equal(String(dataCall.url).startsWith('https://data.example.test/neondb/rest/v1/'), true);
