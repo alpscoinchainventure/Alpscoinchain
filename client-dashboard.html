@@ -337,6 +337,9 @@
     if(!currentUser){setProfileEditMessage("Your session expired. Please sign in again.","error");return}
     button.disabled=true;setProfileEditMessage("Saving your profile…");
     try{
+      const profileUpdate=await supabaseClient.rpc("client_update_own_profile_name",{p_full_name:displayName});
+      if(profileUpdate.error)throw profileUpdate.error;
+      if(!profileUpdate.data||profileUpdate.data.success!==true)throw new Error("The profile update could not be confirmed.");
       const {data,error}=await supabaseClient.auth.updateUser({data:{full_name:displayName}});
       if(error)throw error;
       if(!data?.user)throw new Error("The profile update could not be confirmed. Please refresh and check again.");
