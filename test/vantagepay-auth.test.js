@@ -6,7 +6,6 @@ import { validateTransactionRequest } from '../lib/vantagepay-api.js';
 
 const html = await readFile(new URL('../vantagepay-auth.html', import.meta.url), 'utf8');
 const dashboardHtml = await readFile(new URL('../vantagepay-dashboard.html', import.meta.url), 'utf8');
-const previewHtml = await readFile(new URL('../vantagepay-preview.html', import.meta.url), 'utf8');
 const server = await readFile(new URL('../server.js', import.meta.url), 'utf8');
 const standaloneSchema = await readFile(new URL('../docs/vantagepay-standalone-schema.sql', import.meta.url), 'utf8');
 const vantagepayApi = await readFile(new URL('../lib/vantagepay-api.js', import.meta.url), 'utf8');
@@ -56,16 +55,15 @@ test('customer dashboard requires a real session and uses user-scoped read-only 
   assert.match(dashboardHtml, /vp_customer_accounts/);
   assert.match(dashboardHtml, /vp_ledger_transactions/);
   assert.match(dashboardHtml, /\/api\/vantagepay\/transaction-requests/);
-  assert.match(dashboardHtml, /No balance, deposit, withdrawal, transfer, or payout is enabled/i);
+  assert.match(dashboardHtml, /Deposit and withdrawal requests remain review-only/i);
   assert.doesNotMatch(dashboardHtml, /\.insert\(|\.upsert\(|\.update\(|\.delete\(/);
   assert.match(server, /app\.get\('\/vantagepay-dashboard\.html'/);
 });
 
-test('VantagePay demo links to authentication and clearly labels fictional financial data', () => {
-  assert.match(previewHtml, /href="\/vantagepay-auth\.html"/);
-  assert.match(previewHtml, /fictional balances/i);
-  assert.match(previewHtml, /does not hold funds/i);
-  assert.match(previewHtml, /No live financial connection/i);
+test('public demo routes are retired and send visitors to real account access', () => {
+  assert.match(server, /app\.get\('\/vantagepay\/demo',[\s\S]*?res\.redirect\(302, '\/vantagepay\/login'\)/);
+  assert.match(server, /app\.get\('\/vantagepay-preview\.html',[\s\S]*?res\.redirect\(302, '\/vantagepay\/login'\)/);
+  assert.doesNotMatch(dashboardHtml, /vantagepay-preview\.html|Open demo|dashboard preview/i);
 });
 
 
