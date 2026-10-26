@@ -24,10 +24,7 @@ begin
 
   return query
   select p.id,
-    coalesce(nullif(trim(p.full_name), ''),
-             nullif(trim(u.raw_user_meta_data->>'full_name'), ''),
-             nullif(trim(u.raw_user_meta_data->>'name'), ''),
-             u.email, 'Name not provided')::text,
+    p.full_name::text,
     p.role::text, p.account_status::text, u.email::text
   from public.profiles p
   left join auth.users u on u.id = p.id
