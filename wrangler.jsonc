@@ -1,0 +1,5 @@
+{
+  "name": "alpscoinchain-proxy",
+  "compatibility_date": "2026-10-01",
+  "main": "worker.js"
+}

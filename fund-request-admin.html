@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+
+  <script>
+    if (window.location.hostname === 'www.alpscoinchaininvestment.uk') {
+      window.location.replace(
+        'https://alpscoinchaininvestment.uk' +
+        window.location.pathname +
+        window.location.search +
+        window.location.hash
+      );
+    }
+  </script>
+
+  <title>Fund Request Review | AlpsCoinChain</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1120;
+      --panel: #131d30;
+      --line: #2b3b55;
+      --text: #edf3ff;
+      --muted: #a6b4ca;
+      --danger: #ff9292;
+      --success: #8ce6b8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.55 Arial, sans-serif;
+    }
+
+    header {
+      padding: 16px 20px;
+      background: #101a2c;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 22px 14px 40px;
+    }
+
+    h1 {
+      font-size: 26px;
+      margin: 0 0 5px;
+    }
+
+    h2 {
+      font-size: 19px;
+      margin: 0;
+    }
+
+    .muted,
+    .small {
+      color: var(--muted);
+    }
+
+    .small {
+      font-size: 13px;
+    }
+
+    .panel,
+    .notice {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 16px;
+      overflow-wrap: anywhere;
+    }
+
+    .error {
+      color: var(--danger);
+      border-color: #874747;
+    }
+
+    .success {
+      color: var(--success);
+      border-color: #248566;
+    }
+
+    .warning {
+      border-left: 3px solid #d6ad54;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button,
+    select,
+    textarea {
+      font: inherit;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      background: #24334b;
+      color: var(--text);
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled,
+    select:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      background: #17694f;
+      border-color: #248566;
+    }
+
+    .danger {
+      background: #4a252c;
+      border-color: #874747;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 64px;
+      background: #0d1527;
+      margin: 8px 0;
+      resize: vertical;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 850px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 11px 9px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    td {
+      font-size: 14px;
+    }
+
+    .actions {
+      min-width: 205px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .actions button {
+      font-size: 13px;
+      padding: 8px;
+    }
+
+    @media (max-width: 600px) {
+      main {
+        padding: 16px 10px;
+      }
+
+      header {
+        padding: 14px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <strong>AlpsCoinChain Investment · Admin</strong>
+
+    <div class="toolbar">
+      <span id="adminEmail" class="small"></span>
+      <button id="signOut" type="button">Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <h1>Fund request review</h1>
+
+    <p class="muted">
+      Review client deposit and withdrawal request records.
+    </p>
+
+    <div class="notice warning">
+      <strong>Important:</strong>
+      Reviewing, approving, or rejecting a request updates its request record only.
+      It does not transfer funds, validate a wallet, or change any balance.
+      Any accounting entry must be handled separately through the authorized
+      accounting process.
+    </div>
+
+    <div id="sessionNotice" class="notice" role="status">
+      Checking administrator access…
+    </div>
+
+    <section class="panel">
+      <div class="toolbar">
+        <h2 style="margin-right:auto">Requests</h2>
+
+        <label for="statusFilter" class="small">Show:</label>
+
+        <select id="statusFilter">
+          <option value="open">Pending + under review</option>
+          <option value="all">All statuses</option>
+          <option value="pending">Pending only</option>
+          <option value="under_review">Under review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+
+        <button id="refresh" class="primary" type="button">
+          Refresh requests
+        </button>
+      </div>
+
+      <div
+        id="listNotice"
+        class="notice"
+        role="status"
+        aria-live="polite"
+      >
+        Requests have not loaded yet.
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Type / amount</th>
+              <th>Client ID</th>
+              <th>Destination</th>
+              <th>Reference / status</th>
+              <th>Review note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="small muted">
+      Only an active administrator may review requests. Never enter
+      passwords, private keys, or wallet seed phrases into a review note.
+    </p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    'use strict';
+
+    const SUPABASE_URL =
+      'https://uevofmlzpwrdidjnwxfd.supabase.co';
+
+    const SUPABASE_KEY =
+      'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+
+    const $ = id => document.getElementById(id);
+
+    if (!window.supabase || !window.supabase.createClient) {
+      $('sessionNotice').textContent =
+        'Supabase library did not load. Check your internet connection and reload.';
+
+      throw new Error('Supabase library unavailable');
+    }
+
+    const db = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      }
+    );
+
+    let isAdmin = false;
+    let busy = false;
+    let initialized = false;
+    let authSubscription = null;
+
+    function notice(id, message, type = '') {
+      const element = $(id);
+
+      element.textContent = message;
+      element.className = 'notice';
+
+      if (type === 'error') {
+        element.classList.add('error');
+      } else if (type === 'success') {
+        element.classList.add('success');
+      }
+    }
+
+    function addCell(row, value) {
+      const cell = document.createElement('td');
+
+      cell.textContent =
+        value === null ||
+        value === undefined ||
+        value === ''
+          ? '—'
+          : String(value);
+
+      row.appendChild(cell);
+
+      return cell;
+    }
+
+    function formatDate(value) {
+      if (!value) return '—';
+
+      const date = new Date(value);
+
+      return Number.isNaN(date.getTime())
+        ? '—'
+        : date.toLocaleString();
+    }
+
+    async function getCurrentSession() {
+      const { data, error } = await db.auth.getSession();
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.session && data.session.user) {
+        return data.session;
+      }
+
+      return null;
+    }
+
+    async function loadRequests() {
+      if (!isAdmin || busy) {
+        return;
+      }
+
+      $('refresh').disabled = true;
+      $('rows').replaceChildren();
+
+      notice('listNotice', 'Loading requests…');
+
+      try {
+        let query = db
+          .from('fund_requests')
+          .select(
+            'id,user_id,request_type,amount,asset,destination,status,reference,review_note,created_at'
+          )
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        const filter = $('statusFilter').value;
+
+        if (filter === 'open') {
+          query = query.in(
+            'status',
+            ['pending', 'under_review']
+          );
+        } else if (filter !== 'all') {
+          query = query.eq('status', filter);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          notice(
+            'listNotice',
+            'Could not load requests: ' + error.message,
+            'error'
+          );
+
+          return;
+        }
+
+        const visibleRequests = (data || []).filter(request =>
+          !['TEST', 'TES'].includes(String(request.asset || '').trim().toUpperCase()) &&
+          !String(request.reference || '').toUpperCase().includes('TEST')
+        );
+
+        if (visibleRequests.length === 0) {
+          notice(
+            'listNotice',
+            'No requests found for this filter.'
+          );
+
+          return;
+        }
+
+        for (const request of visibleRequests) {
+          const row = document.createElement('tr');
+
+          addCell(row, formatDate(request.created_at));
+
+          addCell(
+            row,
+            request.request_type + ' · ' +
+            request.amount + ' ' + request.asset
+          );
+
+          addCell(row, request.user_id);
+          addCell(row, request.destination);
+
+          const referenceCell = addCell(row, '');
+
+          const strong = document.createElement('strong');
+          strong.textContent = request.reference || '—';
+
+          const statusText = document.createElement('span');
+          statusText.textContent = request.status;
+
+          referenceCell.append(
+            strong,
+            document.createElement('br'),
+            statusText
+          );
+
+          addCell(row, request.review_note);
+
+          const actionCell = document.createElement('td');
+
+          if (
+            request.status !== 'pending' &&
+            request.status !== 'under_review'
+          ) {
+            actionCell.textContent = 'Final status';
+            row.appendChild(actionCell);
+            $('rows').appendChild(row);
+            continue;
+          }
+
+          const note = document.createElement('textarea');
+
+          note.rows = 2;
+          note.maxLength = 1000;
+          note.value = request.review_note || '';
+          note.placeholder =
+            'Optional note; rejection requires a reason';
+
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+
+          const reviewing = document.createElement('button');
+
+          reviewing.type = 'button';
+          reviewing.textContent = 'Mark reviewing';
+
+          reviewing.addEventListener('click', () => {
+            reviewRequest(
+              request,
+              'under_review',
+              note.value
+            );
+          });
+
+          const approve = document.createElement('button');
+
+          approve.type = 'button';
+          approve.className = 'primary';
+          approve.textContent = 'Approve';
+
+          approve.addEventListener('click', () => {
+            reviewRequest(
+              request,
+              'approved',
+              note.value
+            );
+          });
+
+          const reject = document.createElement('button');
+
+          reject.type = 'button';
+          reject.className = 'danger';
+          reject.textContent = 'Reject';
+
+          reject.addEventListener('click', () => {
+            reviewRequest(
+              request,
+              'rejected',
+              note.value
+            );
+          });
+
+          actions.append(
+            reviewing,
+            approve,
+            reject
+          );
+
+          actionCell.append(note, actions);
+          row.appendChild(actionCell);
+
+          $('rows').appendChild(row);
+        }
+
+        notice(
+          'listNotice',
+          'Loaded ' + visibleRequests.length +
+          ' request(s). Review actions change request records only.'
+        );
+      } catch (error) {
+        notice(
+          'listNotice',
+          'Unexpected error loading requests: ' +
+          (error.message || String(error)),
+          'error'
+        );
+
+        console.error('Load requests error:', error);
+      } finally {
+        $('refresh').disabled = false;
+      }
+    }
+
+    async function reviewRequest(request, status, noteValue) {
+      if (busy || !isAdmin) {
+        return;
+      }
+
+      const enteredNote = (noteValue || '').trim();
+
+      const effectiveNote =
+        enteredNote || request.review_note || null;
+
+      if (status === 'rejected' && !effectiveNote) {
+        notice(
+          'listNotice',
+          'Enter a reason before rejecting a request.',
+          'error'
+        );
+
+        return;
+      }
+
+      const messages = {
+        under_review:
+          'Mark this request as under review? No money will move.',
+
+        approved:
+          'Approve this request record? No funds will transfer and no balance will change.',
+
+        rejected:
+          'Reject this request record using the note provided? No funds will move.'
+      };
+
+      if (!confirm(messages[status])) {
+        return;
+      }
+
+      busy = true;
+
+      $('refresh').disabled = true;
+      $('statusFilter').disabled = true;
+
+      notice(
+        'listNotice',
+        'Submitting review for ' +
+        (request.reference || request.id) + '…'
+      );
+
+      try {
+        const { data, error } = await db.rpc(
+          'admin_review_fund_request',
+          {
+            p_request_id: request.id,
+            p_status: status,
+            p_review_note: effectiveNote
+          }
+        );
+
+        if (error) {
+          throw new Error(
+            'Review failed: ' + error.message
+          );
+        }
+
+        /*
+         * Verify the documented RPC response.
+         * Supabase should return the exact fields confirmed
+         * in the database function definition.
+         */
+        if (
+          !data ||
+          data.success !== true ||
+          String(data.request_id).toLowerCase() !==
+            String(request.id).toLowerCase() ||
+          String(data.status).toLowerCase() !== status ||
+          data.money_moved !== false ||
+          data.balance_changed !== false
+        ) {
+          console.error(
+            'Unexpected review RPC response:',
+            data
+          );
+
+          throw new Error(
+            'Supabase returned an unexpected response. ' +
+            'The saved status has not yet been confirmed. ' +
+            'Refresh and verify the request before trying again.'
+          );
+        }
+
+        /*
+         * Independently query the saved database record.
+         * Do not report success based on the RPC response alone.
+         */
+        const {
+          data: savedRequest,
+          error: verifyError
+        } = await db
+          .from('fund_requests')
+          .select(
+            'id,status,review_note,reviewed_at'
+          )
+          .eq('id', request.id)
+          .maybeSingle();
+
+        if (verifyError) {
+          console.error(
+            'Could not verify saved request:',
+            verifyError
+          );
+
+          throw new Error(
+            'The review call returned success, but the saved ' +
+            'request could not be verified: ' +
+            verifyError.message +
+            '. Refresh the page and check the request status before retrying.'
+          );
+        }
+
+        if (
+          !savedRequest ||
+          String(savedRequest.id).toLowerCase() !==
+            String(request.id).toLowerCase() ||
+          String(savedRequest.status).toLowerCase() !== status
+        ) {
+          console.error(
+            'Persisted request did not match the requested review:',
+            {
+              requestedId: request.id,
+              requestedStatus: status,
+              savedRequest
+            }
+          );
+
+          throw new Error(
+            'The database record does not show the requested ' +
+            'status yet. Refresh and verify the request before retrying.'
+          );
+        }
+
+        /*
+         * The RPC succeeded and the database row now confirms
+         * the requested status. Refresh the displayed table.
+         */
+        await loadRequests();
+
+        notice(
+          'listNotice',
+          'Verified: request ' +
+          (request.reference || request.id) +
+          ' is saved as ' + savedRequest.status +
+          '. No funds moved and no balance changed.' +
+          (
+            savedRequest.reviewed_at
+              ? ' Reviewed at ' +
+                formatDate(savedRequest.reviewed_at) + '.'
+              : ''
+          ),
+          'success'
+        );
+      } catch (error) {
+        notice(
+          'listNotice',
+          error.message || String(error),
+          'error'
+        );
+
+        console.error(
+          'Fund request review error:',
+          error
+        );
+      } finally {
+        busy = false;
+
+        $('refresh').disabled = false;
+        $('statusFilter').disabled = false;
+      }
+    }
+
+    async function verifyAdministrator() {
+      isAdmin = false;
+
+      $('adminEmail').textContent = '';
+      $('rows').replaceChildren();
+
+      notice(
+        'sessionNotice',
+        'Checking administrator session…'
+      );
+
+      try {
+        const session = await getCurrentSession();
+
+        if (!session || !session.user) {
+          notice(
+            'sessionNotice',
+            'No signed-in session was found on this domain. ' +
+            'Sign in at the main login page, then return here.',
+            'error'
+          );
+
+          return;
+        }
+
+        const user = session.user;
+
+        const {
+          data: profile,
+          error: profileError
+        } = await db
+          .from('profiles')
+          .select('role, account_status')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          notice(
+            'sessionNotice',
+            'Could not read the profile: ' +
+            profileError.message,
+            'error'
+          );
+
+          console.error(
+            'Profile query error:',
+            profileError
+          );
+
+          return;
+        }
+
+        const observedRole =
+          profile?.role ?? 'profile not visible';
+
+        const observedStatus =
+          profile?.account_status ?? 'status unavailable';
+
+        if (
+          !profile ||
+          String(profile.role).toLowerCase() !== 'admin' ||
+          String(profile.account_status).toLowerCase() !== 'active'
+        ) {
+          notice(
+            'sessionNotice',
+            'Administrator check failed. Detected role: ' +
+            String(observedRole) +
+            '; account status: ' +
+            String(observedStatus) +
+            '. No request actions are enabled.',
+            'error'
+          );
+
+          return;
+        }
+
+        isAdmin = true;
+
+        $('adminEmail').textContent =
+          user.email || 'Admin session';
+
+        notice(
+          'sessionNotice',
+          'Active administrator session verified.',
+          'success'
+        );
+
+        await loadRequests();
+      } catch (error) {
+        notice(
+          'sessionNotice',
+          'Could not verify administrator access: ' +
+          (error.message || String(error)),
+          'error'
+        );
+
+        console.error(
+          'Admin initialization error:',
+          error
+        );
+      }
+    }
+
+    async function init() {
+      if (initialized) {
+        return;
+      }
+
+      initialized = true;
+
+      $('refresh').addEventListener(
+        'click',
+        loadRequests
+      );
+
+      $('statusFilter').addEventListener(
+        'change',
+        loadRequests
+      );
+
+      $('signOut').addEventListener(
+        'click',
+        async () => {
+          $('signOut').disabled = true;
+
+          try {
+            const { error } = await db.auth.signOut();
+
+            if (error) {
+              notice(
+                'sessionNotice',
+                'Sign out failed: ' + error.message,
+                'error'
+              );
+
+              $('signOut').disabled = false;
+              return;
+            }
+
+            isAdmin = false;
+
+            window.location.replace('/login');
+          } catch (error) {
+            notice(
+              'sessionNotice',
+              'Sign out failed: ' +
+              (error.message || String(error)),
+              'error'
+            );
+
+            $('signOut').disabled = false;
+          }
+        }
+      );
+
+      /*
+       * Register the listener before checking the session.
+       * Database queries are deferred outside the auth callback.
+       */
+      const { data } = db.auth.onAuthStateChange(
+        (event, session) => {
+          if (event === 'SIGNED_OUT') {
+            isAdmin = false;
+
+            $('adminEmail').textContent = '';
+            $('rows').replaceChildren();
+
+            notice(
+              'sessionNotice',
+              'You are signed out. Please sign in again.',
+              'error'
+            );
+          } else if (
+            event === 'SIGNED_IN' ||
+            event === 'TOKEN_REFRESHED' ||
+            event === 'USER_UPDATED'
+          ) {
+            setTimeout(() => {
+              if (session && session.user) {
+                verifyAdministrator();
+              }
+            }, 0);
+          }
+        }
+      );
+
+      authSubscription = data.subscription;
+
+      await verifyAdministrator();
+    }
+
+    window.addEventListener('pagehide', () => {
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

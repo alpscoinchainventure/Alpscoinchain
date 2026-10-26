@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#07111f">
+<title>My Beneficiaries | AlpsCoinChain</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#07111f;--panel:#102139;--text:#edf5ff;--muted:#a2b5cd;--line:rgba(154,185,226,.2);--blue:#2f83ff;--green:#7ce2b4;--red:#ffadad}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 12% 0%,rgba(36,111,190,.22),transparent 38%),linear-gradient(145deg,#07111f,#0a1728 52%,#07101d);color:var(--text);font:15px/1.6 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:22px 18px;background:rgba(5,14,26,.85);border-bottom:1px solid var(--line)}header>div,main{width:min(980px,100%);margin:auto}h1{font-size:clamp(23px,4vw,30px);margin:0;letter-spacing:-.04em}header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+main{padding:24px 16px 48px}.notice{padding:14px 16px;border:1px solid rgba(230,200,137,.35);background:rgba(98,73,30,.18);border-radius:13px;color:#f1dfb7;font-size:13px;margin-bottom:20px}
+.layout{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:18px;align-items:start}.panel{min-width:0;background:linear-gradient(145deg,rgba(19,36,59,.94),rgba(12,25,43,.94));border:1px solid var(--line);border-radius:16px;overflow:hidden}.panel h2{font-size:17px;margin:0;padding:16px 19px;border-bottom:1px solid var(--line)}form{padding:19px;display:grid;gap:13px}label{display:grid;gap:6px;font-size:13px;font-weight:700;color:#d1def0}input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:#071424;color:var(--text);font:inherit}input:focus,select:focus{outline:2px solid rgba(47,131,255,.45);outline-offset:1px}.muted{color:var(--muted);font-size:12px;margin:0}
+button,.link{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(92,157,255,.25);border-radius:10px;padding:11px 14px;background:linear-gradient(135deg,#2f83ff,#1b60cf);color:white;text-decoration:none;font:inherit;font-size:13px;font-weight:700;cursor:pointer;text-align:center}button:disabled{opacity:.55;cursor:wait}.secondary{background:rgba(137,170,210,.09);border-color:var(--line);color:#d8e8ff}.danger{background:rgba(255,100,100,.1);border-color:rgba(255,140,140,.25);color:#ffc2c2}.actions{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0}.message{display:none;margin:0 19px 17px;padding:11px 13px;border-radius:10px;font-size:13px;overflow-wrap:anywhere}.message.show{display:block}.message.ok{color:var(--green);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25)}.message.err{color:var(--red);background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25)}
+#beneficiary-list{padding:4px 18px 12px}.empty{padding:22px 0;color:var(--muted);font-size:13px}.beneficiary{padding:15px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.beneficiary:last-child{border-bottom:0}.beneficiary strong{display:block;overflow-wrap:anywhere}.beneficiary small{display:block;color:var(--muted);overflow-wrap:anywhere}.item-actions{display:flex;gap:7px;flex-shrink:0}.item-actions button{padding:7px 9px;font-size:12px}
+@media(max-width:700px){main{padding:18px 12px 32px}.layout{grid-template-columns:1fr}.beneficiary{flex-direction:column}.item-actions{width:100%}.item-actions button{flex:1}}
+</style>
+</head>
+<body>
+<header><div><h1>My Beneficiaries</h1><p>Manage saved destinations for your account requests</p></div></header>
+<main>
+<div class="notice"><strong>Important:</strong> A saved beneficiary is only a saved destination record. It does not verify ownership, send money, approve a withdrawal, or guarantee a transfer. Only enter details needed for the intended request. Never enter passwords, private keys, or recovery phrases.</div>
+<div class="actions"><a class="link secondary" href="/client-dashboard.html">← Back to dashboard</a><a class="link secondary" href="/fund-requests.html">Deposit &amp; withdrawal requests</a><button type="button" class="secondary" id="refresh">Refresh list</button></div>
+<div id="page-message" class="message show" role="status" aria-live="polite">Checking your sign-in session…</div>
+<div class="layout">
+<section class="panel"><h2 id="form-title">Add a beneficiary</h2>
+<form id="beneficiary-form">
+<label for="beneficiary-name">Beneficiary name<input id="beneficiary-name" name="beneficiary_name" maxlength="120" autocomplete="off" required></label>
+<label for="destination">Destination or account reference<input id="destination" name="destination" maxlength="500" autocomplete="off" required placeholder="Enter the destination/reference"></label>
+<label for="asset">Asset or currency code<input id="asset" name="asset" maxlength="20" required placeholder="e.g. USDT, BTC"></label>
+<p class="muted">Check every detail carefully before saving. These details are stored in your account and are visible to your signed-in account under the database access rules.</p>
+<button id="save-button" type="submit">Save beneficiary</button>
+<button id="cancel-edit" type="button" class="secondary" hidden>Cancel edit</button>
+</form><div id="form-message" class="message" role="status" aria-live="polite"></div>
+</section>
+<section class="panel"><h2>Saved beneficiaries</h2><div id="beneficiary-list"><div class="empty">Loading your saved beneficiaries…</div></div></section>
+</div>
+</main>
+<script>
+'use strict';
+const SUPABASE_URL='https://uevofmlzpwrdidjnwxfd.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+let supabaseClient=null;
+async function ensureSupabaseClient(){
+  if(window.supabase&&typeof window.supabase.createClient==='function'){
+    supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+    return true;
+  }
+  return await new Promise(resolve=>{
+    const fallback=document.createElement('script');
+    fallback.src='https://unpkg.com/@supabase/supabase-js@2';
+    fallback.onload=()=>{
+      if(window.supabase&&typeof window.supabase.createClient==='function'){
+        supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+        resolve(true);
+      }else resolve(false);
+    };
+    fallback.onerror=()=>resolve(false);
+    document.head.appendChild(fallback);
+  });
+}
+const $=id=>document.getElementById(id);
+let currentUser=null,editingId=null;
+function showMessage(id,text,type='ok'){const el=$(id);el.textContent=text;el.className='message show '+(type==='err'?'err':'ok')}
+function clearMessage(id){const el=$(id);el.textContent='';el.className='message'}
+function safeText(tag,text,className){const el=document.createElement(tag);el.textContent=text;if(className)el.className=className;return el}
+function resetForm(){editingId=null;$('beneficiary-form').reset();$('form-title').textContent='Add a beneficiary';$('save-button').textContent='Save beneficiary';$('cancel-edit').hidden=true;clearMessage('form-message')}
+async function checkSession(){try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;if(!data.session){window.location.replace('/login.html?next=beneficiaries');return false}currentUser=data.session.user;const {data:profile,error:profileError}=await supabaseClient.from('profiles').select('role,account_status').eq('id',currentUser.id).maybeSingle();if(profileError)throw profileError;if(!profile||profile.account_status!=='active'||profile.role!=='client'){showMessage('page-message','This page is available to active client accounts only. If you believe this is an error, contact support.','err');$('beneficiary-form').querySelectorAll('input,button').forEach(el=>el.disabled=true);return false}showMessage('page-message','Signed in as '+currentUser.email+'. Your saved beneficiary records are shown below.');return true}catch(error){console.error('Beneficiary session check failed:',error);showMessage('page-message','Unable to verify your account. Please refresh or sign in again.','err');return false}}
+async function loadBeneficiaries(){if(!currentUser)return;$('refresh').disabled=true;$('beneficiary-list').replaceChildren(safeText('div','Loading saved beneficiaries…','empty'));try{const {data,error}=await supabaseClient.from('beneficiaries').select('id,beneficiary_name,destination,asset,created_at,updated_at').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(100);if(error)throw error;const list=$('beneficiary-list');list.replaceChildren();if(!data||!data.length){list.appendChild(safeText('div','No beneficiaries saved yet. Add one using the form.','empty'));return}for(const item of data){const article=safeText('article','','beneficiary');const details=document.createElement('div');details.appendChild(safeText('strong',item.beneficiary_name));details.appendChild(safeText('small','Asset: '+item.asset));details.appendChild(safeText('small','Destination/reference: '+item.destination));const actions=safeText('div','','item-actions');const edit=safeText('button','Edit');edit.type='button';edit.className='secondary';edit.addEventListener('click',()=>{editingId=item.id;$('beneficiary-name').value=item.beneficiary_name||'';$('destination').value=item.destination||'';$('asset').value=item.asset||'';$('form-title').textContent='Edit beneficiary';$('save-button').textContent='Update beneficiary';$('cancel-edit').hidden=false;clearMessage('form-message');window.scrollTo({top:0,behavior:'smooth'})});const remove=safeText('button','Delete');remove.type='button';remove.className='danger';remove.addEventListener('click',()=>deleteBeneficiary(item.id,item.beneficiary_name));actions.append(edit,remove);article.append(details,actions);list.appendChild(article)}}catch(error){console.error('Beneficiary list load failed:',error);$('beneficiary-list').replaceChildren(safeText('div','Could not load beneficiaries: '+(error&&error.message?error.message:'unknown error')+'. Check the beneficiaries table and its SELECT policy for your own user_id.','empty'))}finally{$('refresh').disabled=false}}
+$('beneficiary-form').addEventListener('submit',async event=>{event.preventDefault();if(!currentUser)return;const beneficiary_name=$('beneficiary-name').value.trim();const destination=$('destination').value.trim();const asset=$('asset').value.trim().toUpperCase();if(!beneficiary_name||!destination||!asset){showMessage('form-message','Complete all three fields.','err');return}if(beneficiary_name.length>120||destination.length>500||asset.length>20){showMessage('form-message','One or more fields exceed the allowed length.','err');return}const wasEditing=Boolean(editingId);const button=$('save-button');button.disabled=true;button.textContent=wasEditing?'Updating…':'Saving…';try{let result;if(editingId){result=await supabaseClient.from('beneficiaries').update({beneficiary_name,destination,asset,updated_at:new Date().toISOString()}).eq('id',editingId).eq('user_id',currentUser.id).select('id').maybeSingle()}else{result=await supabaseClient.from('beneficiaries').insert({user_id:currentUser.id,beneficiary_name,destination,asset}).select('id').single()}if(result.error)throw result.error;if(!result.data)throw new Error('No record was changed. Refresh and try again.');resetForm();showMessage('page-message',wasEditing?'Beneficiary updated.':'Beneficiary saved.','ok');await loadBeneficiaries()}catch(error){console.error('Beneficiary save failed:',error);showMessage('form-message',error.message||'Could not save the beneficiary. Please try again.','err')}finally{button.disabled=false;button.textContent=editingId?'Update beneficiary':'Save beneficiary'}});
+async function deleteBeneficiary(id,name){if(!currentUser||!window.confirm('Delete saved beneficiary “'+name+'”? This will not cancel or change any existing request.'))return;try{const {data,error}=await supabaseClient.from('beneficiaries').delete().eq('id',id).eq('user_id',currentUser.id).select('id').maybeSingle();if(error)throw error;if(!data)throw new Error('No record was deleted. Refresh and try again.');if(editingId===id)resetForm();showMessage('page-message','Beneficiary deleted. Existing requests are not changed.');await loadBeneficiaries()}catch(error){console.error('Beneficiary delete failed:',error);showMessage('page-message',error.message||'Could not delete this beneficiary.','err')}}
+$('cancel-edit').addEventListener('click',resetForm);$('refresh').addEventListener('click',loadBeneficiaries);
+(async()=>{
+  const ready=await ensureSupabaseClient();
+  if(!ready){
+    showMessage('page-message','The secure database library could not load. Check your internet connection, then refresh this page. The form has been disabled so it will not simply reload without saving.','err');
+    $('beneficiary-form').querySelectorAll('input,button').forEach(el=>el.disabled=true);
+    $('refresh').disabled=true;
+    return;
+  }
+  if(await checkSession())await loadBeneficiaries();
+})();
+</script>
+</body>
+</html>
