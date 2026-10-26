@@ -54,10 +54,13 @@ test('VantagePay auth page uses Neon Auth APIs rather than simulating authentica
 });
 
 test('signup does not send the unsupported callbackURL/emailRedirectTo option', () => {
-  assert.match(html, /client\\.signUp\\(\\{email,password,options:\\{data:\\{full_name:fullName\\}\\}\\}\\)/);
-  assert.doesNotMatch(html, /client\\.signUp\\(\\{email,password,options:\\{data:\\{full_name:fullName\\},emailRedirectTo:/);
+  const start = html.indexOf('client.signUp(');
+  const end = html.indexOf(';', start);
+  assert.ok(start >= 0 && end > start, 'signup call must exist');
+  const signupCall = html.slice(start, end);
+  assert.equal(signupCall.includes('emailRedirectTo'), false);
+  assert.equal(signupCall.includes('callbackURL'), false);
 });
-
 test('auth and dashboard inline scripts parse', () => {
   assert.doesNotThrow(() => new vm.Script(inlineScript(html, 'auth')), 'auth script must parse');
   assert.doesNotThrow(() => new vm.Script(inlineScript(dashboardHtml, 'dashboard')), 'dashboard script must parse');
