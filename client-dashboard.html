@@ -19,7 +19,7 @@
     .button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.button,button{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(92,157,255,.25);border-radius:10px;padding:11px 15px;background:linear-gradient(135deg,#2b7fff,#1b60cf);color:#fff;text-decoration:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;transition:transform .18s ease,filter .18s ease,background .18s ease}.button:hover,button:hover{filter:brightness(1.12);transform:translateY(-1px)}.button.secondary{background:rgba(137,170,210,.09);border-color:var(--border);color:#d8e8ff}.button.secondary:hover{background:rgba(137,170,210,.16)}button:disabled{opacity:.55;cursor:not-allowed;transform:none}
     .profile-photo-area{display:flex;align-items:center;gap:16px;padding:15px;margin:0 0 17px;border:1px solid rgba(123,161,205,.2);border-radius:14px;background:linear-gradient(135deg,rgba(5,17,31,.7),rgba(23,48,75,.55))}.avatar-frame{width:92px;height:92px;flex:0 0 92px;border-radius:50%;overflow:hidden;display:grid;place-items:center;border:2px solid rgba(105,224,176,.72);background:linear-gradient(135deg,rgba(43,127,255,.35),rgba(105,224,176,.2));box-shadow:0 0 0 5px rgba(43,127,255,.08)}.avatar-frame img{width:100%;height:100%;object-fit:cover}.avatar-initials{font-size:27px;font-weight:800;letter-spacing:-.04em;color:#e8f6ff}.avatar-copy{min-width:0;flex:1}.avatar-copy h4{margin:0 0 3px;font-size:15px}.avatar-copy p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}.avatar-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.avatar-actions button{padding:9px 12px;font-size:12px}.avatar-status{margin:8px 0 0;font-size:12px;overflow-wrap:anywhere}.avatar-status.success-message{color:var(--success)}.avatar-status.error-message{color:var(--danger)}#avatar-file{display:none}
 
-    .table-wrap{overflow-x:auto;width:100%;border:1px solid var(--border);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:620px;font-size:13px}th,td{text-align:left;padding:12px 11px;border-bottom:1px solid var(--border);overflow-wrap:anywhere}th{color:#a9bfd9;background:rgba(3,12,23,.45);font-weight:700}td{color:#e0eaf7}tr:last-child td{border-bottom:0}.empty{color:var(--muted);padding:15px 0}
+    .apy-report-list{display:grid;gap:12px;margin-top:14px}.apy-report-item,.apy-activity-entry{padding:16px;border:1px solid var(--border);border-radius:12px;background:rgba(3,12,23,.32);margin-top:10px;overflow-wrap:anywhere}.apy-report-item h4{margin:0 0 5px;font-size:16px}.apy-report-item details{margin:10px 0}.apy-report-item summary{cursor:pointer;color:#a9c6e8;font-weight:700}.apy-report-item button{margin-top:10px}.apy-report-item .muted{white-space:pre-wrap;overflow-wrap:anywhere}.table-wrap{overflow-x:auto;width:100%;border:1px solid var(--border);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:620px;font-size:13px}th,td{text-align:left;padding:12px 11px;border-bottom:1px solid var(--border);overflow-wrap:anywhere}th{color:#a9bfd9;background:rgba(3,12,23,.45);font-weight:700}td{color:#e0eaf7}tr:last-child td{border-bottom:0}.empty{color:var(--muted);padding:15px 0}
     label{display:block;margin:12px 0 5px;font-size:14px;font-weight:700;color:#c8d8eb}input,textarea{display:block;width:100%;border:1px solid var(--border);border-radius:10px;padding:12px 13px;font:inherit;background:rgba(3,12,23,.65);color:var(--text)}input:focus,textarea:focus{outline:2px solid rgba(43,127,255,.5);outline-offset:1px}textarea{min-height:110px;resize:vertical}.form-message{margin-top:12px;font-size:14px;overflow-wrap:anywhere}.success-message{color:var(--success)}.error-message{color:var(--danger)}footer{text-align:center;padding:22px 15px;color:#8398b4;font-size:12px;border-top:1px solid var(--border);background:rgba(4,12,22,.45)}[hidden]{display:none!important}
     @media(max-width:700px){header{padding:16px 12px}.brand-lockup{gap:10px}.brand-mark{width:44px;height:44px;flex-basis:44px}.header-home-button{padding:8px 10px;font-size:12px}.grid{grid-template-columns:1fr}main{padding:18px 12px 32px}.card{padding:17px}.welcome h2{font-size:25px}#ledger-balance-list{grid-template-columns:1fr}.button-row .button,.button-row button{flex:1 1 100%}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
@@ -93,6 +93,38 @@
     <div class="button-row"><button type="button" id="refresh-requests-button">Refresh request history</button></div>
     <p id="request-history-message" class="form-message" role="status" aria-live="polite">Request history has not been loaded yet.</p>
     <div class="table-wrap"><table><thead><tr><th>Type</th><th>Amount</th><th>Asset</th><th>Status</th><th>Date</th><th>Reference</th></tr></thead><tbody id="request-history-rows"><tr><td colspan="6" class="empty">Sign in to load your request history.</td></tr></tbody></table></div>
+  </section>
+
+
+  <section class="card" id="beneficiary-apy-card">
+    <h3>Beneficiary Activities · APY Progress</h3>
+    <p class="muted">View published APY performance reports and their activity history. Report figures and outcomes are displayed only when recorded and reviewed; this section does not initiate transfers or change balances.</p>
+    <div class="button-row"><button type="button" id="refresh-apy-reports-button">Refresh APY reports</button></div>
+    <p id="apy-reports-message" class="form-message" role="status" aria-live="polite">Loading APY activity…</p>
+    <div id="apy-report-list" class="apy-report-list" aria-live="polite"></div>
+  </section>
+
+  <section class="card" id="apy-agent-workspace" hidden>
+    <h3>Agent Workspace · Submit APY Report</h3>
+    <p class="muted">Submit a factual report only for a beneficiary assigned to your account. Submissions remain pending until an administrator reviews and publishes them.</p>
+    <form id="apy-agent-report-form">
+      <label for="apy-beneficiary-select">Assigned beneficiary</label>
+      <select id="apy-beneficiary-select" required><option value="">Loading assignments…</option></select>
+      <div class="form-grid">
+        <div><label for="apy-period-start">Reporting period start</label><input id="apy-period-start" type="date" required></div>
+        <div><label for="apy-period-end">Reporting period end</label><input id="apy-period-end" type="date" required></div>
+        <div><label for="apy-rate">APY rate (%) — if verified</label><input id="apy-rate" type="number" min="0" max="1000000" step="0.000001" placeholder="Leave blank if unverified"></div>
+        <div><label for="apy-return-amount">Recorded return amount — if verified</label><input id="apy-return-amount" type="number" min="0" max="9999999999999999" step="0.00000001" placeholder="Leave blank if unverified"></div>
+        <div><label for="apy-asset-code">Asset code</label><input id="apy-asset-code" maxlength="20" placeholder="e.g. USDT"></div>
+        <div><label for="apy-activity-type">Activity type</label><select id="apy-activity-type"><option value="progress_review">Progress review</option><option value="progression_attempt">Progression attempt</option><option value="performance_note">Performance note</option><option value="follow_up">Follow-up</option></select></div>
+        <div><label for="apy-activity-outcome">Activity outcome</label><select id="apy-activity-outcome"><option value="needs_review">Needs review</option><option value="pending">Pending</option><option value="completed">Completed</option><option value="unsuccessful">Unsuccessful</option></select></div>
+        <div><label for="apy-evidence-reference">Evidence reference (optional)</label><input id="apy-evidence-reference" maxlength="500" placeholder="Ticket or record reference"></div>
+      </div>
+      <label for="apy-summary">Report summary</label><textarea id="apy-summary" maxlength="4000" required placeholder="Describe verified performance and any outstanding issue. Do not include passwords, private keys, or recovery phrases."></textarea>
+      <label for="apy-activity-details">Activity details</label><textarea id="apy-activity-details" maxlength="3000" placeholder="Record what was attempted and the observed result. Leave blank to use the report summary."></textarea>
+      <div class="button-row"><button type="submit" id="apy-submit-report-button">Submit report for review</button></div>
+      <p id="apy-agent-message" class="form-message" role="status" aria-live="polite"></p>
+    </form>
   </section>
 
   <section class="card"><h3>Deposits and withdrawals</h3>
@@ -418,12 +450,88 @@
     finally{button.disabled=false}
   }
 
+
+  function apyStatusLabel(status){
+    return ({submitted:"Submitted · awaiting review",approved:"Approved · awaiting publication",published:"Published",changes_requested:"Changes requested",rejected:"Rejected"})[status]||String(status||"Unknown");
+  }
+  function apyField(label,value){
+    const p=document.createElement("p");p.className="muted";const strong=document.createElement("strong");strong.textContent=label+": ";p.append(strong,document.createTextNode(value===null||value===undefined||value===""?"Not recorded":String(value)));return p;
+  }
+  async function loadApyReports(){
+    const message=document.getElementById("apy-reports-message"),list=document.getElementById("apy-report-list"),refresh=document.getElementById("refresh-apy-reports-button");
+    if(!supabaseClient||!currentUser)return;
+    refresh.disabled=true;message.textContent="Loading APY reports…";list.replaceChildren();
+    try{
+      const {data,error}=await supabaseClient.rpc("apy_list_dashboard_reports");if(error)throw error;
+      const reports=Array.isArray(data)?data:[];
+      if(!reports.length){message.textContent="No APY reports are available yet. Published reports appear here after administrator review.";return}
+      for(const report of reports){
+        const article=document.createElement("article");article.className="apy-report-item";
+        const heading=document.createElement("h4");heading.textContent=(report.beneficiary_name||"Beneficiary")+" · "+apyStatusLabel(report.status);article.appendChild(heading);
+        const period=document.createElement("p");period.className="muted";period.textContent="Reporting period: "+report.reporting_period_start+" to "+report.reporting_period_end+" · Updated "+formatDate(report.updated_at);article.appendChild(period);
+        const details=document.createElement("details");const summary=document.createElement("summary");summary.textContent="View report details";details.appendChild(summary);
+        details.append(apyField("Agent",report.agent_name),apyField("APY rate",report.apy_rate===null?"Not recorded":String(report.apy_rate)+"%"),apyField("Recorded return",report.return_amount===null?"Not recorded":String(report.return_amount)+(report.asset_code?" "+report.asset_code:"")),apyField("Summary",report.summary),apyField("Administrator notes",report.admin_notes),apyField("Published at",report.published_at?formatDate(report.published_at):"Not published"));
+        article.appendChild(details);
+        const activities=document.createElement("button");activities.type="button";activities.className="secondary";activities.textContent="View activity history";activities.addEventListener("click",async()=>{
+          const area=article.querySelector(".apy-activity-history");
+          if(area){area.remove();activities.textContent="View activity history";return}
+          activities.disabled=true;
+          try{
+            const result=await supabaseClient.rpc("apy_list_activities",{p_report_id:report.report_id});if(result.error)throw result.error;
+            const wrap=document.createElement("div");wrap.className="apy-activity-history";
+            const rows=Array.isArray(result.data)?result.data:[];
+            if(!rows.length){wrap.appendChild(apyField("Activity history","No activity records found."))}
+            for(const item of rows){const block=document.createElement("div");block.className="apy-activity-entry";block.append(apyField("Activity",item.activity_type),apyField("Outcome",item.outcome),apyField("Date",formatDate(item.occurred_at)),apyField("Details",item.details),apyField("Evidence reference",item.evidence_reference));wrap.appendChild(block)}
+            article.appendChild(wrap);activities.textContent="Hide activity history";
+          }catch(error){message.textContent="Could not load activity history: "+(error.message||"Please try again.");}
+          finally{activities.disabled=false}
+        });
+        article.appendChild(activities);list.appendChild(article);
+      }
+      message.textContent=reports.length+" report(s) loaded. Only published reports are visible to beneficiaries; assigned agents can also see their own submissions.";
+    }catch(error){console.error("APY reports could not be loaded:",error);message.textContent="APY reports could not be loaded. Ensure the APY migration is applied and try again."}
+    finally{refresh.disabled=false}
+  }
+  async function loadApyAgentWorkspace(){
+    const workspace=document.getElementById("apy-agent-workspace"),select=document.getElementById("apy-beneficiary-select"),message=document.getElementById("apy-agent-message");
+    try{
+      const {data,error}=await supabaseClient.rpc("apy_list_agent_assignments");if(error)throw error;
+      const assignments=(Array.isArray(data)?data:[]).filter(a=>a.active&&a.agent_user_id===currentUser.id);
+      if(!assignments.length){workspace.hidden=true;return}
+      select.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select an assigned beneficiary";select.appendChild(placeholder);
+      for(const item of assignments){const option=document.createElement("option");option.value=item.beneficiary_user_id;option.textContent=item.beneficiary_name+" · "+item.beneficiary_user_id;select.appendChild(option)}
+      workspace.hidden=false;message.textContent="You can submit reports for "+assignments.length+" assigned beneficiary account(s).";
+    }catch(error){workspace.hidden=true;console.info("No APY agent workspace for this account:",error.message||error)}
+  }
+  async function submitApyReport(event){
+    event.preventDefault();const form=document.getElementById("apy-agent-report-form"),button=document.getElementById("apy-submit-report-button"),message=document.getElementById("apy-agent-message");
+    const beneficiary=document.getElementById("apy-beneficiary-select").value,start=document.getElementById("apy-period-start").value,end=document.getElementById("apy-period-end").value,summary=document.getElementById("apy-summary").value.trim();
+    if(!beneficiary||!start||!end||end<start||!summary){message.textContent="Select a beneficiary, valid reporting period, and report summary.";return}
+    const optionalNumber=id=>{const raw=document.getElementById(id).value.trim();return raw===""?null:Number(raw)};
+    const rate=optionalNumber("apy-rate"),amount=optionalNumber("apy-return-amount");
+    if((rate!==null&&(!Number.isFinite(rate)||rate<0))||(amount!==null&&(!Number.isFinite(amount)||amount<0))){message.textContent="Enter valid non-negative APY and return values, or leave them blank if unverified.";return}
+    button.disabled=true;message.textContent="Submitting report…";
+    try{
+      const {data,error}=await supabaseClient.rpc("apy_agent_submit_report",{
+        p_beneficiary_user_id:beneficiary,p_reporting_period_start:start,p_reporting_period_end:end,
+        p_apy_rate:rate,p_return_amount:amount,p_asset_code:document.getElementById("apy-asset-code").value.trim().toUpperCase()||null,
+        p_summary:summary,p_activity_type:document.getElementById("apy-activity-type").value,
+        p_outcome:document.getElementById("apy-activity-outcome").value,
+        p_activity_details:document.getElementById("apy-activity-details").value.trim()||null,
+        p_evidence_reference:document.getElementById("apy-evidence-reference").value.trim()||null
+      });
+      if(error)throw error;if(!data||data.success!==true)throw new Error("The report was not accepted.");
+      form.reset();message.textContent="Report submitted successfully and is awaiting administrator review.";await loadApyReports();
+    }catch(error){console.error("APY report submission failed:",error);message.textContent=error.message||"The report could not be submitted. Check your assignment and try again."}
+    finally{button.disabled=false}
+  }
+
   async function startDashboard(){
     if(!window.supabase||!window.supabase.createClient){showPageMessage("The account service did not load. Check your internet connection and refresh.");return}
     supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
     try{
       const result=await supabaseClient.auth.getSession();if(result.error)throw result.error;const session=result.data.session;if(!session||!session.user){window.location.replace("/login");return}
-      currentUser=session.user;setText("account-email",currentUser.email);setText("account-id",currentUser.id);showPageMessage("You are signed in.");const profileReady=await loadProfile();if(!profileReady)return;await loadAvatar();await Promise.all([loadLedgerBalances(),loadRequestHistory()]);
+      currentUser=session.user;setText("account-email",currentUser.email);setText("account-id",currentUser.id);showPageMessage("You are signed in.");const profileReady=await loadProfile();if(!profileReady)return;await loadAvatar();await Promise.all([loadLedgerBalances(),loadRequestHistory(),loadApyReports(),loadApyAgentWorkspace()]);
     }catch(error){console.error("Dashboard initialization failed:",error);showPageMessage("We could not load your account. Please refresh or sign in again.")}
   }
 
@@ -431,6 +539,8 @@
   document.getElementById("sign-out-button").addEventListener("click",signOut);
   document.getElementById("refresh-balances-button").addEventListener("click",loadLedgerBalances);
   document.getElementById("refresh-requests-button").addEventListener("click",loadRequestHistory);
+  document.getElementById("refresh-apy-reports-button").addEventListener("click",loadApyReports);
+  document.getElementById("apy-agent-report-form").addEventListener("submit",submitApyReport);
   document.getElementById("support-form").addEventListener("submit",submitSupport);
   startDashboard();
 })();
