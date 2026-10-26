@@ -80,6 +80,26 @@ test('signup requires a verification code and does not expose unverified session
   assert.match(vantagepayApi, /VANTAGEPAY_EMAIL_VERIFICATION_REQUIRED/);
 });
 
+test('OTP verification survives page reload without persisting the OTP itself', () => {
+  assert.match(html, /vantagepay\.pending-email-verification\.v1/);
+  assert.match(html, /function savePendingVerification\(email\)/);
+  assert.match(html, /function readPendingVerification\(\)/);
+  assert.match(html, /pendingVerification && mode !== 'recovery'/);
+  assert.match(html, /Your email is saved if this page reloads/);
+  assert.match(html, /sessionStorage/);
+  assert.doesNotMatch(html, /sessionStorage\.setItem\([^,]*verification-code/);
+});
+
+test('OTP resend is cooldown-limited and reports the newest-code guidance', () => {
+  assert.match(html, /RESEND_COOLDOWN_MS = 45000/);
+  assert.match(html, /function startResendCooldown\(\)/);
+  assert.match(html, /function restoreResendCooldown\(\)/);
+  assert.match(html, /Please wait for the resend timer/);
+  assert.match(html, /use the newest code you receive/i);
+  assert.match(html, /That code may be incorrect or expired/);
+  assert.match(html, /await client\.resend\(\{type:'signup',email\}\)/);
+});
+
 test('customer KYC profile is linked to the authenticated VantagePay account', () => {
   assert.match(dashboardHtml, /id="kyc-form"/);
   assert.match(dashboardHtml, /apiRequest\('\/api\/vantagepay\/kyc'/);
