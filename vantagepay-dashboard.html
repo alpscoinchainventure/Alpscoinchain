@@ -158,19 +158,29 @@ document.getElementById('request-form').addEventListener('submit',async event=>{
  }catch(error){setMessage('request-status',error.message,'bad');}
  finally{button.disabled=false;}
 });
+function formatMoneyMinorUnits(units,currency){
+const raw=String(units??'0');
+if(!/^-?\\d+$/.test(raw))return 'Unavailable';
+const negative=raw.startsWith('-');
+const digits=negative?raw.slice(1):raw;
+const padded=digits.padStart(3,'0');
+const major=padded.slice(0,-2).replace(/^0+(?=\\d)/,'');
+const fraction=padded.slice(-2);
+return (negative?'-':'')+String(currency||'')+' '+major+'.'+fraction;
+}
 function renderActivity(){
 activityRows.replaceChildren();
 const q=(activitySearch.value||'').trim().toLowerCase();
 const filtered=currentEntries.filter(e=>[e.transaction_type,e.amount_minor_units,e.currency_code,e.transaction_reference,e.description,e.status,e.created_at].some(v=>String(v??'').toLowerCase().includes(q)));
 if(!filtered.length){activityWrap.classList.add('hidden');activityMessage.classList.remove('hidden');activityMessage.textContent=q?'No activity matches your search.':'No ledger entries are available for this account yet.';return;}
-for(const e of filtered){const tr=document.createElement('tr');tr.append(cell(date(e.created_at)),cell(e.transaction_type),cell(String(e.amount_minor_units)+' minor units '+String(e.currency_code||'')),cell(e.transaction_reference),cell((e.description||'')+' · '+String(e.status||'pending')));activityRows.append(tr);}
+for(const e of filtered){const tr=document.createElement('tr');tr.append(cell(date(e.created_at)),cell(e.transaction_type),cell(formatMoneyMinorUnits(e.amount_minor_units,e.currency_code)),cell(e.transaction_reference),cell((e.description||'')+' · '+String(e.status||'pending')));activityRows.append(tr);}
 activityMessage.classList.add('hidden');activityWrap.classList.remove('hidden');
 }
 activitySearch.addEventListener('input',renderActivity);
 exportActivity.addEventListener('click',()=>{
 const q=(activitySearch.value||'').trim().toLowerCase();
 const rows=currentEntries.filter(e=>[e.transaction_type,e.amount_minor_units,e.currency_code,e.transaction_reference,e.description,e.status,e.created_at].some(v=>String(v??'').toLowerCase().includes(q)));
-const csv=[['Date','Type','Amount minor units','Currency','Reference','Status','Description'],...rows.map(e=>[e.created_at,e.transaction_type,e.amount_minor_units,e.currency_code,e.transaction_reference,e.status,e.description])].map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+const csv=[['Date','Type','Amount','Currency','Reference','Status','Description'],...rows.map(e=>[e.created_at,e.transaction_type,formatMoneyMinorUnits(e.amount_minor_units,e.currency_code),e.currency_code,e.transaction_reference,e.status,e.description])].map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
 const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='vantagepay-account-activity.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
 document.getElementById('refresh').addEventListener('click',()=>load().catch(()=>status('Could not refresh the account. Try again.','bad')));
