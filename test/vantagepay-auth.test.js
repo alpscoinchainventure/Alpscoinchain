@@ -159,9 +159,11 @@ test('customer dashboard requires a real session and uses user-scoped read-only 
   assert.match(dashboardHtml, /apiRequest\('\/api\/vantagepay\/account'/);
   assert.match(vantagepayApi, /rpc\/vp_ensure_customer_account/);
   assert.match(standaloneSchema, /FUNCTION public\.vp_ensure_customer_account/);
-  assert.match(dashboardHtml, /vp_ledger_transactions/);
-  assert.match(dashboardHtml, /function formatMoneyMinorUnits\(units,currency\)/);
-  assert.match(dashboardHtml, /cell\(formatMoneyMinorUnits\(e\.amount_minor_units,e\.currency_code\)\)/);
+  assert.match(vantagepayApi, /app\.get\('\/api\/vantagepay\/account-activity'/);
+  assert.match(vantagepayApi, /rpc\/vp_customer_ledger_snapshot/);
+  assert.match(dashboardHtml, /apiRequest\('\/api\/vantagepay\/account-activity'\)/);
+  assert.match(dashboardHtml, /function formatLedgerUnits\(units,scale\)/);
+  assert.doesNotMatch(dashboardHtml, /client\.from\('vp_ledger_transactions'\)/);
   assert.match(dashboardHtml, /\/api\/vantagepay\/transaction-requests/);
   assert.match(dashboardHtml, /Deposit and withdrawal requests are review-only/i);
   assert.doesNotMatch(dashboardHtml, /\.insert\(|\.upsert\(|\.update\(|\.delete\(/);
@@ -282,4 +284,17 @@ test('client profiles are stored in the standalone VantagePay schema with row ow
   assert.match(dashboardHtml, /await loadClientProfile\(\)/);
   assert.match(dashboardHtml, /Profile picture HTTPS URL/);
   assert.doesNotMatch(profileMigration, /AlpsCoinChain.*(DATABASE|TABLE|SCHEMA)/i);
+});
+
+
+test('customer ledger snapshot migration is read-only and scoped to the signed-in customer', async () => {
+  const ledgerMigration = await readFile(new URL('../docs/vantagepay-customer-ledger-snapshot-v1.sql', import.meta.url), 'utf8');
+  assert.match(ledgerMigration, /FUNCTION public\.vp_customer_ledger_snapshot\(\)/);
+  assert.match(ledgerMigration, /SECURITY DEFINER/);
+  assert.match(ledgerMigration, /auth\.uid\(\)/);
+  assert.match(ledgerMigration, /tx\.customer_ref = v_account_ref/);
+  assert.match(ledgerMigration, /le\.account_code = 'customer:' \|\| v_user_id::text/);
+  assert.match(ledgerMigration, /tx\.status = 'posted'/);
+  assert.match(ledgerMigration, /GRANT EXECUTE ON FUNCTION public\.vp_customer_ledger_snapshot\(\) TO authenticated/);
+  assert.doesNotMatch(ledgerMigration, /INSERT INTO public\.vp_ledger_transactions|UPDATE public\.vp_ledger_transactions|DELETE FROM public\.vp_ledger_transactions/);
 });
