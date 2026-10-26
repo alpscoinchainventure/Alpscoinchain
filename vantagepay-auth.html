@@ -289,7 +289,19 @@
         const {error}=await client.signInWithPassword({email,password}); if (error) throw error;
         const {data}=await client.getSession();
         if (data.session && data.session.user && data.session.user.emailVerified===true) showAccount(data.session.user);
-        else { await client.signOut(); lastEmail=email; setMode('verify'); showMessage(message,'Email verification is required before sign-in can continue. Enter your code or request a new one.','bad'); }
+        else {
+          await client.signOut();
+          lastEmail=email;
+          document.getElementById('email').value=email;
+          savePendingVerification(email);
+          setMode('verify');
+          try {
+            await requestVerificationCode(email);
+            showMessage(message,'This account is not verified. We requested a fresh verification code for '+email+'. Check your inbox and spam folder, then enter the newest six-digit code.','good');
+          } catch (resendError) {
+            showMessage(message,'This account is not verified, and we could not request a new code: '+explainAuthError(resendError)+' You can try “Send a new code” after checking the email address.','bad');
+          }
+        }
       } else if (mode==='reset') {
         const {error}=await client.resetPasswordForEmail(email,{redirectTo:redirectUrl()+'?mode=recovery'}); if (error) throw error;
         showMessage(message, 'If the account can receive recovery email, a password-reset link will be sent. Check your inbox and spam folder.', 'good');
