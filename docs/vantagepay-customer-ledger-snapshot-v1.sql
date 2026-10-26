@@ -36,7 +36,7 @@ BEGIN
       tx.created_at,
       tx.posted_at,
       COALESCE(e.asset_code, tx.asset_code) AS asset_code,
-      COALESCE(e.amount_units, 0)::text AS amount_units,
+      e.amount_units::text AS amount_units,
       COALESCE(ad.minor_unit_scale, 2) AS minor_unit_scale
     FROM public.vp_ledger_transactions AS tx
     LEFT JOIN LATERAL (
