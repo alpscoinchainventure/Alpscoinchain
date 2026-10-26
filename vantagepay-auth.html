@@ -30,6 +30,7 @@
 <div id="recover-wrap" class="hidden"><label for="new-password">New password</label><input id="new-password" name="newPassword" type="password" autocomplete="new-password" minlength="8"></div>
 <button id="submit" class="primary" type="submit">Sign in</button>
 </form>
+<form id="verify-form" class="hidden" novalidate><label for="verification-code">Email verification code</label><input id="verification-code" name="verificationCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" minlength="6" required><p class="hint">Enter the six-digit code sent to your email address.</p><button id="verify-submit" class="primary" type="submit">Verify email</button><button id="resend-code" class="quiet" type="button">Send a new code</button></form>
 <div class="row" style="margin-top:10px"><span class="hint" id="extra-note">New here? Create an account to begin.</span><button class="quiet" id="resend" type="button" hidden>Resend confirmation</button></div>
 <div id="auth-message" class="msg" role="status" aria-live="polite"></div>
 </div>
@@ -57,10 +58,14 @@
   const submit = document.getElementById('submit');
   const message = document.getElementById('auth-message');
   const resendButton = document.getElementById('resend');
+  const verifyForm = document.getElementById('verify-form');
+  const verifySubmit = document.getElementById('verify-submit');
+  const resendCodeButton = document.getElementById('resend-code');
   const accountMessage = document.getElementById('account-message');
   const modes = {
     login: {title:'Welcome back', subtitle:'Sign in to access your VantagePay account.', button:'Sign in', note:'New here? Create an account to begin.'},
-    signup: {title:'Create your account', subtitle:'Use an email address you can access. Email confirmation may be required.', button:'Create account', note:'You will need to verify your email if confirmations are enabled.'},
+    signup: {title:'Create your account', subtitle:'Use an email address you can access. Email verification is required.', button:'Create account', note:'A verification code is required before account features can be used.'},
+    verify: {title:'Verify your email', subtitle:'Enter the code sent to your registered email address.', button:'Verify email', note:'If you do not see the message, check spam or request a new code.'},
     reset: {title:'Reset your password', subtitle:'We will send a password reset link if this email can receive one.', button:'Send reset email', note:'Use the email link to return here and choose a new password.'},
     recovery: {title:'Choose a new password', subtitle:'Set a new password for your account.', button:'Update password', note:'After updating your password, sign in again.'}
   };
@@ -73,6 +78,8 @@
   function setMode(next) {
     mode = next;
     const config = modes[next] || modes.login;
+    form.classList.toggle('hidden', next === 'verify');
+    verifyForm.classList.toggle('hidden', next !== 'verify');
     title.textContent=config.title; subtitle.textContent=config.subtitle; submit.textContent=config.button;
     document.getElementById('extra-note').textContent=config.note;
     document.getElementById('name-wrap').classList.toggle('hidden', next !== 'signup');
@@ -82,9 +89,10 @@
     document.getElementById('password').required = next === 'login' || next === 'signup';
     document.getElementById('confirm-password').required = next === 'signup';
     document.getElementById('new-password').required = next === 'recovery';
+    document.getElementById('verification-code').required = next === 'verify';
     document.getElementById('password').autocomplete = next === 'signup' ? 'new-password' : 'current-password';
     document.querySelectorAll('[data-mode]').forEach(button => {
-      button.hidden = next === 'recovery';
+      button.hidden = next === 'recovery' || next === 'verify';
       button.setAttribute('aria-selected', String(button.dataset.mode === next));
     });
     clearMessage(message); resendButton.hidden = next !== 'signup';
@@ -92,6 +100,12 @@
   // Always return auth emails to the VantagePay account page, never another product home/dashboard.
   const redirectUrl = () => new URL('/vantagepay-auth.html', window.location.origin).toString();
   function showAccount(user) {
+    if (!user || user.emailVerified !== true) {
+      showAuth(); setMode('verify');
+      if (user && user.email) { lastEmail=user.email; document.getElementById('email').value=user.email; }
+      showMessage(message, 'Verify your email address before opening your VantagePay account.', 'bad');
+      return;
+    }
     authView.classList.add('hidden'); accountView.classList.remove('hidden');
     document.getElementById('signed-in-as').textContent = user && user.email ? 'Signed in as ' + user.email : 'Your identity session is active.';
   }
@@ -152,11 +166,14 @@
     else if (query.get('mode') === 'signup') setMode('signup');
     const {data,error}=await client.getSession();
     if (error) showMessage(message, 'Could not check the current session. Please try again.', 'bad');
-    if (data && data.session && mode !== 'recovery') showAccount(data.session.user);
+    if (data && data.session && mode !== 'recovery') {
+      if (data.session.user && data.session.user.emailVerified === true) showAccount(data.session.user);
+      else { lastEmail=(data.session.user&&data.session.user.email)||''; if(lastEmail)document.getElementById('email').value=lastEmail; setMode('verify'); showMessage(message,'Email verification is required before you can access account features. Enter the code sent to your email or request a new one.','bad'); }
+    }
     client.onAuthStateChange((event, session) => {
       if (event==='PASSWORD_RECOVERY') { pendingReset=true; showAuth(); setMode('recovery'); }
       else if (event==='SIGNED_OUT') { showAuth(); setMode('login'); }
-      else if (event==='SIGNED_IN' && session && mode!=='recovery') showAccount(session.user);
+      else if (event==='SIGNED_IN' && session && mode!=='recovery') { if(session.user&&session.user.emailVerified===true)showAccount(session.user); else {lastEmail=(session.user&&session.user.email)||lastEmail;showAuth();setMode('verify');} }
     });
   }
   document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>setMode(button.dataset.mode)));
@@ -179,11 +196,15 @@
       if (mode==='signup') {
         const {data,error}=await client.signUp({email,password,options:{data:{full_name:fullName}}});
         if (error) throw error;
-        if (data.session) showMessage(message, 'Account created and signed in. Banking features remain unavailable until verification and provider approvals are complete.', 'good');
-        else showMessage(message, 'Sign-up request accepted. If the identity provider asks you to confirm your email, follow its message. This request no longer sends an unsupported callbackURL parameter. Banking features remain locked until email verification is actually enabled and confirmed.', 'good');
+        if (data && data.session) await client.signOut();
+        setMode('verify');
+        const sent=await requestVerificationCode(email);
+        showMessage(message, sent ? 'Account created. A verification code has been requested for your email. Enter it below; banking features remain locked until verification succeeds.' : 'Account created, but the verification email could not be confirmed as sent. Use “Send a new code” after the provider is configured.', sent?'good':'bad');
       } else if (mode==='login') {
         const {error}=await client.signInWithPassword({email,password}); if (error) throw error;
-        const {data}=await client.getSession(); if (data.session) showAccount(data.session.user);
+        const {data}=await client.getSession();
+        if (data.session && data.session.user && data.session.user.emailVerified===true) showAccount(data.session.user);
+        else { await client.signOut(); lastEmail=email; setMode('verify'); showMessage(message,'Email verification is required before sign-in can continue. Enter your code or request a new one.','bad'); }
       } else if (mode==='reset') {
         const {error}=await client.resetPasswordForEmail(email,{redirectTo:redirectUrl()+'?mode=recovery'}); if (error) throw error;
         showMessage(message, 'If the account can receive recovery email, a password-reset link will be sent. Check your inbox and spam folder.', 'good');
@@ -194,12 +215,35 @@
     } catch(error) { showMessage(message, explainAuthError(error), 'bad'); }
     finally { submit.disabled=false; submit.textContent=(modes[mode]||modes.login).button; }
   });
+  async function requestVerificationCode(email) {
+    const {error}=await client.resend({type:'signup',email});
+    if(error) throw error;
+    return true;
+  }
+  verifyForm.addEventListener('submit',async event=>{
+    event.preventDefault(); if(!client)return;
+    const email=lastEmail||document.getElementById('email').value.trim().toLowerCase();
+    const token=document.getElementById('verification-code').value.trim();
+    if(!email||!/^[0-9]{6}$/.test(token)){showMessage(message,'Enter the six-digit code sent to your email.','bad');return;}
+    verifySubmit.disabled=true;verifySubmit.textContent='Verifying…';
+    try{
+      const {data,error}=await client.verifyOtp({email,token,type:'signup'});if(error)throw error;
+      const user=data&&(data.user||(data.session&&data.session.user));
+      if(user&&user.emailVerified===true){showMessage(message,'Email verified successfully. Your VantagePay account is ready for profile setup; financial services remain disabled.','good');showAccount(user);}
+      else {const {data:sessionData}=await client.getSession();if(sessionData&&sessionData.session&&sessionData.session.user&&sessionData.session.user.emailVerified===true)showAccount(sessionData.session.user);else{setMode('login');showMessage(message,'Email verification was accepted. Sign in to continue.','good');}}
+    }catch(error){showMessage(message,explainAuthError(error),'bad');}
+    finally{verifySubmit.disabled=false;verifySubmit.textContent='Verify email';}
+  });
+  resendCodeButton.addEventListener('click',async()=>{
+    const email=lastEmail||document.getElementById('email').value.trim().toLowerCase();if(!email){showMessage(message,'Enter your email address first.','bad');return;}
+    resendCodeButton.disabled=true;try{await requestVerificationCode(email);showMessage(message,'A new verification code was requested. Check your inbox and spam folder.','good');}catch(error){showMessage(message,explainAuthError(error),'bad');}finally{resendCodeButton.disabled=false;}
+  });
   resendButton.addEventListener('click',async()=>{
     if (!client) return;
     if (!lastEmail) lastEmail=document.getElementById('email').value.trim().toLowerCase();
     if (!lastEmail) { showMessage(message,'Enter your email address first.','bad'); return; }
     resendButton.disabled=true;
-    try { const {error}=await client.resend({type:'signup',email:lastEmail,options:{emailRedirectTo:redirectUrl()}}); if(error)throw error; showMessage(message,'If confirmation can be resent, a new email has been requested.','good'); }
+    try { await requestVerificationCode(lastEmail); showMessage(message,'A new verification code was requested. Check your inbox and spam folder.','good'); }
     catch(error){showMessage(message,explainAuthError(error),'bad');}
     finally{resendButton.disabled=false;}
   });
