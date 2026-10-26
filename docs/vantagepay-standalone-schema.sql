@@ -683,7 +683,7 @@ BEGIN
   IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'A signed-in user is required' USING ERRCODE = '42501';
   END IF;
-  SELECT u.name INTO v_name FROM neon_auth."user" AS u WHERE u.id = v_user_id;
+  SELECT COALESCE(NULLIF(btrim(u.name), ''), split_part(u.email, '@', 1)) INTO v_name FROM neon_auth."user" AS u WHERE u.id = v_user_id;
   IF v_name IS NULL THEN
     RAISE EXCEPTION 'Authenticated user profile is unavailable' USING ERRCODE = 'P0002';
   END IF;
