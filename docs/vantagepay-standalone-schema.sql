@@ -691,3 +691,42 @@ END;
 $$;
 REVOKE EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT, TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.vp_admin_update_request_status(UUID, UUID, TEXT, TEXT) TO authenticated;
+
+
+CREATE OR REPLACE FUNCTION public.vp_ensure_customer_account()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_name TEXT;
+  v_row public.vp_customer_accounts%ROWTYPE;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'A signed-in user is required' USING ERRCODE = '42501';
+  END IF;
+  SELECT u.name INTO v_name FROM neon_auth."user" AS u WHERE u.id = v_user_id;
+  IF v_name IS NULL THEN
+    RAISE EXCEPTION 'Authenticated user profile is unavailable' USING ERRCODE = 'P0002';
+  END IF;
+  INSERT INTO public.vp_customer_accounts (user_id, account_reference, display_name, account_status)
+  VALUES (
+    v_user_id,
+    'VP-' || upper(substr(replace(v_user_id::text, '-', ''), 1, 12)),
+    left(v_name, 120),
+    'pending'
+  )
+  ON CONFLICT (user_id) DO UPDATE SET
+    display_name = CASE
+      WHEN btrim(public.vp_customer_accounts.display_name) = '' THEN EXCLUDED.display_name
+      ELSE public.vp_customer_accounts.display_name
+    END,
+    updated_at = now()
+  RETURNING * INTO v_row;
+  RETURN to_jsonb(v_row);
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.vp_ensure_customer_account() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.vp_ensure_customer_account() TO authenticated;
