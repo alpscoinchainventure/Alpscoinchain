@@ -30,7 +30,7 @@
 <div id="recover-wrap" class="hidden"><label for="new-password">New password</label><input id="new-password" name="newPassword" type="password" autocomplete="new-password" minlength="8"></div>
 <button id="submit" class="primary" type="submit">Sign in</button>
 </form>
-<form id="verify-form" class="hidden" novalidate><label for="verification-code">Email verification code</label><input id="verification-code" name="verificationCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" minlength="6" required><p class="hint">Enter the six-digit code sent to your email address.</p><button id="verify-submit" class="primary" type="submit">Verify email</button><button id="resend-code" class="quiet" type="button">Send a new code</button></form>
+<form id="verify-form" class="hidden" novalidate><label for="verification-code">Email verification code</label><input id="verification-code" name="verificationCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" minlength="6" required><p class="hint">Enter the six-digit code sent to your email address.</p><button id="verify-submit" class="primary" type="submit">Verify email</button><button id="resend-code" class="quiet" type="button">Send a new code</button><button id="change-email-toggle" class="quiet" type="button" aria-expanded="false" aria-controls="change-email-panel">Update email address</button><div id="change-email-panel" class="hidden"><p class="hint">Can’t access that inbox? Enter the new email address and your account password. We’ll restart verification for the new address.</p><label for="replacement-email">New email address</label><input id="replacement-email" type="email" autocomplete="email" maxlength="254"><label for="replacement-password">Account password</label><input id="replacement-password" type="password" autocomplete="current-password" minlength="8"><button id="update-email-submit" class="primary" type="button">Update email &amp; send code</button></div></form>
 <div class="row" style="margin-top:10px"><span class="hint" id="extra-note">New here? Create an account to begin.</span><button class="quiet" id="resend" type="button" hidden>Resend confirmation</button></div>
 <div id="auth-message" class="msg" role="status" aria-live="polite"></div>
 </div>
@@ -325,6 +325,38 @@
       else {const {data:sessionData}=await client.getSession();if(sessionData&&sessionData.session&&sessionData.session.user&&sessionData.session.user.emailVerified===true){clearPendingVerification();showAccount(sessionData.session.user);}else{setMode('login');showMessage(message,'Email verification was accepted. Sign in to continue.','good');}}
     }catch(error){showMessage(message,explainAuthError(error),'bad');}
     finally{verifySubmit.disabled=false;verifySubmit.textContent='Verify email';}
+  });
+  const changeEmailToggle = document.getElementById('change-email-toggle');
+  const changeEmailPanel = document.getElementById('change-email-panel');
+  const updateEmailSubmit = document.getElementById('update-email-submit');
+  changeEmailToggle.addEventListener('click',()=>{
+    const open=changeEmailPanel.classList.contains('hidden');
+    changeEmailPanel.classList.toggle('hidden',!open);
+    changeEmailToggle.setAttribute('aria-expanded',String(open));
+    if(open) document.getElementById('replacement-email').focus();
+  });
+  updateEmailSubmit.addEventListener('click',async()=>{
+    if(!client)return;
+    const email=document.getElementById('replacement-email').value.trim().toLowerCase();
+    const password=document.getElementById('replacement-password').value;
+    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){showMessage(message,'Enter a valid new email address.','bad');return;}
+    if(email===String(lastEmail||'').toLowerCase()){showMessage(message,'Enter an email address different from the current one.','bad');return;}
+    if(!password||password.length<8){showMessage(message,'Enter the password you used when creating this account.','bad');return;}
+    updateEmailSubmit.disabled=true;updateEmailSubmit.textContent='Updating…';
+    try{
+      const fullName=document.getElementById('full-name').value.trim();
+      const {data,error}=await client.signUp({email,password,options:{data:fullName?{full_name:fullName}:{}}});
+      if(error)throw error;
+      if(data&&data.session)await client.signOut();
+      lastEmail=email;
+      document.getElementById('email').value=email;
+      document.getElementById('verification-code').value='';
+      savePendingVerification(email);
+      setMode('verify');
+      startResendCooldown();
+      showMessage(message,'Verification has been restarted for '+email+'. Check that inbox and its spam folder for the newest code. If an account already exists for that address, sign in to it instead.','good');
+    }catch(error){showMessage(message,explainAuthError(error),'bad');}
+    finally{updateEmailSubmit.disabled=false;updateEmailSubmit.textContent='Update email & send code';}
   });
   resendCodeButton.addEventListener('click',async()=>{
     const email=lastEmail||document.getElementById('email').value.trim().toLowerCase();if(!email){showMessage(message,'Enter your email address first.','bad');return;}
