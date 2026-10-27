@@ -185,72 +185,80 @@ async function sendEmail({
   });
 }
 
-// Public market-data proxy. Only fixed, read-only Binance market endpoints are exposed.
-const allowedMarketPairs = new Set([
-  'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'USDCUSDT', 'DOGEUSDT'
+// Public read-only market-data proxy. CoinGecko is used for REST data because Binance REST
+// endpoints can be unreachable from some hosting regions/networks. Restrict query inputs.
+const allowedMarketAssets = new Set([
+  'bitcoin', 'ethereum', 'binancecoin', 'solana', 'ripple', 'usd-coin', 'dogecoin'
 ]);
-const marketUpstreamHosts = [
-  'https://api.binance.com',
-  'https://api1.binance.com',
-  'https://api2.binance.com',
-  'https://api3.binance.com'
-];
+const coinGeckoBase = 'https://api.coingecko.com/api/v3';
 
-async function proxyPublicMarketData(upstreamPath, res) {
-  let lastStatus = 503;
-  for (const host of marketUpstreamHosts) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 7000);
-    try {
-      const upstream = await fetch(host + upstreamPath, {
-        headers: { accept: 'application/json' },
-        signal: controller.signal
-      });
-      if (upstream.ok) {
-        const data = await upstream.json();
-        res.set({
-          'Cache-Control': 'no-store, max-age=0',
-          'CDN-Cache-Control': 'no-store',
-          'Vercel-CDN-Cache-Control': 'no-store'
-        });
-        return res.status(200).json(data);
-      }
-      lastStatus = upstream.status;
-      if (upstream.status === 429 || upstream.status === 418) {
-        continue;
-      }
-    } catch (error) {
-      lastStatus = 503;
-    } finally {
-      clearTimeout(timeout);
+async function fetchCoinGecko(path) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const upstream = await fetch(coinGeckoBase + path, {
+      headers: { accept: 'application/json' },
+      signal: controller.signal
+    });
+    if (!upstream.ok) {
+      const status = upstream.status === 429 ? 429 : 503;
+      const error = new Error(status === 429
+        ? 'Public market-data rate limit reached. Please wait and retry.'
+        : 'The public market-data provider is temporarily unavailable. Please retry shortly.');
+      error.status = status;
+      throw error;
     }
+    return await upstream.json();
+  } finally {
+    clearTimeout(timeout);
   }
-  const status = lastStatus === 429 || lastStatus === 418 ? 429 : 503;
+}
+
+function sendMarketError(res, error) {
+  const status = error?.status === 429 ? 429 : 503;
   return res.status(status).json({
-    error: status === 429
-      ? 'The public exchange rate limit was reached. Please wait and retry.'
-      : 'The public exchange could not be reached from the market service. Please retry shortly.'
+    error: error?.message || 'The public market-data provider is temporarily unavailable. Please retry shortly.'
   });
 }
 
-app.get('/api/market/ticker-24hr', async (req, res) => {
-  return proxyPublicMarketData('/api/v3/ticker/24hr', res);
+app.get('/api/market/ticker-24hr', async (_req, res) => {
+  try {
+    const ids = [...allowedMarketAssets].join(',');
+    const query = new URLSearchParams({
+      vs_currency: 'usd',
+      ids,
+      price_change_percentage: '24h'
+    });
+    const data = await fetchCoinGecko('/coins/markets?' + query.toString());
+    res.set({
+      'Cache-Control': 'public, max-age=20, stale-while-revalidate=20',
+      'CDN-Cache-Control': 'public, max-age=20',
+      'Vercel-CDN-Cache-Control': 'public, max-age=20'
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return sendMarketError(res, error);
+  }
 });
 
-app.get('/api/market/klines', async (req, res) => {
-  const symbol = String(req.query.symbol || '').toUpperCase();
-  const interval = String(req.query.interval || '5m');
-  const requestedLimit = Number(req.query.limit || 288);
-  if (!allowedMarketPairs.has(symbol) || interval !== '5m' ||
-      !Number.isInteger(requestedLimit) || requestedLimit < 2 || requestedLimit > 288) {
+app.get('/api/market/ohlc', async (req, res) => {
+  const id = String(req.query.id || '').toLowerCase();
+  const days = String(req.query.days || '1');
+  if (!allowedMarketAssets.has(id) || days !== '1') {
     return res.status(400).json({ error: 'Invalid market chart request.' });
   }
-  const query = new URLSearchParams({
-    symbol,
-    interval,
-    limit: String(requestedLimit)
-  });
-  return proxyPublicMarketData('/api/v3/klines?' + query.toString(), res);
+  try {
+    const query = new URLSearchParams({ vs_currency: 'usd', days: '1' });
+    const data = await fetchCoinGecko('/coins/' + encodeURIComponent(id) + '/ohlc?' + query.toString());
+    res.set({
+      'Cache-Control': 'public, max-age=30, stale-while-revalidate=30',
+      'CDN-Cache-Control': 'public, max-age=30',
+      'Vercel-CDN-Cache-Control': 'public, max-age=30'
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return sendMarketError(res, error);
+  }
 });
 
 // Client dashboard: disable browser caching.
