@@ -220,7 +220,7 @@ function notificationMetadataLines(metadata = {}) {
 
 function buildAccountNotificationEmail({ title, summary, metadata = {} }) {
   const details = notificationMetadataLines(metadata);
-  const detailText = details.map(([label, value]) => label + ': ' + value).join('\\n');
+  const detailText = details.map(([label, value]) => label + ': ' + value).join('\n');
   const detailHtml = details.length
     ? '<table role="presentation" style="width:100%;border-collapse:collapse;margin:18px 0">' +
       details.map(([label, value]) =>
@@ -234,9 +234,9 @@ function buildAccountNotificationEmail({ title, summary, metadata = {} }) {
   return {
     subject: '[AlpsCoinChain] ' + safeTitle,
     text:
-      'Hello,\\n\\n' + safeSummary + '\\n\\n' +
-      (detailText ? detailText + '\\n\\n' : '') +
-      'Sign in to your account dashboard to review this activity. If you did not expect this change, contact support through the official website.\\n\\n' +
+      'Hello,\n\n' + safeSummary + '\n\n' +
+      (detailText ? detailText + '\n\n' : '') +
+      'Sign in to your account dashboard to review this activity. If you did not expect this change, contact support through the official website.\n\n' +
       'AlpsCoinChain Investment Ventures',
     html:
       '<div style="font-family:Arial,sans-serif;line-height:1.65;color:#0f172a;max-width:640px;margin:auto">' +
@@ -269,7 +269,7 @@ app.post('/api/notifications/event', async (req, res) => {
   ]);
 
   if (!allowedTypes.has(String(event.event_type || '')) ||
-      !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(recipient) ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient) ||
       recipient.length > 254 ||
       !event.notification_id) {
     return res.status(400).json({ success: false, message: 'Invalid notification event.' });
@@ -299,7 +299,7 @@ app.post('/api/notifications/event', async (req, res) => {
  */
 app.post('/api/notifications/test', async (req, res) => {
   const authorization = req.get('authorization') || '';
-  const match = authorization.match(/^Bearer\\s+(.+)$/i);
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
   if (!match) {
     return res.status(401).json({ success: false, message: 'Please sign in before testing email notifications.' });
   }
@@ -317,7 +317,7 @@ app.post('/api/notifications/test', async (req, res) => {
     }
     const user = await authResponse.json();
     const recipient = String(user?.email || '').trim();
-    if (!user?.id || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(recipient)) {
+    if (!user?.id || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
       return res.status(400).json({ success: false, message: 'No valid email address is attached to this account.' });
     }
 
