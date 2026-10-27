@@ -32,7 +32,7 @@
 
   <section class="card" id="live-market-section">
     <h3>Live Crypto Market</h3>
-    <p class="muted">Public cryptocurrency exchange data from Binance. Streaming prices update while connected; historical candles and 24-hour statistics refresh periodically. Market prices are informational only, not your account balance or investment return.</p>
+    <p class="muted">Aggregated public cryptocurrency market data from CoinGecko. Prices and historical candles refresh periodically; a Binance ticker stream may provide faster updates when available. Market prices are informational only, not your account balance or investment return. Market prices are informational only, not your account balance or investment return.</p>
     <div class="button-row" style="align-items:end;margin-bottom:12px">
       <div style="flex:1 1 220px;min-width:180px">
         <label for="market-chart-asset">Chart asset</label>
@@ -197,16 +197,16 @@
     const button=document.getElementById("refresh-market-button"),rows=document.getElementById("market-rows");
     button.disabled=true;
     try{
-      const stats=await marketFetch("/api/v3/ticker/24hr");
-      const byPair=new Map(stats.filter(s=>s.symbol.endsWith("USDT")).map(s=>[s.symbol,s]));
+      const stats=await marketFetch("/api/market/ticker-24hr");
+      const byId=new Map(stats.map(item=>[item.id,item]));
       rows.replaceChildren();
       for(const coin of marketCoins){
-        const item=byPair.get(coin.pair);if(!item)continue;
-        const row=document.createElement("tr");addCell(row,coin.name+" ("+coin.symbol+")");addCell(row,money(item.lastPrice));
-        const change=Number(item.priceChangePercent),changeCell=document.createElement("td");
+        const item=byId.get(coin.id);if(!item)continue;
+        const row=document.createElement("tr");addCell(row,coin.name+" ("+coin.symbol+")");addCell(row,money(item.current_price));
+        const change=Number(item.price_change_percentage_24h),changeCell=document.createElement("td");
         changeCell.textContent=Number.isFinite(change)?(change>0?"+":"")+change.toFixed(2)+"%":"—";
         changeCell.style.color=Number.isFinite(change)?(change>=0?"var(--success)":"var(--danger)"):"var(--muted)";
-        row.appendChild(changeCell);addCell(row,compactMoney(item.quoteVolume));rows.appendChild(row);
+        row.appendChild(changeCell);addCell(row,compactMoney(item.total_volume));rows.appendChild(row);
       }
       if(!rows.children.length)throw new Error("No supported USDT market quotes were returned.");
       marketError("Exchange data · updated "+new Date().toLocaleTimeString()+" · streaming "+(marketSocket&&marketSocket.readyState===WebSocket.OPEN?"connected":"reconnecting"));
@@ -250,11 +250,11 @@
   async function loadMarketChart(){
     const selector=document.getElementById("market-chart-asset"),coin=marketCoins.find(item=>item.id===selector.value)||marketCoins[0];
     const message=document.getElementById("market-chart-message"),title=document.getElementById("market-chart-title");
-    title.textContent=coin.name+" ("+coin.symbol+"/USDT) — 24-hour candlestick chart";message.textContent="Loading exchange candlesticks…";
+    title.textContent=coin.name+" ("+coin.symbol+"/USD reference) — 24-hour candlestick chart";message.textContent="Loading exchange candlesticks…";
     try{
       if(!window.LightweightCharts)throw new Error("The interactive chart library did not load. Refresh the page to retry.");
-      const result=await marketFetch("/api/v3/klines?symbol="+encodeURIComponent(coin.pair)+"&interval=5m&limit=288");
-      if(!Array.isArray(result)||result.length<2)throw new Error("Historical candle data is not available for this pair.");
+      const result=await marketFetch("/api/market/ohlc?id="+encodeURIComponent(coin.id)+"&days=1");
+      if(!Array.isArray(result)||result.length<2)throw new Error("Historical candle data is not available for this asset.");
       const candles=result.map(k=>({time:Math.floor(Number(k[0])/1000),open:Number(k[1]),high:Number(k[2]),low:Number(k[3]),close:Number(k[4])})).filter(k=>Number.isFinite(k.time)&&[k.open,k.high,k.low,k.close].every(Number.isFinite));
       const container=document.getElementById("market-price-chart");
       if(marketChart){marketChart.remove();marketChart=null;marketCandleSeries=null}
@@ -263,7 +263,7 @@
       marketCandleSeries.setData(candles);marketChart.timeScale().fitContent();
       const resizeObserver=new ResizeObserver(entries=>{if(marketChart&&entries[0])marketChart.applyOptions({width:entries[0].contentRect.width})});
       resizeObserver.observe(container);container._marketResizeObserver?.disconnect();container._marketResizeObserver=resizeObserver;
-      message.textContent="Exchange OHLC candles · 5-minute intervals · last 24 hours. Latest close: "+money(candles[candles.length-1].close)+".";
+      message.textContent="CoinGecko OHLC candles · public market data · last 24 hours. Latest close: "+money(candles[candles.length-1].close)+".";
       connectMarketSocket(coin);
     }catch(error){console.error("Live market chart failed:",error);message.textContent=(error.message||"Chart data is temporarily unavailable")+" Prices will not be fabricated; retry when the public exchange API is available."}
   }
