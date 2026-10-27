@@ -1,4 +1,5 @@
-import 'dotenv/config';\nimport { timingSafeEqual } from 'node:crypto';
+import 'dotenv/config';
+import { timingSafeEqual } from 'node:crypto';
 import express from 'express';
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
