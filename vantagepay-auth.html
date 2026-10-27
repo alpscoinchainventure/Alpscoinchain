@@ -170,8 +170,14 @@
   }
   // Always return auth emails to the VantagePay account page, never another product home/dashboard.
   const redirectUrl = () => new URL('/vantagepay-auth.html', window.location.origin).toString();
+  function isEmailVerified(user) {
+    // Native Better Auth uses `emailVerified`; the compatibility adapter can expose
+    // the same state as `email_confirmed_at` or `confirmed_at`.
+    return !!user && (user.emailVerified === true || user.email_confirmed === true ||
+      Boolean(user.email_confirmed_at || user.confirmed_at));
+  }
   function showAccount(user) {
-    if (!user || user.emailVerified !== true) {
+    if (!isEmailVerified(user)) {
       showAuth(); setMode('verify');
       if (user && user.email) { lastEmail=user.email; document.getElementById('email').value=user.email; }
       showMessage(message, 'Verify your email address before opening your VantagePay account.', 'bad');
@@ -249,7 +255,7 @@
     const {data,error}=await client.getSession();
     if (error) showMessage(message, 'Could not check the current session. Please try again.', 'bad');
     if (data && data.session && mode !== 'recovery') {
-      if (data.session.user && data.session.user.emailVerified === true) showAccount(data.session.user);
+      if (data.session.user && isEmailVerified(data.session.user)) showAccount(data.session.user);
       else { lastEmail=(data.session.user&&data.session.user.email)||lastEmail; if(lastEmail)document.getElementById('email').value=lastEmail; setMode('verify'); showMessage(message,'Email verification is required before you can access account features. Your email is saved if this page reloads. Enter the code sent to your email or request a new one.','bad'); }
     } else if (pendingVerification && mode !== 'recovery') {
       setMode('verify');
@@ -258,7 +264,7 @@
     client.onAuthStateChange((event, session) => {
       if (event==='PASSWORD_RECOVERY') { pendingReset=true; showAuth(); setMode('recovery'); }
       else if (event==='SIGNED_OUT') { showAuth(); setMode('login'); }
-      else if (event==='SIGNED_IN' && session && mode!=='recovery') { if(session.user&&session.user.emailVerified===true)showAccount(session.user); else {lastEmail=(session.user&&session.user.email)||lastEmail;showAuth();setMode('verify');} }
+      else if (event==='SIGNED_IN' && session && mode!=='recovery') { if(isEmailVerified(session.user))showAccount(session.user); else {lastEmail=(session.user&&session.user.email)||lastEmail;showAuth();setMode('verify');} }
     });
   }
   document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>setMode(button.dataset.mode)));
@@ -290,7 +296,7 @@
       } else if (mode==='login') {
         const {error}=await client.signInWithPassword({email,password}); if (error) throw error;
         const {data}=await client.getSession();
-        if (data.session && data.session.user && data.session.user.emailVerified===true) showAccount(data.session.user);
+        if (data.session && data.session.user && isEmailVerified(data.session.user)) showAccount(data.session.user);
         else {
           await client.signOut();
           lastEmail=email;
