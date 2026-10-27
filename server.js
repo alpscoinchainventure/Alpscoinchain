@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { timingSafeEqual } from 'node:crypto';
 import express from 'express';
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
@@ -184,6 +185,162 @@ async function sendEmail({
     html
   });
 }
+
+
+const notificationWebhookSecret = process.env.ALPS_NOTIFICATION_WEBHOOK_SECRET || '';
+const notificationSupabaseUrl = 'https://uevofmlzpwrdidjnwxfd.supabase.co';
+const notificationSupabasePublicKey = 'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+const notificationTestLastSent = new Map();
+
+function safeSecretMatch(provided, expected) {
+  if (typeof provided !== 'string' || !expected) return false;
+  const left = Buffer.from(provided);
+  const right = Buffer.from(expected);
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
+function notificationMetadataLines(metadata = {}) {
+  const allowed = [
+    ['request_type', 'Request type'],
+    ['amount', 'Amount'],
+    ['asset', 'Asset'],
+    ['reference', 'Reference'],
+    ['status', 'Status'],
+    ['account_status', 'Account status'],
+    ['period_start', 'Report period start'],
+    ['period_end', 'Report period end'],
+    ['apy_rate', 'APY rate'],
+    ['return_amount', 'Reported return'],
+    ['asset_code', 'Asset'],
+    ['action', 'Action']
+  ];
+  return allowed
+    .filter(([key]) => metadata && metadata[key] !== undefined && metadata[key] !== null && metadata[key] !== '')
+    .map(([key, label]) => [label, String(metadata[key]).slice(0, 180)]);
+}
+
+function buildAccountNotificationEmail({ title, summary, metadata = {} }) {
+  const details = notificationMetadataLines(metadata);
+  const detailText = details.map(([label, value]) => label + ': ' + value).join('\n');
+  const detailHtml = details.length
+    ? '<table role="presentation" style="width:100%;border-collapse:collapse;margin:18px 0">' +
+      details.map(([label, value]) =>
+        '<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#64748b">' +
+        escapeHtml(label) + '</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#0f172a;font-weight:600">' +
+        escapeHtml(value) + '</td></tr>'
+      ).join('') + '</table>'
+    : '';
+  const safeTitle = String(title || 'Account activity notice').slice(0, 160);
+  const safeSummary = String(summary || 'There has been an update to your account.').slice(0, 1000);
+  return {
+    subject: '[AlpsCoinChain] ' + safeTitle,
+    text:
+      'Hello,\n\n' + safeSummary + '\n\n' +
+      (detailText ? detailText + '\n\n' : '') +
+      'Sign in to your account dashboard to review this activity. If you did not expect this change, contact support through the official website.\n\n' +
+      'AlpsCoinChain Investment Ventures',
+    html:
+      '<div style="font-family:Arial,sans-serif;line-height:1.65;color:#0f172a;max-width:640px;margin:auto">' +
+      '<div style="background:#102b50;color:#fff;padding:22px 24px;border-radius:12px 12px 0 0"><strong>AlpsCoinChain Investment Ventures</strong></div>' +
+      '<div style="border:1px solid #e2e8f0;border-top:0;padding:24px;border-radius:0 0 12px 12px">' +
+      '<h2 style="margin:0 0 14px;color:#102b50">' + escapeHtml(safeTitle) + '</h2>' +
+      '<p>' + escapeHtml(safeSummary) + '</p>' + detailHtml +
+      '<p><a href="https://alpscoinchaininvestment.uk/client-dashboard.html" style="display:inline-block;background:#1d65d8;color:#fff;padding:11px 16px;border-radius:8px;text-decoration:none;font-weight:700">Open your dashboard</a></p>' +
+      '<p style="font-size:12px;color:#64748b">If you did not expect this change, contact support through the official website. This is an automated account notice.</p>' +
+      '<p>Kind regards,<br>AlpsCoinChain Investment Ventures</p></div></div>'
+  };
+}
+
+/*
+ * Internal event endpoint. The database calls this asynchronously through pg_net.
+ * It accepts only server-generated events authenticated with a separate secret.
+ * Email failures are logged and never change the originating database transaction.
+ */
+app.post('/api/notifications/event', async (req, res) => {
+  if (!safeSecretMatch(req.get('x-alps-notification-secret'), notificationWebhookSecret)) {
+    return res.status(401).json({ success: false, message: 'Unauthorized notification event.' });
+  }
+
+  const event = req.body || {};
+  const recipient = String(event.to || '').trim();
+  const allowedTypes = new Set([
+    'deposit_request_received', 'withdrawal_request_received', 'fund_request_status',
+    'account_status_changed', 'profile_updated', 'beneficiary_insert',
+    'beneficiary_update', 'beneficiary_delete', 'apy_report_published'
+  ]);
+
+  if (!allowedTypes.has(String(event.event_type || '')) ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient) ||
+      recipient.length > 254 ||
+      !event.notification_id) {
+    return res.status(400).json({ success: false, message: 'Invalid notification event.' });
+  }
+
+  try {
+    const email = buildAccountNotificationEmail({
+      title: event.title,
+      summary: event.summary,
+      metadata: event.metadata
+    });
+    await sendEmail({ to: recipient, ...email });
+    return res.status(200).json({ success: true, notification_id: event.notification_id });
+  } catch (error) {
+    console.error('Account notification delivery failed:', {
+      notificationId: String(event.notification_id).slice(0, 80),
+      eventType: String(event.event_type).slice(0, 80),
+      message: error?.message || 'email delivery failed'
+    });
+    return res.status(502).json({ success: false, message: 'Notification email delivery failed.' });
+  }
+});
+
+/*
+ * Signed-in user self-test. The recipient is derived from Supabase Auth, never
+ * from request JSON, so this endpoint cannot be used to send mail to other people.
+ */
+app.post('/api/notifications/test', async (req, res) => {
+  const authorization = req.get('authorization') || '';
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!match) {
+    return res.status(401).json({ success: false, message: 'Please sign in before testing email notifications.' });
+  }
+
+  try {
+    const authResponse = await fetch(notificationSupabaseUrl + '/auth/v1/user', {
+      headers: {
+        apikey: notificationSupabasePublicKey,
+        Authorization: 'Bearer ' + match[1],
+        accept: 'application/json'
+      }
+    });
+    if (!authResponse.ok) {
+      return res.status(401).json({ success: false, message: 'Your sign-in session is invalid or expired. Please sign in again.' });
+    }
+    const user = await authResponse.json();
+    const recipient = String(user?.email || '').trim();
+    if (!user?.id || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
+      return res.status(400).json({ success: false, message: 'No valid email address is attached to this account.' });
+    }
+
+    const now = Date.now();
+    const previous = notificationTestLastSent.get(user.id) || 0;
+    if (now - previous < 60000) {
+      return res.status(429).json({ success: false, message: 'Please wait one minute before sending another test email.' });
+    }
+    notificationTestLastSent.set(user.id, now);
+
+    const email = buildAccountNotificationEmail({
+      title: 'Email notifications are working',
+      summary: 'This is a test message sent to the email address on your signed-in AlpsCoinChain account. You will receive similar notices for supported account activities.',
+      metadata: { action: 'Email delivery test', status: 'Test only' }
+    });
+    await sendEmail({ to: recipient, ...email });
+    return res.status(200).json({ success: true, message: 'Test email accepted for delivery to ' + recipient + '.' });
+  } catch (error) {
+    console.error('Account notification self-test failed:', error?.message || 'email delivery failed');
+    return res.status(502).json({ success: false, message: 'The test email could not be sent right now. Please try again later.' });
+  }
+});
 
 // Public read-only market-data proxy. CoinGecko is used for REST data because Binance REST
 // endpoints can be unreachable from some hosting regions/networks. Restrict query inputs.
