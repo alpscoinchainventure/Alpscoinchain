@@ -37,7 +37,7 @@
       <div style="flex:1 1 220px;min-width:180px">
         <label for="market-chart-asset">Chart asset</label>
         <select id="market-chart-asset" style="display:block;width:100%;border:1px solid var(--border);border-radius:10px;padding:12px 13px;font:inherit;background:rgba(3,12,23,.65);color:var(--text)">
-          <option value="bitcoin">Bitcoin (BTC)</option><option value="ethereum">Ethereum (ETH)</option><option value="tether">Tether (USDT)</option><option value="binancecoin">BNB</option><option value="solana">Solana (SOL)</option><option value="ripple">XRP</option><option value="usd-coin">USD Coin (USDC)</option><option value="dogecoin">Dogecoin (DOGE)</option>
+          <option value="bitcoin">Bitcoin (BTC)</option><option value="ethereum">Ethereum (ETH)</option><option value="binancecoin">BNB</option><option value="solana">Solana (SOL)</option><option value="ripple">XRP</option><option value="usd-coin">USD Coin (USDC)</option><option value="dogecoin">Dogecoin (DOGE)</option>
         </select>
       </div>
       <button type="button" id="refresh-market-button">Refresh market</button>
@@ -176,7 +176,7 @@
   let marketChart=null,marketCandleSeries=null,marketSocket=null,marketRefreshTimer=null,marketStatsTimer=null,marketLastPrice=null,marketReconnectTimer=null;
   const marketCoins=[
     {id:"bitcoin",symbol:"BTC",name:"Bitcoin",pair:"BTCUSDT"},{id:"ethereum",symbol:"ETH",name:"Ethereum",pair:"ETHUSDT"},
-    {id:"tether",symbol:"USDT",name:"Tether",pair:"USDTUSDT"},{id:"binancecoin",symbol:"BNB",name:"BNB",pair:"BNBUSDT"},
+    {id:"binancecoin",symbol:"BNB",name:"BNB",pair:"BNBUSDT"},
     {id:"solana",symbol:"SOL",name:"Solana",pair:"SOLUSDT"},{id:"ripple",symbol:"XRP",name:"XRP",pair:"XRPUSDT"},
     {id:"usd-coin",symbol:"USDC",name:"USD Coin",pair:"USDCUSDT"},{id:"dogecoin",symbol:"DOGE",name:"Dogecoin",pair:"DOGEUSDT"}
   ];
