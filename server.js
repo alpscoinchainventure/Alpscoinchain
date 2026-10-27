@@ -212,6 +212,8 @@ function notificationMetadataLines(metadata = {}) {
     ['apy_rate', 'APY rate'],
     ['return_amount', 'Reported return'],
     ['asset_code', 'Asset'],
+    ['entry_type', 'Entry type'],
+    ['description', 'Description'],
     ['action', 'Action']
   ];
   return allowed
@@ -266,7 +268,8 @@ app.post('/api/notifications/event', async (req, res) => {
   const allowedTypes = new Set([
     'deposit_request_received', 'withdrawal_request_received', 'fund_request_status',
     'account_status_changed', 'profile_updated', 'beneficiary_insert',
-    'beneficiary_update', 'beneficiary_delete', 'apy_report_published'
+    'beneficiary_update', 'beneficiary_delete', 'apy_report_published',
+    'ledger_entry_posted'
   ]);
 
   if (!allowedTypes.has(String(event.event_type || '')) ||
