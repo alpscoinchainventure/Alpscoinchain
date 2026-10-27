@@ -1,5 +1,8 @@
 -- Event-driven client email notifications. The HTTP delivery is asynchronous so email
 -- provider latency/failure never blocks or rolls back a client/admin database action.
+create schema if not exists net;
+create extension if not exists pg_net with schema net;
+
 begin;
 
 create table if not exists public.account_email_notification_log (
