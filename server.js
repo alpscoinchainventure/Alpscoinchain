@@ -185,6 +185,74 @@ async function sendEmail({
   });
 }
 
+// Public market-data proxy. Only fixed, read-only Binance market endpoints are exposed.
+const allowedMarketPairs = new Set([
+  'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'USDCUSDT', 'DOGEUSDT'
+]);
+const marketUpstreamHosts = [
+  'https://api.binance.com',
+  'https://api1.binance.com',
+  'https://api2.binance.com',
+  'https://api3.binance.com'
+];
+
+async function proxyPublicMarketData(upstreamPath, res) {
+  let lastStatus = 503;
+  for (const host of marketUpstreamHosts) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 7000);
+    try {
+      const upstream = await fetch(host + upstreamPath, {
+        headers: { accept: 'application/json' },
+        signal: controller.signal
+      });
+      if (upstream.ok) {
+        const data = await upstream.json();
+        res.set({
+          'Cache-Control': 'no-store, max-age=0',
+          'CDN-Cache-Control': 'no-store',
+          'Vercel-CDN-Cache-Control': 'no-store'
+        });
+        return res.status(200).json(data);
+      }
+      lastStatus = upstream.status;
+      if (upstream.status === 429 || upstream.status === 418) {
+        continue;
+      }
+    } catch (error) {
+      lastStatus = 503;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  const status = lastStatus === 429 || lastStatus === 418 ? 429 : 503;
+  return res.status(status).json({
+    error: status === 429
+      ? 'The public exchange rate limit was reached. Please wait and retry.'
+      : 'The public exchange could not be reached from the market service. Please retry shortly.'
+  });
+}
+
+app.get('/api/market/ticker-24hr', async (req, res) => {
+  return proxyPublicMarketData('/api/v3/ticker/24hr', res);
+});
+
+app.get('/api/market/klines', async (req, res) => {
+  const symbol = String(req.query.symbol || '').toUpperCase();
+  const interval = String(req.query.interval || '5m');
+  const requestedLimit = Number(req.query.limit || 288);
+  if (!allowedMarketPairs.has(symbol) || interval !== '5m' ||
+      !Number.isInteger(requestedLimit) || requestedLimit < 2 || requestedLimit > 288) {
+    return res.status(400).json({ error: 'Invalid market chart request.' });
+  }
+  const query = new URLSearchParams({
+    symbol,
+    interval,
+    limit: String(requestedLimit)
+  });
+  return proxyPublicMarketData('/api/v3/klines?' + query.toString(), res);
+});
+
 // Client dashboard: disable browser caching.
 app.get('/client-dashboard.html', (req, res) => {
   res.set({
