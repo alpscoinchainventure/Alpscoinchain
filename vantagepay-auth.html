@@ -372,7 +372,7 @@
     if(!client)return;
     const email=document.getElementById('replacement-email').value.trim().toLowerCase();
     const password=document.getElementById('replacement-password').value;
-    if(!/^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(email)){showMessage(message,'Enter a valid new email address.','bad');return;}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showMessage(message,'Enter a valid new email address.','bad');return;}
     if(email===String(lastEmail||'').toLowerCase()){showMessage(message,'Enter an email address different from the current one.','bad');return;}
     if(!password||password.length<8){showMessage(message,'Enter the password you used when creating this account.','bad');return;}
     updateEmailSubmit.disabled=true;updateEmailSubmit.textContent='Updating…';
