@@ -13,6 +13,7 @@
     header{background:rgba(5,14,26,.82);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);color:#fff;padding:22px 16px;box-shadow:0 12px 40px rgba(0,0,0,.15)}
     .header-inner,main{width:min(1120px,100%);margin:0 auto}header h1{margin:0;font-size:clamp(21px,3vw,27px);letter-spacing:-.04em;font-weight:750}header p{margin:5px 0 0;color:#a9c6e8;font-size:14px;letter-spacing:.02em}.brand-lockup{display:flex;align-items:center;gap:14px}.header-home-button{margin-left:auto;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 15px;border:1px solid rgba(92,157,255,.4);border-radius:10px;background:linear-gradient(135deg,#2b7fff,#1b60cf);color:#fff;text-decoration:none;font-size:14px;font-weight:750;white-space:nowrap}.header-home-button:hover{filter:brightness(1.12)}.brand-mark{width:54px;height:54px;flex:0 0 54px;filter:drop-shadow(0 6px 14px rgba(47,131,255,.18))}.brand-copy{min-width:0}main{padding:28px 16px 48px}
     .notice{border:1px solid rgba(230,200,137,.35);background:linear-gradient(120deg,rgba(98,73,30,.22),rgba(37,34,28,.45));color:#f1dfb7;border-radius:14px;padding:15px 17px;margin-bottom:22px;box-shadow:inset 0 1px rgba(255,255,255,.03)}
+    #account-control-panel{margin:14px 0 0;border-color:rgba(105,224,176,.25);background:rgba(8,31,34,.5)}#account-control-panel.account-suspended{border-color:rgba(255,157,157,.45);background:rgba(57,19,29,.42);color:#ffd6d6}#account-control-panel p{margin:5px 0}#account-control-message{font-weight:650}#deactivate-account-button{margin-top:10px;background:linear-gradient(135deg,#b83b55,#86253a);border-color:rgba(255,157,157,.35)}
     .welcome{margin-bottom:23px}.welcome h2{margin:0 0 5px;font-size:clamp(25px,4vw,34px);letter-spacing:-.04em}.muted{color:var(--muted)}
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}.card{background:linear-gradient(145deg,rgba(19,36,59,.94),rgba(12,25,43,.94));border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:0 18px 48px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.035);min-width:0;margin-bottom:18px}.grid .card{margin-bottom:0}.card h3{margin:0 0 14px;font-size:18px;letter-spacing:-.02em}.account-line{margin:10px 0;overflow-wrap:anywhere}.balance{font-size:clamp(21px,3vw,27px);font-weight:750;letter-spacing:-.035em;margin:12px 0;padding:14px 16px;border-radius:12px;background:rgba(4,13,25,.58);border:1px solid rgba(123,161,205,.13);overflow-wrap:anywhere;color:#e5f3ff}.status{display:inline-block;border-radius:20px;padding:4px 11px;background:rgba(36,166,119,.15);color:var(--success);font-size:12px;font-weight:750}
     #ledger-balance-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}#ledger-balance-list .asset-card{margin:0;min-height:116px;padding:16px;border-radius:14px;background:linear-gradient(145deg,rgba(5,17,31,.9),rgba(12,29,48,.88));border:1px solid rgba(123,161,205,.2);display:flex;flex-direction:column;gap:7px;overflow-wrap:anywhere}#ledger-balance-list .asset-head{display:flex;align-items:center;gap:10px}#ledger-balance-list .asset-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:50%;font-size:11px;font-weight:800;letter-spacing:-.03em;background:rgba(83,145,229,.16);border:1px solid rgba(123,161,205,.25);color:#cfe5ff}#ledger-balance-list .asset-name{font-weight:750;color:#edf5ff;line-height:1.2}#ledger-balance-list .asset-code{font-size:11px;color:var(--muted);letter-spacing:.08em}#ledger-balance-list .asset-amount{font-size:18px;font-weight:800;letter-spacing:-.03em;line-height:1.3;color:#e5f3ff;overflow-wrap:anywhere}#ledger-balance-list .asset-label{font-size:11px;color:var(--muted)}#ledger-balance-list .asset-pending{color:#e6c889;font-size:14px;font-weight:700}#ledger-balance-list .asset-verified{color:var(--success)}
@@ -95,6 +96,12 @@
       <p class="account-line"><strong>Account ID:</strong> <span id="account-id">Loading…</span></p>
       <p class="account-line"><strong>Account status:</strong> <span id="account-status">Checking…</span></p>
       <p class="account-line"><strong>Account role:</strong> <span id="account-role">Checking…</span></p>
+      <div id="account-control-panel" class="notice" role="status" aria-live="polite">
+        <strong>Account controls</strong>
+        <p id="account-control-message">Checking your account permissions…</p>
+        <button type="button" class="secondary" id="deactivate-account-button" hidden>Deactivate my account</button>
+        <p class="muted small" id="account-control-footnote">Deactivation is reversible. It does not delete your profile, recorded balances, or transaction history. An administrator must reactivate a deactivated account.</p>
+      </div>
       <div class="button-row"><button type="button" class="secondary" id="edit-profile-button" aria-expanded="false" aria-controls="profile-edit-panel">Edit profile</button><a class="button secondary" href="/">Homepage</a><button type="button" id="sign-out-button">Sign out</button></div>
       <form id="profile-edit-panel" hidden>
         <h4>Edit your profile</h4>
@@ -112,8 +119,8 @@
       <p id="ledger-balance-message" class="muted form-message" role="status" aria-live="polite">Checking your authorized ledger entries…</p>
       <div class="button-row">
         <button type="button" id="refresh-balances-button">Refresh balances</button>
-        <a class="button secondary" href="/fund-requests.html">Deposits &amp; Withdrawals</a>
-        <a class="button secondary" href="/beneficiaries.html">My Beneficiaries</a>
+        <a class="button secondary" id="fund-requests-link" href="/fund-requests.html">Deposits &amp; Withdrawals</a>
+        <a class="button secondary" id="beneficiaries-link" href="/beneficiaries.html">My Beneficiaries</a>
       </div>
     </section>
   </div>
@@ -297,7 +304,7 @@
     marketStatsTimer=setInterval(()=>{loadMarketPrices();loadMarketChart()},5*60*1000);
     document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){loadMarketPrices();if(!marketSocket||marketSocket.readyState>WebSocket.OPEN)loadMarketChart()}});
   }
-  let supabaseClient=null,currentUser=null;
+  let supabaseClient=null,currentUser=null,currentProfile=null;
   function setText(id,value){const e=document.getElementById(id);if(e)e.textContent=value===null||value===undefined||value===""?"Not available":String(value)}
   function showPageMessage(message){pageMessage.textContent=message}
   function formatDate(value){if(!value)return"Not available";const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString()}
@@ -336,6 +343,7 @@
   }
   async function uploadAvatar(){
     const input=document.getElementById("avatar-file"),button=document.getElementById("upload-avatar-button");
+    if(!currentProfile||String(currentProfile.account_status||"").toLowerCase()!=="active"){setAvatarStatus("Photo changes are unavailable while your account is deactivated.","error");return}
     const file=input.files&&input.files[0];
     if(!currentUser||!file){setAvatarStatus("Choose a photo before uploading.","error");return}
     const allowedTypes=["image/jpeg","image/png","image/webp"];
@@ -396,6 +404,7 @@
   }
   async function saveClientProfile(event){
     event.preventDefault();
+    if(!currentProfile||String(currentProfile.account_status||"").toLowerCase()!=="active"){setProfileEditMessage("Account changes are unavailable while your account is deactivated.","error");return}
     const input=document.getElementById("profile-display-name"),button=document.getElementById("save-profile-button");
     const displayName=input.value.trim();
     if(!displayName||displayName.length>100){setProfileEditMessage("Enter a display name between 1 and 100 characters.","error");return}
@@ -418,18 +427,42 @@
     }finally{button.disabled=false}
   }
 
+  function applyAccountControls(profile){
+    const role=String(profile.role||"").toLowerCase(),status=String(profile.account_status||"").toLowerCase();
+    const active=status==="active",canSelfDeactivate=profile.can_self_deactivate!==false;
+    const panel=document.getElementById("account-control-panel"),message=document.getElementById("account-control-message"),button=document.getElementById("deactivate-account-button");
+    panel.classList.toggle("account-suspended",!active);
+    button.hidden=!(role==="client"&&active&&canSelfDeactivate);
+    if(role!=="client")message.textContent="Account controls are available to client accounts. Administrator access is governed by administrator status.";
+    else if(active&&canSelfDeactivate)message.textContent="Your account is active. You may deactivate it yourself; doing so preserves your records and requires an administrator to reactivate access.";
+    else if(active)message.textContent="Your account is active. Self-deactivation is currently disabled by an administrator.";
+    else message.textContent="Your account is "+(status||"not active")+". You can review existing records, but new financial requests and account changes are restricted. Contact support or an administrator for help.";
+    for(const id of ["edit-profile-button","choose-avatar-button","upload-avatar-button"]){const control=document.getElementById(id);if(control)control.disabled=!active;}
+    if(!active){document.getElementById("profile-edit-panel").hidden=true;document.getElementById("edit-profile-button").setAttribute("aria-expanded","false");}
+    const fundsLink=document.getElementById("fund-requests-link"),beneficiariesLink=document.getElementById("beneficiaries-link");
+    if(fundsLink)fundsLink.hidden=!active;if(beneficiariesLink)beneficiariesLink.hidden=!active;
+    const agentWorkspace=document.getElementById("apy-agent-workspace");if(agentWorkspace&&!active)agentWorkspace.hidden=true;
+  }
+
+  async function deactivateOwnAccount(){
+    if(!currentUser||!currentProfile||String(currentProfile.role||"").toLowerCase()!=="client"||String(currentProfile.account_status||"").toLowerCase()!=="active"||currentProfile.can_self_deactivate===false)return;
+    const confirmed=window.confirm("Deactivate your AlpsCoinChain account? You will retain access to view existing records, but new financial requests and account changes will be restricted. Your profile, balances, and history will not be deleted. Only an administrator can reactivate your account.");
+    if(!confirmed)return;
+    const button=document.getElementById("deactivate-account-button");button.disabled=true;button.textContent="Deactivating…";
+    try{const {data,error}=await supabaseClient.rpc("client_deactivate_own_account");if(error)throw error;if(!data||data.success!==true)throw new Error("The account deactivation could not be confirmed.");showPageMessage("Your account has been deactivated. Existing records remain available in read-only mode.");await loadProfile();}
+    catch(error){console.error("Client account deactivation failed:",error);document.getElementById("account-control-message").textContent=error.message||"Your account could not be deactivated. Please contact support."}
+    finally{button.disabled=false;button.textContent="Deactivate my account";}
+  }
+
   async function loadProfile(){
-    const result=await supabaseClient.from("profiles").select("role, account_status, kyc_status").eq("id",currentUser.id).maybeSingle();
-    if(result.error){console.error("Profile query failed:",result.error);setText("account-status","Could not load");setText("account-role","Could not load");showPageMessage("We could not verify your KYC status. Please refresh or contact support.");return false}
+    const result=await supabaseClient.from("profiles").select("role, account_status, kyc_status, can_self_deactivate").eq("id",currentUser.id).maybeSingle();
+    if(result.error){console.error("Profile query failed:",result.error);setText("account-status","Could not load");setText("account-role","Could not load");showPageMessage("We could not verify your account status. Please refresh or contact support.");return false}
     const profile=result.data;
     if(!profile){setText("account-status","Not available");setText("account-role","Not available");showPageMessage("Your account profile could not be found. Please contact support.");return false}
-    setText("account-status",profile.account_status||"Not available");setText("account-role",profile.role||"Not available");
+    currentProfile=profile;setText("account-status",profile.account_status||"Not available");setText("account-role",profile.role||"Not available");
     const isActiveAdmin=String(profile.role).toLowerCase()==="admin"&&String(profile.account_status).toLowerCase()==="active";
-    document.getElementById("admin-requests-link").hidden=!isActiveAdmin;
-    if(String(profile.role).toLowerCase()==="client" && String(profile.account_status).toLowerCase()==="active" && profile.kyc_status!=="approved"){
-      window.location.replace("/kyc.html");
-      return false;
-    }
+    document.getElementById("admin-requests-link").hidden=!isActiveAdmin;applyAccountControls(profile);
+    if(String(profile.role).toLowerCase()==="client"&&String(profile.account_status).toLowerCase()==="active"&&profile.kyc_status!=="approved"){window.location.replace("/kyc.html");return false;}
     return true;
   }
 
@@ -607,6 +640,7 @@
   }
   async function loadApyAgentWorkspace(){
     const workspace=document.getElementById("apy-agent-workspace"),select=document.getElementById("apy-beneficiary-select"),message=document.getElementById("apy-agent-message");
+    if(!currentProfile||String(currentProfile.account_status||"").toLowerCase()!=="active"){workspace.hidden=true;return}
     try{
       const {data,error}=await supabaseClient.rpc("apy_list_agent_assignments");if(error)throw error;
       const assignments=(Array.isArray(data)?data:[]).filter(a=>a.active&&a.agent_user_id===currentUser.id);
@@ -650,6 +684,7 @@
 
   startLiveMarket();
   document.getElementById("sign-out-button").addEventListener("click",signOut);
+  document.getElementById("deactivate-account-button").addEventListener("click",deactivateOwnAccount);
   document.getElementById("edit-profile-button").addEventListener("click",openProfileEditor);
   document.getElementById("cancel-profile-edit-button").addEventListener("click",closeProfileEditor);
   document.getElementById("profile-edit-panel").addEventListener("submit",saveClientProfile);
