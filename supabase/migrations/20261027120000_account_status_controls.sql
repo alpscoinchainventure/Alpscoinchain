@@ -25,6 +25,43 @@ $function$;
 revoke all on function public.admin_list_profiles_for_management() from public,anon;
 grant execute on function public.admin_list_profiles_for_management() to authenticated;
 
+-- Prevent direct client updates from changing account status or the permission
+-- flag. Only active admins may change these fields; the self-service RPC may
+-- make the single allowed active -> suspended transition after setting a
+-- transaction-local marker.
+create or replace function public.guard_profile_account_controls()
+returns trigger language plpgsql security definer set search_path = ''
+as $function$
+declare v_user_id uuid := auth.uid();
+begin
+  if new.account_status is not distinct from old.account_status
+     and new.can_self_deactivate is not distinct from old.can_self_deactivate then
+    return new;
+  end if;
+  if v_user_id is null then return new; end if;
+  if exists (
+    select 1 from public.profiles p where p.id=v_user_id
+      and lower(coalesce(p.role,''))='admin'
+      and lower(coalesce(p.account_status,''))='active'
+  ) then return new; end if;
+  if v_user_id=old.id
+     and lower(coalesce(old.role,''))='client'
+     and lower(coalesce(old.account_status,''))='active'
+     and lower(coalesce(new.account_status,''))='suspended'
+     and old.can_self_deactivate is true
+     and new.can_self_deactivate is not distinct from old.can_self_deactivate
+     and coalesce(pg_catalog.current_setting('app.client_self_deactivation',true),'')='on' then
+    return new;
+  end if;
+  raise exception 'Only an active administrator can change account controls'
+    using errcode='42501';
+end;
+$function$;
+drop trigger if exists profiles_guard_account_controls on public.profiles;
+create trigger profiles_guard_account_controls
+before update of account_status, can_self_deactivate on public.profiles
+for each row execute function public.guard_profile_account_controls();
+
 create or replace function public.admin_set_client_account_status(p_client_id uuid,p_account_status text,p_reason text)
 returns jsonb language plpgsql security definer set search_path = ''
 as $function$
@@ -87,6 +124,7 @@ begin
   if not found or lower(coalesce(v_role,''))<>'client' then raise exception 'Client account not found or not eligible'; end if;
   if lower(coalesce(v_old_status,''))<>'active' then raise exception 'Only an active client can deactivate their account'; end if;
   if not coalesce(v_allowed,false) then raise exception 'Self-deactivation is disabled by an administrator'; end if;
+  perform pg_catalog.set_config('app.client_self_deactivation','on',true);
   update public.profiles set account_status='suspended',updated_at=now() where id=v_user_id;
   insert into public.admin_action_audit(actor_id,action,entity_type,entity_id,old_status,new_status,reason)
   values(v_user_id,'client_self_deactivated','client_profile',v_user_id,v_old_status,'suspended','Client requested reversible account deactivation');
