@@ -26,6 +26,18 @@ app.get('/vantagepay-preview.html', (_req, res) => res.redirect(302, '/vantagepa
 // Privileged webhook and admin operations remain fail-closed until a reviewed Neon server adapter exists.
 registerVantagePayApi(app);
 
+// Never let an unknown VantagePay API URL fall through to the repository's
+// legacy static-site fallback. That fallback serves AlpsCoinChain HTML and can
+// mislead API clients into treating an HTML page as a successful API response.
+app.use('/api/vantagepay', (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  return res.status(404).json({
+    success: false,
+    code: 'VANTAGEPAY_API_ROUTE_NOT_FOUND',
+    message: 'This VantagePay API endpoint is not available.'
+  });
+});
+
 // Serve VantagePay at the root of its dedicated Vercel project.
 // AlpsCoinChain remains on its separate production project and main branch.
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'vantagepay-home.html')));
