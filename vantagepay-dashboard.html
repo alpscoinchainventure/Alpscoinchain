@@ -98,9 +98,9 @@ async function loadClientProfile(){
  try{
   const data=await apiRequest('/api/vantagepay/client-profile');const p=data.profile||{};
   document.getElementById('client-display-name').value=p.display_name||'';
-  document.getElementById('client-phone').value=p.phone_number||'';
+  document.getElementById('client-phone').value=/^\+234(?:\s|$)/i.test(String(p.phone_number||'').trim())?'':(p.phone_number||'');
   document.getElementById('client-city').value=p.city||'';
-  document.getElementById('client-country').value=String(p.country_code||'').trim();
+  document.getElementById('client-country').value=/^NG$/i.test(String(p.country_code||'').trim())?'':String(p.country_code||'').trim();
   document.getElementById('client-avatar-url').value=p.avatar_url||'';
   document.getElementById('client-profile-heading').textContent=p.display_name||'Your profile';
   document.getElementById('client-profile-updated').textContent=p.updated_at?'Updated '+date(p.updated_at):'No saved profile yet';
@@ -126,7 +126,7 @@ async function loadKyc(){
   if(!k){box.textContent='No KYC profile submitted yet. Complete the form to start review.';return;}
   document.getElementById('kyc-legal-name').value=k.legal_name||'';
   document.getElementById('kyc-dob').value=k.date_of_birth||'';
-  document.getElementById('kyc-country').value=(k.country_code||'').trim();
+  document.getElementById('kyc-country').value=/^NG$/i.test(String(k.country_code||'').trim())?'':String(k.country_code||'').trim();
   document.getElementById('kyc-address').value=k.address_line1||'';
   document.getElementById('kyc-city').value=k.city||'';
   document.getElementById('kyc-postal').value=k.postal_code||'';
