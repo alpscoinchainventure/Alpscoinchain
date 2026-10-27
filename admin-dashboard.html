@@ -35,11 +35,11 @@
       <button id="refreshAccountsButton" type="button">Refresh accounts</button>
     </div>
     <div id="accountsNotice" class="notice" role="status" aria-live="polite">Client accounts have not been loaded yet.</div>
-    <div class="table-wrap"><table><thead><tr><th>Client name</th><th>Email</th><th>Account ID</th><th>Role</th><th>Account status</th><th>Action</th></tr></thead><tbody id="accountRows"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Client name</th><th>Email</th><th>Account ID</th><th>Role</th><th>Account status</th><th>Self-deactivation</th><th>Actions</th></tr></thead><tbody id="accountRows"></tbody></table></div>
     <form id="clientProfileEditForm" class="notice" hidden>
-      <h3>Edit client profile</h3><p class="small muted">Only display name and account status are editable here. Email, role, KYC decisions, and financial records are protected.</p>
+      <h3>Edit client profile</h3><p class="small muted">Only the display name is editable here. Use the audited account controls in the client list to activate or deactivate an account. Email, role, KYC decisions, and financial records are protected.</p>
       <input id="editClientId" type="hidden">
-      <div class="form-grid"><div><label for="editClientName">Client display name</label><input id="editClientName" minlength="2" maxlength="100" required></div><div><label for="editClientStatus">Account status</label><select id="editClientStatus" required><option value="active">Active</option><option value="pending">Pending</option><option value="suspended">Suspended</option></select></div></div>
+      <div class="form-grid"><div><label for="editClientName">Client display name</label><input id="editClientName" minlength="2" maxlength="100" required></div></div>
       <div class="button-row"><button class="primary" id="saveClientProfileButton" type="submit">Save client profile</button><button id="cancelClientProfileEditButton" type="button">Cancel</button></div>
       <div id="clientProfileEditNotice" role="status" aria-live="polite"></div>
     </form>
@@ -214,9 +214,15 @@
       for(const value of [profile.full_name||profile.email||"Name not provided",profile.email||"—",profile.id,profile.role,profile.account_status]){
         const cell=document.createElement("td");cell.textContent=value||"—";row.appendChild(cell)
       }
+      const permissionCell=document.createElement("td");
+      if(String(profile.role||"").toLowerCase()==="client")permissionCell.textContent=profile.can_self_deactivate===false?"Disabled":"Allowed";else permissionCell.textContent="—";
+      row.appendChild(permissionCell);
       const actionCell=document.createElement("td");
       if(String(profile.role||"").toLowerCase()==="client"){
-        const edit=document.createElement("button");edit.type="button";edit.textContent="Edit";edit.addEventListener("click",()=>openClientProfileEditor(profile));actionCell.appendChild(edit);
+        const edit=document.createElement("button");edit.type="button";edit.textContent="Edit";edit.style.margin="3px";edit.addEventListener("click",()=>openClientProfileEditor(profile));actionCell.appendChild(edit);
+        const statusButton=document.createElement("button");statusButton.type="button";statusButton.style.margin="3px";
+        const isActive=String(profile.account_status||"").toLowerCase()==="active";statusButton.textContent=isActive?"Deactivate account":"Activate account";statusButton.className=isActive?"danger":"primary";statusButton.addEventListener("click",()=>setClientAccountStatus(profile,isActive?"suspended":"active",statusButton));actionCell.appendChild(statusButton);
+        const permissionButton=document.createElement("button");permissionButton.type="button";permissionButton.style.margin="3px";permissionButton.textContent=profile.can_self_deactivate===false?"Allow self-deactivation":"Disable self-deactivation";permissionButton.addEventListener("click",()=>setClientSelfDeactivation(profile,profile.can_self_deactivate===false,permissionButton));actionCell.appendChild(permissionButton);
       }else{actionCell.textContent="—"}
       row.appendChild(actionCell);body.appendChild(row)
     }
@@ -234,7 +240,6 @@
     if(!profile||String(profile.role||"").toLowerCase()!=="client")return;
     $("editClientId").value=profile.id;
     $("editClientName").value=profile.full_name||"";
-    $("editClientStatus").value=String(profile.account_status||"active").toLowerCase();
     $("clientProfileEditForm").hidden=false;
     $("clientProfileEditNotice").textContent="Editing "+(profile.email||profile.id)+".";
     $("clientProfileEditForm").scrollIntoView({behavior:"smooth",block:"center"});
@@ -242,8 +247,9 @@
 
   async function saveClientProfile(event){
     event.preventDefault();
-    const id=$("editClientId").value,name=$("editClientName").value.trim(),status=$("editClientStatus").value;
-    if(!id||name.length<2||name.length>100){$("clientProfileEditNotice").textContent="Enter a client name between 2 and 100 characters.";return}
+    const id=$("editClientId").value,name=$("editClientName").value.trim();
+    const selectedProfile=visibleProfiles.find(profile=>profile.id===id);const status=String(selectedProfile?.account_status||"").toLowerCase();
+    if(!id||name.length<2||name.length>100||!selectedProfile||!["active","pending","suspended"].includes(status)){$("clientProfileEditNotice").textContent="Enter a client name between 2 and 100 characters.";return}
     if(!window.confirm("Save profile changes for this client? Account status changes may affect their access."))return;
     const button=$("saveClientProfileButton");button.disabled=true;$("clientProfileEditNotice").textContent="Saving client profile…";
     try{
@@ -256,6 +262,28 @@
     }catch(error){console.error("Client profile update failed:",error);$("clientProfileEditNotice").textContent=error.message||"Could not update the client profile."}
     finally{button.disabled=false}
   }
+  async function setClientAccountStatus(profile,nextStatus,button){
+    if(!profile||String(profile.role||"").toLowerCase()!=="client")return;
+    const reason=window.prompt("Record the reason for "+(nextStatus==="active"?"activating":"deactivating")+" this client account (3–1000 characters):");if(reason===null)return;
+    const trimmed=reason.trim();if(trimmed.length<3||trimmed.length>1000){setNotice("accountsNotice","Enter a reason between 3 and 1000 characters.","error");return}
+    if(!window.confirm((nextStatus==="active"?"Activate":"Deactivate")+" this client account? "+(nextStatus==="active"?"The client may regain access to restricted activities, subject to KYC and other controls.":"The client will retain read-only access to existing records; new financial requests will be blocked.")+"\n\nReason: "+trimmed))return;
+    button.disabled=true;
+    try{const {data,error}=await client.rpc("admin_set_client_account_status",{p_client_id:profile.id,p_account_status:nextStatus,p_reason:trimmed});if(error)throw error;if(!data||data.success!==true)throw new Error("The account status change could not be confirmed.");await loadAccounts();setNotice("accountsNotice","Account status changed to "+nextStatus+" and audit logged.","success");}
+    catch(error){console.error("Account status change failed:",error);setNotice("accountsNotice",error.message||"Could not change the account status.","error")}
+    finally{button.disabled=false}
+  }
+
+  async function setClientSelfDeactivation(profile,allowed,button){
+    if(!profile||String(profile.role||"").toLowerCase()!=="client")return;
+    const reason=window.prompt("Record the reason to "+(allowed?"allow":"disable")+" self-deactivation for this client (3–1000 characters):");if(reason===null)return;
+    const trimmed=reason.trim();if(trimmed.length<3||trimmed.length>1000){setNotice("accountsNotice","Enter a reason between 3 and 1000 characters.","error");return}
+    if(!window.confirm((allowed?"Allow":"Disable")+" this client’s ability to deactivate their own account?"))return;
+    button.disabled=true;
+    try{const {data,error}=await client.rpc("admin_set_client_self_deactivation",{p_client_id:profile.id,p_allowed:allowed,p_reason:trimmed});if(error)throw error;if(!data||data.success!==true)throw new Error("The self-deactivation permission change could not be confirmed.");await loadAccounts();setNotice("accountsNotice","Self-deactivation permission updated and audit logged.","success");}
+    catch(error){console.error("Self-deactivation permission update failed:",error);setNotice("accountsNotice",error.message||"Could not update self-deactivation permission.","error")}
+    finally{button.disabled=false}
+  }
+
   async function verifySession(){
     if(!window.supabase||!window.supabase.createClient){setNotice("sessionNotice","The account service did not load. Refresh and try again.","error");return false}
     client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
