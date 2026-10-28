@@ -45,7 +45,7 @@ test('VantagePay auth page includes account access modes and dashboard link', ()
 });
 
 test('VantagePay auth page uses Neon Auth APIs rather than simulating authentication', () => {
-  for (const api of ['createAuthClient', 'SupabaseAuthAdapter', 'signUp(', 'signInWithPassword(', 'resetPasswordForEmail(', 'updateUser(', 'resend(', 'signOut(', 'getUser(']) {
+  for (const api of ['createAuthClient', 'SupabaseAuthAdapter', 'signUp(', 'signInWithPassword(', 'resetPasswordForEmail(', 'updateUser(', 'emailOtp.sendVerificationOtp(', 'emailOtp.verifyEmail(', 'signOut(', 'getUser(']) {
     assert.ok(html.includes(api), 'missing Neon Auth API: ' + api);
   }
   assert.ok(html.includes("fetch('/api/vantagepay/config'"));
@@ -65,7 +65,7 @@ test('auth and dashboard inline scripts parse', () => {
   assert.doesNotThrow(() => new vm.Script(inlineScript(html, 'auth')), 'auth script must parse');
   assert.doesNotThrow(() => new vm.Script(inlineScript(dashboardHtml, 'dashboard')), 'dashboard script must parse');
   assert.match(html, /Neon authentication library.*could not load/i);
-  assert.match(html, /verifyOtp\(/);
+  assert.match(html, /emailOtp\.verifyEmail\(/);
   assert.match(html, /requestVerificationCode\(/);
   assert.doesNotMatch(html, /emailRedirectTo/);
   assert.match(html, /redirectTo/);
@@ -75,7 +75,7 @@ test('signup requires a verification code and does not expose unverified session
   assert.match(html, /Email verification is required/);
   assert.match(html, /id="verify-form"/);
   assert.match(html, /id="verification-code"/);
-  assert.match(html, /client\.verifyOtp\(\{email,token,type:'signup'\}\)/);
+  assert.match(html, /nativeAuthClient\.emailOtp\.verifyEmail\(\{ email, otp: token \}\)/);
   assert.match(html, /user\.emailVerified !== true/);
   assert.match(vantagepayApi, /VANTAGEPAY_EMAIL_VERIFICATION_REQUIRED/);
 });
@@ -96,7 +96,7 @@ test('email verification screen lets users restart verification at a new email a
   assert.match(html, /id="update-email-submit"[^>]*>Update email &amp; send code/);
   assert.match(html, /client\.signUp\(\{email,password,options:\{data:fullName\?\{full_name:fullName\}:\{\}\}\}\)/);
   assert.match(html, /savePendingVerification\(email\)/);
-  assert.match(html, /Verification has been restarted for /);
+  assert.match(html, /A verification-code request was accepted for '\+email/);
   assert.match(html, /aria-expanded/);
 });
 
@@ -117,7 +117,7 @@ test('OTP resend is cooldown-limited and reports the newest-code guidance', () =
   assert.match(html, /Please wait for the resend timer/);
   assert.match(html, /use the newest code you receive/i);
   assert.match(html, /That code may be incorrect or expired/);
-  assert.match(html, /await client\.resend\(\{type:'signup',email\}\)/);
+  assert.match(html, /nativeAuthClient\.emailOtp\.sendVerificationOtp\(\{ email, type: 'email-verification' \}\)/);
 });
 
 test('customer KYC profile is linked to the authenticated VantagePay account', () => {
@@ -155,7 +155,7 @@ test('operations console exposes an audited KYC review queue', () => {
 
 test('customer dashboard requires a real session and uses user-scoped read-only queries', () => {
   assert.match(dashboardHtml, /client\.auth\.getUser\(\)/);
-  assert.match(dashboardHtml, /\.eq\('user_id',user\.id\)/);
+  assert.match(dashboardHtml, /apiRequest\('\/api\/vantagepay\/account-activity'\)/);
   assert.match(dashboardHtml, /apiRequest\('\/api\/vantagepay\/account'/);
   assert.match(vantagepayApi, /rpc\/vp_ensure_customer_account/);
   assert.match(standaloneSchema, /FUNCTION public\.vp_ensure_customer_account/);
