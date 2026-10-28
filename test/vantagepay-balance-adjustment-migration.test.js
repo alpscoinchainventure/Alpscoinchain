@@ -32,3 +32,6 @@ test('VantagePay adjustment is not represented as an external funds transfer', (
   assert.match(migration, /'funds_transfer_executed',false/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.vp_admin_post_balance_adjustment[\s\S]*?GRANT EXECUTE ON FUNCTION public\.vp_admin_post_balance_adjustment/);
 });
+test('VantagePay balance adjustment rejects a null side before any ledger operation', () => {
+  assert.match(migration, /p_asset_code IS NULL OR p_side IS NULL OR p_side NOT IN \('credit','debit'\)/);
+});
