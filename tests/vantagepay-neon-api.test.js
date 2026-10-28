@@ -220,6 +220,7 @@ test('admin request queue uses the SQL RPC after checking the signed-in admin me
       VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
     },
     fetchImpl: async (url, options = {}) => {
+      if (String(url).endsWith('/.well-known/jwks.json')) return jwksResponse();
       calls.push({ url: String(url), options });
       if (String(url).endsWith('/get-session')) {
         return jwksResponse();
@@ -245,7 +246,7 @@ test('admin request queue uses the SQL RPC after checking the signed-in admin me
   const rpcCall = calls.find(call => call.url.endsWith('/rpc/vp_admin_list_transaction_requests'));
   assert.ok(rpcCall, 'expected the cross-customer queue to use the SQL RPC');
   assert.equal(rpcCall.options.method, 'POST');
-  assert.equal(rpcCall.options.headers.Authorization, 'Bearer admin-jwt');
+  assert.equal(rpcCall.options.headers.Authorization, `Bearer ${ADMIN_TOKEN}`);
   assert.deepEqual(JSON.parse(rpcCall.options.body), { p_actor_user_id: userId });
 });
 
@@ -280,7 +281,7 @@ test('admin status change is delegated to the audited SQL RPC and never writes r
 
   const res = makeResponse();
   await app.handlers.get('PATCH /api/vantagepay/admin/transaction-requests/:id/status')({
-    headers: { authorization: 'Bearer admin-jwt' },
+    headers: { authorization: `Bearer ${ADMIN_TOKEN}` },
     params: { id: requestId },
     body: { status: 'under_review', reason: 'Review supporting request documents' }
   }, res);
@@ -310,6 +311,7 @@ test('balance adjustment remains explicitly disabled and does not call the data 
       VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
     },
     fetchImpl: async (url) => {
+      if (String(url).endsWith('/.well-known/jwks.json')) return jwksResponse();
       calls.push(String(url));
       if (String(url).endsWith('/get-session')) {
         return { ok: true, json: async () => ({ user: { id: userId, emailVerified: true } }) };
@@ -319,7 +321,7 @@ test('balance adjustment remains explicitly disabled and does not call the data 
   });
   const res = makeResponse();
   await app.handlers.get('POST /api/vantagepay/admin/balance-adjustments')({
-    headers: { authorization: 'Bearer customer-jwt' },
+    headers: { authorization: `Bearer ${CUSTOMER_TOKEN}` },
     body: { user_id: userId, amount_minor_units: '10000', currency_code: 'GBP' }
   }, res);
 
