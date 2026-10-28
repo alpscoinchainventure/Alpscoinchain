@@ -76,7 +76,8 @@ test('signup requires a verification code and does not expose unverified session
   assert.match(html, /id="verify-form"/);
   assert.match(html, /id="verification-code"/);
   assert.match(html, /nativeAuthClient\.emailOtp\.verifyEmail\(\{ email, otp: token \}\)/);
-  assert.match(html, /user\.emailVerified !== true/);
+  assert.match(html, /function isEmailVerified\(user\)/);
+  assert.match(html, /if \(!isEmailVerified\(user\)\)/);
   assert.match(vantagepayApi, /VANTAGEPAY_EMAIL_VERIFICATION_REQUIRED/);
 });
 
