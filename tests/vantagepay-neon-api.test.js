@@ -70,9 +70,6 @@ test('customer account query uses the user JWT against Neon Data API', async () 
     fetchImpl: async (url, options = {}) => {
       if (String(url).endsWith('/.well-known/jwks.json')) return jwksResponse();
       calls.push({ url, options });
-      if (String(url).endsWith('/.well-known/jwks.json')) {
-        return jwksResponse();
-      }
       return {
         ok: true,
         status: 200,
@@ -95,7 +92,7 @@ test('customer account query uses the user JWT against Neon Data API', async () 
   assert.equal(res.payload.account.user_id, userId);
   const dataCall = calls.find(call => String(call.url).includes('/rpc/vp_ensure_customer_account'));
   assert.ok(dataCall, 'expected the authenticated account-provisioning RPC');
-  assert.equal(dataCall.options.headers.Authorization, 'Bearer customer-jwt');
+  assert.equal(dataCall.options.headers.Authorization, `Bearer ${CUSTOMER_TOKEN}`);
   assert.equal('apikey' in dataCall.options.headers, false);
   assert.equal(String(dataCall.url).startsWith('https://data.example.test/neondb/rest/v1/'), true);
 });
@@ -109,8 +106,8 @@ test('unverified Neon Auth sessions are denied before any customer data query', 
       VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
     },
     fetchImpl: async (url) => {
-      if (String(url).endsWith('/.well-known/jwks.json')) return jwksResponse();
       calls.push(String(url));
+      if (String(url).endsWith('/.well-known/jwks.json')) return jwksResponse();
       if (String(url).endsWith('/get-session')) {
         return jwksResponse();
       }
@@ -165,8 +162,7 @@ test('invalid or expired Neon session is rejected before querying customer data'
     headers: { authorization: `Bearer ${EXPIRED_TOKEN}` }
   }, res);
   assert.equal(res.statusCode, 401);
-  assert.equal(calls.length, 1);
-  assert.ok(calls[0].endsWith('/get-session'));
+  assert.equal(calls.length, 0, 'expired credentials are rejected before network access');
   assert.equal(calls.some(url => url.includes('/vp_customer_accounts?')), false);
 });
 
@@ -329,6 +325,5 @@ test('balance adjustment remains explicitly disabled and does not call the data 
 
   assert.equal(res.statusCode, 503);
   assert.equal(res.payload.code, 'VANTAGEPAY_LEDGER_MODEL_NOT_REVIEWED');
-  assert.equal(calls.length, 1);
-  assert.ok(calls[0].endsWith('/get-session'));
+  assert.equal(calls.length, 0, 'disabled endpoint must not call the data API');
 });
