@@ -262,6 +262,7 @@ test('admin status change is delegated to the audited SQL RPC and never writes r
       VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
     },
     fetchImpl: async (url, options = {}) => {
+      if (String(url).endsWith('/.well-known/jwks.json')) return jwksResponse();
       calls.push({ url: String(url), options });
       if (String(url).endsWith('/get-session')) {
         return { ok: true, json: async () => ({ user: { id: userId, emailVerified: true } }) };
