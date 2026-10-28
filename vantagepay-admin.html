@@ -8,9 +8,19 @@
 <div class="panel"><h2>Balance adjustments disabled</h2><p>Manual balance changes are unavailable until the currency/account-balance model and balanced, idempotent ledger-posting procedure have been reviewed, implemented, and tested. This console will not create a credit, debit, or one-sided ledger entry. No customer balance can be changed here.</p><div class="message bad" role="status">VANTAGEPAY_LEDGER_MODEL_NOT_REVIEWED · no balance adjustment is enabled.</div></div>
 <div class="panel"><strong>Financial safety</strong><p class="small">Do not mark a request settled from this screen. A provider-confirmed settlement workflow is required. Admin membership must be provisioned in the dedicated VantagePay database; customer accounts cannot grant themselves admin access. APY, bonuses, and investment-plan returns must be verified against the approved external source before any ledger credit.</p></div>
 </main><script type="module">
-import { createAuthClient } from 'https://esm.sh/@neondatabase/auth@latest';
-import { SupabaseAuthAdapter } from 'https://esm.sh/@neondatabase/auth@latest/vanilla/adapters';
 (function(){'use strict';let client,session;const status=document.getElementById('status'),consoleEl=document.getElementById('console'),queue=document.getElementById('queue');
+async function loadAuthLibrary(){
+ const [authModule,adapterModule]=await Promise.all([
+  import('https://esm.sh/@neondatabase/auth@latest'),
+  import('https://esm.sh/@neondatabase/auth@latest/vanilla/adapters')
+ ]);
+ const createAuthClient=authModule.createAuthClient;
+ const SupabaseAuthAdapter=adapterModule.SupabaseAuthAdapter;
+ if(typeof createAuthClient!=='function'||typeof SupabaseAuthAdapter!=='function'){
+  throw new Error('Neon Auth loaded but its compatible adapter export is unavailable. The dashboard stopped safely; no account data was changed.');
+ }
+ return {createAuthClient,SupabaseAuthAdapter};
+}
 function show(text,kind){status.textContent=text;status.className='message'+(kind?' '+kind:'');}
 async function api(path,options={}){if(!session?.access_token)throw new Error('Sign in again to continue.');const r=await fetch(path,{...options,headers:{accept:'application/json','Content-Type':'application/json',Authorization:'Bearer '+session.access_token,...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||'Request failed.');return d;}
 function escapeText(v){return String(v??'—');}
@@ -53,7 +63,7 @@ async function loadKycQueue(){
   }
  }catch(e){host.textContent=e.message;show(e.message,'bad');}
 }
-async function start(){try{const c=await fetch('/api/vantagepay/config');if(!c.ok)throw new Error('Dedicated VantagePay authentication is not configured yet.');const cfg=await c.json();if(!cfg.neonAuthUrl||!cfg.neonDataApiUrl)throw new Error('VantagePay Neon services are not configured yet.');client=createAuthClient(cfg.neonAuthUrl,{adapter:SupabaseAuthAdapter()});const {data,error}=await client.getSession();if(error||!data.session){show('Sign in through VantagePay first, then open this staff console.','bad');return;}session=data.session;const u=await client.getUser();if(u.error||!u.data.user){show('Valid VantagePay session required.','bad');return;}consoleEl.classList.remove('hidden');show('Session verified. Server will check enabled admin membership for every request.','good');await loadProfiles();await loadQueue();await loadKycQueue();}catch(e){show(e.message,'bad');}}
+async function start(){try{show('Loading VantagePay authentication…');const {createAuthClient,SupabaseAuthAdapter}=await loadAuthLibrary();const c=await fetch('/api/vantagepay/config');if(!c.ok)throw new Error('Dedicated VantagePay authentication is not configured yet.');const cfg=await c.json();if(!cfg.neonAuthUrl||!cfg.neonDataApiUrl)throw new Error('VantagePay Neon services are not configured yet.');client=createAuthClient(cfg.neonAuthUrl,{adapter:SupabaseAuthAdapter()});const {data,error}=await client.getSession();if(error||!data.session){show('Sign in through VantagePay first, then open this staff console.','bad');return;}session=data.session;const u=await client.getUser();if(u.error||!u.data.user){show('Valid VantagePay session required.','bad');return;}consoleEl.classList.remove('hidden');show('Session verified. Server will check enabled admin membership for every request.','good');await loadProfiles();await loadQueue();await loadKycQueue();}catch(e){console.error('[VantagePay operations startup]',e);show('Dashboard startup failed: '+(e&&e.message?e.message:'unknown error')+'. Use Refresh after checking the connection, or sign in again.','bad');}}
 // Balance adjustment UI is intentionally absent until the ledger model and audited posting RPC are reviewed.
 document.getElementById('refresh-profiles').addEventListener('click',loadProfiles);document.getElementById('refresh').addEventListener('click',loadQueue);document.getElementById('refresh-kyc').addEventListener('click',loadKycQueue);document.getElementById('signout').addEventListener('click',async()=>{if(client)await client.signOut();location.href='/vantagepay-auth.html';});start();
 })();
