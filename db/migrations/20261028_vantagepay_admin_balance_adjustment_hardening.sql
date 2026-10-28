@@ -52,7 +52,7 @@ BEGIN
   END IF;
 
   IF p_customer_ref IS NULL OR length(btrim(p_customer_ref))=0 OR length(p_customer_ref)>200
-    OR p_asset_code IS NULL OR p_side NOT IN ('credit','debit')
+    OR p_asset_code IS NULL OR p_side IS NULL OR p_side NOT IN ('credit','debit')
     OR p_amount_units IS NULL OR p_amount_units<=0 OR p_amount_units<>trunc(p_amount_units)
     OR p_external_reference IS NULL OR length(btrim(p_external_reference))<8 OR length(p_external_reference)>200
     OR p_reason IS NULL OR length(btrim(p_reason))<12 OR length(p_reason)>1000 THEN
