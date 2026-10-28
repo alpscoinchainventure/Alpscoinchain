@@ -1,9 +1,13 @@
 name: VantagePay validation
 on:
   push:
-    branches: [vantagepay-integration-plan]
+    branches:
+      - vantagepay-integration-plan
+      - vantagepay-ledger-adjustment-hardening
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - vantagepay-premium-dashboard
   workflow_dispatch:
 permissions:
   contents: read
