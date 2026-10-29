@@ -15,11 +15,11 @@
     .table-wrap{width:100%;overflow-x:auto;margin-top:12px;border:1px solid var(--line);border-radius:11px}table{width:100%;border-collapse:collapse;min-width:560px}th,td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--line);overflow-wrap:anywhere;vertical-align:top}th{color:#a9bfd9;font-size:13px;background:rgba(3,12,23,.38)}td{font-size:14px}tr:last-child td{border-bottom:0}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}.form-grid>div{min-width:0}.management-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.management-item{padding:15px;background:rgba(22,42,67,.72);border:1px solid var(--line);border-radius:12px;min-width:0}.management-item strong{display:block;margin-bottom:5px}footer{margin-top:25px;text-align:center;color:var(--muted);font-size:12px}[hidden]{display:none!important}
     @media(max-width:650px){.form-grid,.management-grid{grid-template-columns:1fr}main{padding:18px 12px 35px}header{padding:15px}h1{font-size:25px}.panel{padding:15px}.search-row input{flex:1 1 100%}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}
-  </style>
+  </style><style id="accessibility-enhancements">:focus-visible{outline:3px solid #75e4d0!important;outline-offset:3px!important}.skip-link{position:fixed;left:12px;top:12px;z-index:99999;padding:12px 16px;background:#fff;color:#07111f;border-radius:8px;transform:translateY(-180%);font-weight:700}.skip-link:focus{transform:translateY(0)}body.a11y-large{font-size:1.12em}body.a11y-contrast{filter:contrast(1.18)}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}.a11y-tools{position:fixed;right:12px;bottom:12px;z-index:10000;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100vw - 24px);padding:8px;background:#07111fee;border:1px solid #75e4d0;border-radius:12px}.a11y-tools button{min-height:40px;padding:8px 10px;background:#17304a;color:#fff;border:1px solid #7593b7;border-radius:8px;cursor:pointer}</style>
 </head>
 <body>
 <header><div class="brand-lockup"><svg class="brand-mark" viewBox="0 0 64 64" role="img" aria-label="AlpsCoinChain mountain and coin logo" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="accLogoGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#72e5c0"/><stop offset="1" stop-color="#3287ff"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="18" fill="#0b1b30" stroke="#5f9bdb" stroke-opacity=".55"/><circle cx="43" cy="22" r="11" fill="none" stroke="url(#accLogoGrad)" stroke-width="2.5"/><path d="M10 45 24 25l8 11 6-8 15 17H10Z" fill="url(#accLogoGrad)" fill-opacity=".2" stroke="url(#accLogoGrad)" stroke-width="2.5" stroke-linejoin="round"/><path d="M18 45 28 32l5 7 4-5 10 11" fill="none" stroke="#d9f8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><strong>AlpsCoinChain Investment</strong></div><div class="button-row" style="margin:0"><a class="public-site-link" href="/">Public website</a><button id="signOutButton" type="button">Sign out</button></div></header>
-<main>
+<main id="main-content">
   <section>
     <h1>Admin Dashboard</h1>
     <p class="muted">Secure administration for client accounts, recorded ledger balances, and financial request review.</p>
@@ -138,7 +138,7 @@
   </section>
 
 
-  <section class="panel" aria-labelledby="apyAdminHeading">
+  <section class="panel" id="catalog-management" aria-labelledby="catalogTitle"><h2 id="catalogTitle">Projects &amp; Investment Plans</h2><p class="muted">Create, edit, publish, or deactivate catalogue entries. Published items are visible to clients. Never enter returns as guaranteed.</p><div class="actions"><button type="button" id="newProjectButton">Add project</button><button type="button" id="newPlanButton">Add investment plan</button><button type="button" id="refreshCatalogButton">Refresh catalogue</button></div><p id="catalogNotice" class="muted" role="status" aria-live="polite"></p><h3>Projects</h3><div id="adminProjectsList"></div><h3>Investment plans</h3><div id="adminPlansList"></div></section><section class="panel" aria-labelledby="apyAdminHeading">
     <h2 id="apyAdminHeading">APY Reports &amp; Agent Activities</h2>
     <p class="muted small">Assign agents to beneficiary accounts, review submitted performance reports, and publish verified reports to beneficiary dashboards. APY reports do not post or alter financial ledger entries.</p>
     <h3>Agent assignments</h3>
@@ -174,7 +174,8 @@
     </form>
     <div id="apyRecordNotice" class="notice" role="status" aria-live="polite">Choose a client and enter the activity details to create a report for review.</div>
 
-    <h3 style="margin-top:25px">Submitted APY reports</h3>
+    <h3 style="margin-top:25px">Investment Profits · APY Reports</h3>
+    <p class="muted small">Administrators can review reports and update recorded APY/return figures. These report edits do not post ledger entries or initiate transfers.</p>
     <div id="apyAdminReportsNotice" class="notice" role="status" aria-live="polite">APY reports have not been loaded.</div>
     <div class="table-wrap"><table><thead><tr><th>Beneficiary</th><th>Agent</th><th>Reporting period</th><th>Recorded APY / return</th><th>Status</th><th>Review actions</th></tr></thead><tbody id="apyAdminReportRows"></tbody></table></div>
     <div id="apyAuditPanel" class="notice" hidden></div>
@@ -474,6 +475,38 @@
     }catch(error){console.error("APY report review failed:",error);setNotice("apyAdminReportsNotice",error.message||"Could not update report.","error")}
     finally{button.disabled=false}
   }
+  async function editInvestmentProfit(report,button){
+    const currentRate=report.apy_rate===null||report.apy_rate===undefined?"":String(report.apy_rate);
+    const currentReturn=report.return_amount===null||report.return_amount===undefined?"":String(report.return_amount);
+    const currentAsset=report.asset_code||"";
+    const currentSummary=report.summary||"";
+    const rateInput=window.prompt("Recorded APY rate (%) — leave blank if not recorded:",currentRate);
+    if(rateInput===null)return;
+    const returnInput=window.prompt("Recorded investment return amount — leave blank if not recorded:",currentReturn);
+    if(returnInput===null)return;
+    const assetInput=window.prompt("Return asset/currency code (for example USD or BTC):",currentAsset);
+    if(assetInput===null)return;
+    const summaryInput=window.prompt("Report summary:",currentSummary);
+    if(summaryInput===null)return;
+    const rateText=rateInput.trim(),returnText=returnInput.trim();
+    const rate=rateText===""?null:Number(rateText),amount=returnText===""?null:Number(returnText);
+    if((rate!==null&&(!Number.isFinite(rate)||rate<0||rate>1000000))||(amount!==null&&(!Number.isFinite(amount)||amount<0))){
+      setNotice("apyAdminReportsNotice","Enter valid non-negative numeric APY and return values.","error");return;
+    }
+    if(!summaryInput.trim()){setNotice("apyAdminReportsNotice","The report summary cannot be empty.","error");return}
+    button.disabled=true;setNotice("apyAdminReportsNotice","Saving investment profit record…");
+    try{
+      const {data,error}=await client.rpc("apy_admin_update_investment_profit",{
+        p_report_id:report.report_id,p_apy_rate:rate,p_return_amount:amount,
+        p_asset_code:assetInput.trim()||null,p_summary:summaryInput.trim()
+      });
+      if(error)throw error;
+      if(!data||data.success!==true)throw new Error("The investment profit record was not updated.");
+      setNotice("apyAdminReportsNotice","Recorded profit figures updated. No ledger balance or transfer was changed.","success");
+      await loadApyAdminReports();
+    }catch(error){console.error("Investment profit update failed:",error);setNotice("apyAdminReportsNotice",error.message||"Could not update investment profit record.","error")}
+    finally{button.disabled=false}
+  }
   async function showApyReportAudit(report,button){
     const panel=$("apyAuditPanel");panel.hidden=false;panel.textContent="Loading audit history…";button.disabled=true;
     try{
@@ -503,6 +536,7 @@
         if(report.status==="approved")addAction("Publish","publish");
         if(["submitted","approved"].includes(report.status))addAction("Request changes","request_changes");
         if(["submitted","changes_requested"].includes(report.status))addAction("Reject","reject");
+        const editProfit=document.createElement("button");editProfit.type="button";editProfit.textContent="Edit profit";editProfit.style.margin="3px";editProfit.addEventListener("click",()=>editInvestmentProfit(report,editProfit));actions.appendChild(editProfit);
         const audit=document.createElement("button");audit.type="button";audit.textContent="Audit history";audit.style.margin="3px";audit.addEventListener("click",()=>showApyReportAudit(report,audit));actions.appendChild(audit);
         const noteWrap=document.createElement("div");noteWrap.style.minWidth="170px";noteWrap.appendChild(notes);actions.appendChild(noteWrap);
         body.appendChild(row);
@@ -536,5 +570,9 @@
   (async()=>{const ok=await verifySession();if(ok){await loadAccounts();await loadWalletAddresses();await loadBalanceAdjustments();await loadApyAdminData()}})();
 })();
 </script>
-</body>
+<a class="skip-link" href="#main-content">Skip to main content</a><div class="a11y-tools" role="group" aria-label="Accessibility display options"><button type="button" id="a11yText" aria-pressed="false">Larger text</button><button type="button" id="a11yContrast" aria-pressed="false">Higher contrast</button></div><script>(function(){const b=document.body,t=document.getElementById('a11yText'),c=document.getElementById('a11yContrast');t.addEventListener('click',()=>{const on=b.classList.toggle('a11y-large');t.setAttribute('aria-pressed',String(on))});c.addEventListener('click',()=>{const on=b.classList.toggle('a11y-contrast');c.setAttribute('aria-pressed',String(on))})})();async function loadInvestmentCatalogAdmin(){const note=document.getElementById('catalogNotice');if(!note||!client)return;try{const {data,error}=await client.rpc('list_published_investment_catalog');if(error)throw error;const render=(items,container,kind)=>{container.replaceChildren();if(!items.length){container.textContent='No catalogue entries yet.';return}items.forEach(item=>{const row=document.createElement('div');row.className='panel';const title=document.createElement('strong');title.textContent=(kind==='project'?item.title:item.name)+' · '+item.status;const edit=document.createElement('button');edit.type='button';edit.textContent='Edit';edit.addEventListener('click',()=>editCatalogItem(kind,item));row.append(title,edit);container.append(row)})};render(data?.projects||[],document.getElementById('adminProjectsList'),'project');render(data?.plans||[],document.getElementById('adminPlansList'),'plan');note.textContent='Catalogue refreshed. Draft and inactive items are included for administrators.'}catch(e){console.error(e);note.textContent='Could not load catalogue. Apply the catalogue migration to AlpsCoinChain first.'}}
+async function saveCatalog(fn,args){const note=document.getElementById('catalogNotice');note.textContent='Saving catalogue item…';try{const {data,error}=await client.rpc(fn,args);if(error)throw error;if(!data?.success)throw new Error('Save was not confirmed');note.textContent='Saved and audit logged.';await loadInvestmentCatalogAdmin()}catch(e){console.error(e);note.textContent=e.message||'Could not save this item.'}}
+async function editCatalogItem(kind,item){const project=kind==='project';const title=prompt(project?'Project title':'Plan name',project?item.title:item.name);if(title===null)return;const description=prompt('Description (at least 10 characters)',item.description);if(description===null)return;const status=prompt('Status: draft, published, or inactive',item.status);if(status===null)return;if(project){const type=prompt('Type: investment or company',item.project_type);if(type===null)return;const risk=prompt('Risk disclosure',item.risk_disclosure);if(risk===null)return;await saveCatalog('admin_save_investment_project',{p_id:item.id,p_title:title,p_project_type:type,p_description:description,p_status:status,p_risk_disclosure:risk})}else{const asset=prompt('Asset code',item.asset_code);if(asset===null)return;const min=prompt('Minimum amount',item.minimum_amount);if(min===null)return;const max=prompt('Maximum amount (blank for none)',item.maximum_amount??'');if(max===null)return;const days=prompt('Duration in days',item.duration_days);if(days===null)return;const terms=prompt('Return terms (not guaranteed)',item.return_terms);if(terms===null)return;const apy=prompt('APY percentage (blank if not specified)',item.apy_rate??'');if(apy===null)return;const risk=prompt('Risk disclosure',item.risk_disclosure);if(risk===null)return;await saveCatalog('admin_save_investment_plan',{p_id:item.id,p_name:title,p_description:description,p_asset_code:asset.toUpperCase(),p_minimum:Number(min),p_maximum:max.trim()===''?null:Number(max),p_duration_days:Number(days),p_return_terms:terms,p_apy_rate:apy.trim()===''?null:Number(apy),p_status:status,p_risk_disclosure:risk})}}
+async function newProject(){const title=prompt('Project title');if(title===null)return;const description=prompt('Description');if(description===null)return;const type=prompt('Type: investment or company','company');if(type===null)return;const status=prompt('Status: draft, published, or inactive','draft');if(status===null)return;const risk=prompt('Risk disclosure','Review all risks and terms before making an investment decision.');if(risk===null)return;await saveCatalog('admin_save_investment_project',{p_id:null,p_title:title,p_project_type:type,p_description:description,p_status:status,p_risk_disclosure:risk})}
+async function newPlan(){const name=prompt('Plan name');if(name===null)return;const description=prompt('Description');if(description===null)return;const asset=prompt('Asset code','USDT');if(asset===null)return;const min=prompt('Minimum amount','0');if(min===null)return;const max=prompt('Maximum amount (blank for none)','');if(max===null)return;const days=prompt('Duration in days','30');if(days===null)return;const terms=prompt('Return terms (not guaranteed)','Returns are variable and not guaranteed.');if(terms===null)return;const apy=prompt('APY percentage (blank if not specified)','');if(apy===null)return;const status=prompt('Status: draft, published, or inactive','draft');if(status===null)return;const risk=prompt('Risk disclosure','Digital asset investments involve risk, including loss of capital.');if(risk===null)return;await saveCatalog('admin_save_investment_plan',{p_id:null,p_name:name,p_description:description,p_asset_code:asset.toUpperCase(),p_minimum:Number(min),p_maximum:max.trim()===''?null:Number(max),p_duration_days:Number(days),p_return_terms:terms,p_apy_rate:apy.trim()===''?null:Number(apy),p_status:status,p_risk_disclosure:risk})}</script><script>document.getElementById('newProjectButton')?.addEventListener('click',newProject);document.getElementById('newPlanButton')?.addEventListener('click',newPlan);document.getElementById('refreshCatalogButton')?.addEventListener('click',loadInvestmentCatalogAdmin);window.addEventListener('load',()=>setTimeout(loadInvestmentCatalogAdmin,1200));</script></body>
 </html>
