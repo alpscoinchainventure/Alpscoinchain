@@ -35,3 +35,8 @@ test('VantagePay adjustment is not represented as an external funds transfer', (
 test('VantagePay balance adjustment rejects a null side before any ledger operation', () => {
   assert.match(migration, /p_asset_code IS NULL OR p_side IS NULL OR p_side NOT IN \('credit','debit'\)/);
 });
+
+test('VantagePay duplicate retries only succeed when the prior transaction has exactly two balanced entries', () => {
+  assert.match(migration, /SELECT count\(\),[\s\S]*?INTO v_existing_entry_count, v_existing_net/);
+  assert.match(migration, /v_existing_entry_count=2[\s\S]*?v_existing_net=0/);
+});
