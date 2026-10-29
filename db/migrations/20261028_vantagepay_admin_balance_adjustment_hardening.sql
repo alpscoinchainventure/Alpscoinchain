@@ -37,6 +37,8 @@ DECLARE
   v_existing_control_amount numeric;
   v_existing_control_side text;
   v_customer_balance numeric;
+  v_existing_entry_count integer;
+  v_existing_net numeric;
 BEGIN
   v_actor := auth.uid();
   IF v_actor IS NULL THEN
@@ -100,10 +102,18 @@ BEGIN
       AND e.asset_code=p_asset_code
     LIMIT 1;
 
+    SELECT count(*),
+           coalesce(sum(CASE WHEN e.entry_side='debit' THEN e.amount_units ELSE -e.amount_units END),0)
+      INTO v_existing_entry_count, v_existing_net
+    FROM public.vp_ledger_entries e
+    WHERE e.transaction_id=v_existing.id;
+
     IF v_existing.transaction_type='admin_balance_adjustment'
       AND v_existing.customer_ref=p_customer_ref
       AND v_existing.asset_code=p_asset_code
       AND v_existing.status='posted'
+      AND v_existing_entry_count=2
+      AND v_existing_net=0
       AND v_existing_customer_amount=p_amount_units
       AND v_existing_customer_side=v_customer_side
       AND v_existing_control_amount=p_amount_units
