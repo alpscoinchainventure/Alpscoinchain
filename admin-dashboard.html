@@ -174,7 +174,8 @@
     </form>
     <div id="apyRecordNotice" class="notice" role="status" aria-live="polite">Choose a client and enter the activity details to create a report for review.</div>
 
-    <h3 style="margin-top:25px">Submitted APY reports</h3>
+    <h3 style="margin-top:25px">Investment Profits · APY Reports</h3>
+    <p class="muted small">Administrators can review reports and update recorded APY/return figures. These report edits do not post ledger entries or initiate transfers.</p>
     <div id="apyAdminReportsNotice" class="notice" role="status" aria-live="polite">APY reports have not been loaded.</div>
     <div class="table-wrap"><table><thead><tr><th>Beneficiary</th><th>Agent</th><th>Reporting period</th><th>Recorded APY / return</th><th>Status</th><th>Review actions</th></tr></thead><tbody id="apyAdminReportRows"></tbody></table></div>
     <div id="apyAuditPanel" class="notice" hidden></div>
@@ -474,6 +475,38 @@
     }catch(error){console.error("APY report review failed:",error);setNotice("apyAdminReportsNotice",error.message||"Could not update report.","error")}
     finally{button.disabled=false}
   }
+  async function editInvestmentProfit(report,button){
+    const currentRate=report.apy_rate===null||report.apy_rate===undefined?"":String(report.apy_rate);
+    const currentReturn=report.return_amount===null||report.return_amount===undefined?"":String(report.return_amount);
+    const currentAsset=report.asset_code||"";
+    const currentSummary=report.summary||"";
+    const rateInput=window.prompt("Recorded APY rate (%) — leave blank if not recorded:",currentRate);
+    if(rateInput===null)return;
+    const returnInput=window.prompt("Recorded investment return amount — leave blank if not recorded:",currentReturn);
+    if(returnInput===null)return;
+    const assetInput=window.prompt("Return asset/currency code (for example USD or BTC):",currentAsset);
+    if(assetInput===null)return;
+    const summaryInput=window.prompt("Report summary:",currentSummary);
+    if(summaryInput===null)return;
+    const rateText=rateInput.trim(),returnText=returnInput.trim();
+    const rate=rateText===""?null:Number(rateText),amount=returnText===""?null:Number(returnText);
+    if((rate!==null&&(!Number.isFinite(rate)||rate<0||rate>1000000))||(amount!==null&&(!Number.isFinite(amount)||amount<0))){
+      setNotice("apyAdminReportsNotice","Enter valid non-negative numeric APY and return values.","error");return;
+    }
+    if(!summaryInput.trim()){setNotice("apyAdminReportsNotice","The report summary cannot be empty.","error");return}
+    button.disabled=true;setNotice("apyAdminReportsNotice","Saving investment profit record…");
+    try{
+      const {data,error}=await client.rpc("apy_admin_update_investment_profit",{
+        p_report_id:report.report_id,p_apy_rate:rate,p_return_amount:amount,
+        p_asset_code:assetInput.trim()||null,p_summary:summaryInput.trim()
+      });
+      if(error)throw error;
+      if(!data||data.success!==true)throw new Error("The investment profit record was not updated.");
+      setNotice("apyAdminReportsNotice","Recorded profit figures updated. No ledger balance or transfer was changed.","success");
+      await loadApyAdminReports();
+    }catch(error){console.error("Investment profit update failed:",error);setNotice("apyAdminReportsNotice",error.message||"Could not update investment profit record.","error")}
+    finally{button.disabled=false}
+  }
   async function showApyReportAudit(report,button){
     const panel=$("apyAuditPanel");panel.hidden=false;panel.textContent="Loading audit history…";button.disabled=true;
     try{
@@ -503,6 +536,7 @@
         if(report.status==="approved")addAction("Publish","publish");
         if(["submitted","approved"].includes(report.status))addAction("Request changes","request_changes");
         if(["submitted","changes_requested"].includes(report.status))addAction("Reject","reject");
+        const editProfit=document.createElement("button");editProfit.type="button";editProfit.textContent="Edit profit";editProfit.style.margin="3px";editProfit.addEventListener("click",()=>editInvestmentProfit(report,editProfit));actions.appendChild(editProfit);
         const audit=document.createElement("button");audit.type="button";audit.textContent="Audit history";audit.style.margin="3px";audit.addEventListener("click",()=>showApyReportAudit(report,audit));actions.appendChild(audit);
         const noteWrap=document.createElement("div");noteWrap.style.minWidth="170px";noteWrap.appendChild(notes);actions.appendChild(noteWrap);
         body.appendChild(row);
