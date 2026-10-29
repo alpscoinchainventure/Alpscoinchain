@@ -37,6 +37,6 @@ test('VantagePay balance adjustment rejects a null side before any ledger operat
 });
 
 test('VantagePay duplicate retries only succeed when the prior transaction has exactly two balanced entries', () => {
-  assert.match(migration, /SELECT count\(\),[\s\S]*?INTO v_existing_entry_count, v_existing_net/);
+  assert.match(migration, /SELECT count\(\*\),[\s\S]*?INTO v_existing_entry_count, v_existing_net/);
   assert.match(migration, /v_existing_entry_count=2[\s\S]*?v_existing_net=0/);
 });
