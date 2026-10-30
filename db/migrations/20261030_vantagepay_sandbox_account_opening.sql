@@ -88,7 +88,7 @@ BEGIN
   END IF;
 
   INSERT INTO public.vp_customer_notifications(user_id, notification_type, title, message)
-  VALUES (v_user, 'account', 'Sandbox account application received',
+  VALUES (v_user, 'security', 'Sandbox account application received',
     'Your VantagePay test-account application was received and is awaiting review. This is a simulated environment, not a bank account.');
   RETURN jsonb_build_object('application', to_jsonb(v_application), 'message', 'Sandbox account application submitted for review.');
 END;
@@ -110,7 +110,7 @@ BEGIN
   SELECT * INTO v_bank_account FROM public.vp_demo_bank_accounts WHERE user_id = v_user;
   RETURN jsonb_build_object(
     'application', CASE WHEN v_application.id IS NULL THEN NULL ELSE to_jsonb(v_application) END,
-    'account', CASE WHEN v_bank_account.id IS NULL THEN NULL ELSE to_jsonb(v_bank_account) END
+    'security', CASE WHEN v_bank_account.id IS NULL THEN NULL ELSE to_jsonb(v_bank_account) END
   );
 END;
 $function$;
@@ -201,13 +201,13 @@ BEGIN
     jsonb_build_object('application_status',p_next_status,'test_account_issued',p_next_status='approved'));
 
   INSERT INTO public.vp_customer_notifications(user_id, notification_type, title, message)
-  VALUES (v_app.user_id, 'account',
+  VALUES (v_app.user_id, 'security',
     CASE WHEN p_next_status='approved' THEN 'VantagePay sandbox account approved' ELSE 'VantagePay account application declined' END,
     CASE WHEN p_next_status='approved'
       THEN 'Your simulated VantagePay test account has been created. It is not a real bank account and cannot receive or send real money.'
       ELSE 'Your VantagePay sandbox account application was declined. Review the admin note and contact support if needed.' END);
 
-  RETURN jsonb_build_object('application',to_jsonb(v_app),'account',CASE WHEN v_account.id IS NULL THEN NULL ELSE to_jsonb(v_account) END);
+  RETURN jsonb_build_object('application',to_jsonb(v_app),'security',CASE WHEN v_account.id IS NULL THEN NULL ELSE to_jsonb(v_account) END);
 END;
 $function$;
 
