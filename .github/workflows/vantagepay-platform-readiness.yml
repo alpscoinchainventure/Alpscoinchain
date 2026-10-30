@@ -1,0 +1,24 @@
+name: VantagePay platform readiness
+on:
+  push:
+    branches:
+      - vantagepay-platform-readiness-20261030
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run application and regression tests
+        run: npm test
