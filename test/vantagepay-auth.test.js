@@ -45,7 +45,7 @@ test('VantagePay auth page includes account access modes and dashboard link', ()
 });
 
 test('VantagePay auth page uses Neon Auth APIs rather than simulating authentication', () => {
-  for (const api of ['createAuthClient', 'SupabaseAuthAdapter', 'signUp(', 'signInWithPassword(', 'resetPasswordForEmail(', 'updateUser(', 'resend(', 'signOut(', 'getUser(']) {
+  for (const api of ['createAuthClient', 'SupabaseAuthAdapter', 'signUp(', 'signInWithPassword(', 'resetPasswordForEmail(', 'updateUser(', 'emailOtp.sendVerificationOtp(', 'emailOtp.verifyEmail(', 'signOut(', 'getUser(']) {
     assert.ok(html.includes(api), 'missing Neon Auth API: ' + api);
   }
   assert.ok(html.includes("fetch('/api/vantagepay/config'"));
@@ -65,7 +65,7 @@ test('auth and dashboard inline scripts parse', () => {
   assert.doesNotThrow(() => new vm.Script(inlineScript(html, 'auth')), 'auth script must parse');
   assert.doesNotThrow(() => new vm.Script(inlineScript(dashboardHtml, 'dashboard')), 'dashboard script must parse');
   assert.match(html, /Neon authentication library.*could not load/i);
-  assert.match(html, /verifyOtp\(/);
+  assert.match(html, /emailOtp\.verifyEmail\(/);
   assert.match(html, /requestVerificationCode\(/);
   assert.doesNotMatch(html, /emailRedirectTo/);
   assert.match(html, /redirectTo/);
@@ -75,8 +75,9 @@ test('signup requires a verification code and does not expose unverified session
   assert.match(html, /Email verification is required/);
   assert.match(html, /id="verify-form"/);
   assert.match(html, /id="verification-code"/);
-  assert.match(html, /client\.verifyOtp\(\{email,token,type:'signup'\}\)/);
-  assert.match(html, /user\.emailVerified !== true/);
+  assert.match(html, /nativeAuthClient\.emailOtp\.verifyEmail\(\{ email, otp: token \}\)/);
+  assert.match(html, /function isEmailVerified\(user\)/);
+  assert.match(html, /if \(!isEmailVerified\(user\)\)/);
   assert.match(vantagepayApi, /VANTAGEPAY_EMAIL_VERIFICATION_REQUIRED/);
 });
 
@@ -96,7 +97,7 @@ test('email verification screen lets users restart verification at a new email a
   assert.match(html, /id="update-email-submit"[^>]*>Update email &amp; send code/);
   assert.match(html, /client\.signUp\(\{email,password,options:\{data:fullName\?\{full_name:fullName\}:\{\}\}\}\)/);
   assert.match(html, /savePendingVerification\(email\)/);
-  assert.match(html, /Verification has been restarted for /);
+  assert.match(html, /A verification-code request was accepted for '\+email/);
   assert.match(html, /aria-expanded/);
 });
 
@@ -117,7 +118,7 @@ test('OTP resend is cooldown-limited and reports the newest-code guidance', () =
   assert.match(html, /Please wait for the resend timer/);
   assert.match(html, /use the newest code you receive/i);
   assert.match(html, /That code may be incorrect or expired/);
-  assert.match(html, /await client\.resend\(\{type:'signup',email\}\)/);
+  assert.match(html, /nativeAuthClient\.emailOtp\.sendVerificationOtp\(\{ email, type: 'email-verification' \}\)/);
 });
 
 test('customer KYC profile is linked to the authenticated VantagePay account', () => {
@@ -155,7 +156,7 @@ test('operations console exposes an audited KYC review queue', () => {
 
 test('customer dashboard requires a real session and uses user-scoped read-only queries', () => {
   assert.match(dashboardHtml, /client\.auth\.getUser\(\)/);
-  assert.match(dashboardHtml, /\.eq\('user_id',user\.id\)/);
+  assert.match(dashboardHtml, /apiRequest\('\/api\/vantagepay\/account-activity'\)/);
   assert.match(dashboardHtml, /apiRequest\('\/api\/vantagepay\/account'/);
   assert.match(vantagepayApi, /rpc\/vp_ensure_customer_account/);
   assert.match(standaloneSchema, /FUNCTION public\.vp_ensure_customer_account/);
@@ -189,24 +190,25 @@ test('VantagePay standalone schema uses valid dollar-quoted trigger function and
 
 
 test('transaction request validation requires safe idempotency keys and positive integer minor units', () => {
-  const base = { request_type: 'deposit', amount_minor_units: '1250', currency_code: 'NGN' };
+  const base = { request_type: 'deposit', amount_minor_units: '1250', currency_code: 'GBP' };
   assert.equal(validateTransactionRequest(base, 'request-key-123').valid, true);
+  assert.equal(validateTransactionRequest({ ...base, currency_code: 'NGN' }, 'request-key-123').valid, false);
   assert.equal(validateTransactionRequest({ ...base, amount_minor_units: '0' }, 'request-key-123').valid, false);
   assert.equal(validateTransactionRequest({ ...base, amount_minor_units: '1.25' }, 'request-key-123').valid, false);
   assert.equal(validateTransactionRequest(base, 'short').valid, false);
-  assert.equal(validateTransactionRequest({ ...base, currency_code: 'ngn' }, 'request-key-123').valid, false);
+  assert.equal(validateTransactionRequest({ ...base, currency_code: 'gbp' }, 'request-key-123').valid, false);
   assert.equal(validateTransactionRequest({ ...base, customer_note: 'x'.repeat(501) }, 'request-key-123').valid, false);
 });
 
 test('withdrawal request validation requires a UUID beneficiary and excludes beneficiary from deposits', () => {
   const key = 'request-key-123';
-  const withdrawal = { request_type: 'withdrawal', amount_minor_units: '500', currency_code: 'NGN' };
+  const withdrawal = { request_type: 'withdrawal', amount_minor_units: '500', currency_code: 'GBP' };
   assert.equal(validateTransactionRequest(withdrawal, key).valid, false);
   const beneficiaryId = 'a1b2c3d4-e5f6-4789-8123-abcdef123456';
   const valid = validateTransactionRequest({ ...withdrawal, beneficiary_id: beneficiaryId }, key);
   assert.equal(valid.valid, true);
   assert.equal(valid.value.beneficiary_id, beneficiaryId);
-  const deposit = validateTransactionRequest({ request_type: 'deposit', amount_minor_units: '500', currency_code: 'NGN', beneficiary_id: beneficiaryId }, key);
+  const deposit = validateTransactionRequest({ request_type: 'deposit', amount_minor_units: '500', currency_code: 'GBP', beneficiary_id: beneficiaryId }, key);
   assert.equal(deposit.valid, true);
   assert.equal(Object.hasOwn(deposit.value, 'beneficiary_id'), false);
 });

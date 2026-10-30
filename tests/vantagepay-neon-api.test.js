@@ -2,6 +2,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registerVantagePayApi } from '../lib/vantagepay-api.js';
 
+import { generateKeyPairSync, sign } from 'node:crypto';
+
+const { publicKey: testPublicKey, privateKey: testPrivateKey } = generateKeyPairSync('ed25519');
+const testJwk = { ...testPublicKey.export({ format: 'jwk' }), kid: 'vantagepay-test-key', alg: 'EdDSA', use: 'sig' };
+function makeTestToken(userId, emailVerified = true, exp = Math.floor(Date.now() / 1000) + 3600) {
+  const enc = value => Buffer.from(JSON.stringify(value)).toString('base64url');
+  const header = enc({ alg: 'EdDSA', typ: 'JWT', kid: testJwk.kid });
+  const claims = enc({ iss: 'https://auth.example.test', sub: userId, exp, email: 'test@example.test', emailVerified });
+  const signingInput = header + '.' + claims;
+  return signingInput + '.' + sign(null, Buffer.from(signingInput), testPrivateKey).toString('base64url');
+}
+function jwksResponse() {
+  return { ok: true, status: 200, json: async () => ({ keys: [testJwk] }) };
+}
+const USER_ID = 'c3a9f4a1-1a9b-4b6e-8d10-8fd2c5d3b1a2';
+const CUSTOMER_TOKEN = makeTestToken(USER_ID, true);
+const ADMIN_TOKEN = makeTestToken(USER_ID, true);
+const UNVERIFIED_TOKEN = makeTestToken(USER_ID, false);
+const EXPIRED_TOKEN = makeTestToken(USER_ID, true, Math.floor(Date.now() / 1000) - 60);
+
 function makeApp() {
   const handlers = new Map();
   return {
@@ -48,13 +68,8 @@ test('customer account query uses the user JWT against Neon Data API', async () 
       VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
     },
     fetchImpl: async (url, options = {}) => {
+      if (String(url).endsWith('/.well-known/jwks.json')) return jwksResponse();
       calls.push({ url, options });
-      if (String(url).endsWith('/get-session')) {
-        return {
-          ok: true,
-          json: async () => ({ user: { id: userId, emailVerified: true } })
-        };
-      }
       return {
         ok: true,
         status: 200,
@@ -69,7 +84,7 @@ test('customer account query uses the user JWT against Neon Data API', async () 
   });
   const res = makeResponse();
   await app.handlers.get('GET /api/vantagepay/account')({
-    headers: { authorization: 'Bearer customer-jwt' }
+    headers: { authorization: `Bearer ${CUSTOMER_TOKEN}` }
   }, res);
 
   assert.equal(res.statusCode, 200);
@@ -77,7 +92,7 @@ test('customer account query uses the user JWT against Neon Data API', async () 
   assert.equal(res.payload.account.user_id, userId);
   const dataCall = calls.find(call => String(call.url).includes('/rpc/vp_ensure_customer_account'));
   assert.ok(dataCall, 'expected the authenticated account-provisioning RPC');
-  assert.equal(dataCall.options.headers.Authorization, 'Bearer customer-jwt');
+  assert.equal(dataCall.options.headers.Authorization, `Bearer ${CUSTOMER_TOKEN}`);
   assert.equal('apikey' in dataCall.options.headers, false);
   assert.equal(String(dataCall.url).startsWith('https://data.example.test/neondb/rest/v1/'), true);
 });
@@ -92,23 +107,21 @@ test('unverified Neon Auth sessions are denied before any customer data query', 
     },
     fetchImpl: async (url) => {
       calls.push(String(url));
+      if (String(url).endsWith('/.well-known/jwks.json')) return jwksResponse();
       if (String(url).endsWith('/get-session')) {
-        return { ok: true, json: async () => ({ user: {
-          id: 'c3a9f4a1-1a9b-4b6e-8d10-8fd2c5d3b1a2',
-          emailVerified: false
-        } }) };
+        return jwksResponse();
       }
       throw new Error('unverified user must not query customer data');
     }
   });
   const res = makeResponse();
   await app.handlers.get('GET /api/vantagepay/account')({
-    headers: { authorization: 'Bearer unverified-jwt' }
+    headers: { authorization: `Bearer ${UNVERIFIED_TOKEN}` }
   }, res);
   assert.equal(res.statusCode, 403);
   assert.equal(res.payload.code, 'VANTAGEPAY_EMAIL_VERIFICATION_REQUIRED');
   assert.equal(calls.length, 1);
-  assert.ok(calls[0].endsWith('/get-session'));
+  assert.ok(calls[0].endsWith('/.well-known/jwks.json'));
 });
 
 test('customer account query rejects missing session before touching the data API', async () => {
@@ -146,11 +159,10 @@ test('invalid or expired Neon session is rejected before querying customer data'
   });
   const res = makeResponse();
   await app.handlers.get('GET /api/vantagepay/account')({
-    headers: { authorization: 'Bearer expired-jwt' }
+    headers: { authorization: `Bearer ${EXPIRED_TOKEN}` }
   }, res);
   assert.equal(res.statusCode, 401);
-  assert.equal(calls.length, 1);
-  assert.ok(calls[0].endsWith('/get-session'));
+  assert.equal(calls.length, 0, 'expired credentials are rejected before network access');
   assert.equal(calls.some(url => url.includes('/vp_customer_accounts?')), false);
 });
 
@@ -208,9 +220,10 @@ test('admin request queue uses the SQL RPC after checking the signed-in admin me
       VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
     },
     fetchImpl: async (url, options = {}) => {
+      if (String(url).endsWith('/.well-known/jwks.json')) return jwksResponse();
       calls.push({ url: String(url), options });
       if (String(url).endsWith('/get-session')) {
-        return { ok: true, json: async () => ({ user: { id: userId, emailVerified: true } }) };
+        return jwksResponse();
       }
       if (String(url).includes('/vp_admin_memberships?')) {
         return { ok: true, status: 200, text: async () => JSON.stringify([{ admin_role: 'operations', enabled: true }]) };
@@ -224,7 +237,7 @@ test('admin request queue uses the SQL RPC after checking the signed-in admin me
 
   const res = makeResponse();
   await app.handlers.get('GET /api/vantagepay/admin/transaction-requests')({
-    headers: { authorization: 'Bearer admin-jwt' }
+    headers: { authorization: `Bearer ${ADMIN_TOKEN}` }
   }, res);
 
   assert.equal(res.statusCode, 200);
@@ -233,7 +246,7 @@ test('admin request queue uses the SQL RPC after checking the signed-in admin me
   const rpcCall = calls.find(call => call.url.endsWith('/rpc/vp_admin_list_transaction_requests'));
   assert.ok(rpcCall, 'expected the cross-customer queue to use the SQL RPC');
   assert.equal(rpcCall.options.method, 'POST');
-  assert.equal(rpcCall.options.headers.Authorization, 'Bearer admin-jwt');
+  assert.equal(rpcCall.options.headers.Authorization, `Bearer ${ADMIN_TOKEN}`);
   assert.deepEqual(JSON.parse(rpcCall.options.body), { p_actor_user_id: userId });
 });
 
@@ -249,6 +262,7 @@ test('admin status change is delegated to the audited SQL RPC and never writes r
       VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
     },
     fetchImpl: async (url, options = {}) => {
+      if (String(url).endsWith('/.well-known/jwks.json')) return jwksResponse();
       calls.push({ url: String(url), options });
       if (String(url).endsWith('/get-session')) {
         return { ok: true, json: async () => ({ user: { id: userId, emailVerified: true } }) };
@@ -268,7 +282,7 @@ test('admin status change is delegated to the audited SQL RPC and never writes r
 
   const res = makeResponse();
   await app.handlers.get('PATCH /api/vantagepay/admin/transaction-requests/:id/status')({
-    headers: { authorization: 'Bearer admin-jwt' },
+    headers: { authorization: `Bearer ${ADMIN_TOKEN}` },
     params: { id: requestId },
     body: { status: 'under_review', reason: 'Review supporting request documents' }
   }, res);
@@ -298,6 +312,7 @@ test('balance adjustment remains explicitly disabled and does not call the data 
       VANTAGEPAY_NEON_DATA_API_URL: 'https://data.example.test/neondb/rest/v1'
     },
     fetchImpl: async (url) => {
+      if (String(url).endsWith('/.well-known/jwks.json')) return jwksResponse();
       calls.push(String(url));
       if (String(url).endsWith('/get-session')) {
         return { ok: true, json: async () => ({ user: { id: userId, emailVerified: true } }) };
@@ -307,12 +322,11 @@ test('balance adjustment remains explicitly disabled and does not call the data 
   });
   const res = makeResponse();
   await app.handlers.get('POST /api/vantagepay/admin/balance-adjustments')({
-    headers: { authorization: 'Bearer customer-jwt' },
+    headers: { authorization: `Bearer ${CUSTOMER_TOKEN}` },
     body: { user_id: userId, amount_minor_units: '10000', currency_code: 'GBP' }
   }, res);
 
   assert.equal(res.statusCode, 503);
   assert.equal(res.payload.code, 'VANTAGEPAY_LEDGER_MODEL_NOT_REVIEWED');
-  assert.equal(calls.length, 1);
-  assert.ok(calls[0].endsWith('/get-session'));
+  assert.equal(calls.length, 0, 'disabled endpoint must not call the data API');
 });
