@@ -225,7 +225,7 @@ document.getElementById('request-form').addEventListener('submit',async event=>{
   if(requestType==='withdrawal'){payload.beneficiary_id=document.getElementById('request-beneficiary').value;if(!payload.beneficiary_id)throw new Error('Choose a verified beneficiary before requesting a withdrawal.');}
   const idempotency='vp-'+Date.now()+'-'+Math.random().toString(36).slice(2,12);
   const result=await apiRequest('/api/vantagepay/transaction-requests',{method:'POST',headers:{'Idempotency-Key':idempotency},body:JSON.stringify(payload)});
-  setMessage('request-status',result.message||'Request recorded for review only. No money was moved.','good');document.getElementById('request-form').reset();document.getElementById('request-beneficiary').disabled=true;await loadTransactionRequests();
+  setMessage('request-status',result.message||'Request recorded for review only. No money was moved.','good');document.getElementById('request-form').reset();document.getElementById('request-currency').dispatchEvent(new Event('change'));document.getElementById('request-beneficiary').disabled=true;await loadTransactionRequests();
  }catch(error){setMessage('request-status',error.message,'bad');}
  finally{button.disabled=false;}
 });
