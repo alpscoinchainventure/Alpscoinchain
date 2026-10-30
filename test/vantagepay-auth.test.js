@@ -190,24 +190,25 @@ test('VantagePay standalone schema uses valid dollar-quoted trigger function and
 
 
 test('transaction request validation requires safe idempotency keys and positive integer minor units', () => {
-  const base = { request_type: 'deposit', amount_minor_units: '1250', currency_code: 'NGN' };
+  const base = { request_type: 'deposit', amount_minor_units: '1250', currency_code: 'GBP' };
   assert.equal(validateTransactionRequest(base, 'request-key-123').valid, true);
+  assert.equal(validateTransactionRequest({ ...base, currency_code: 'NGN' }, 'request-key-123').valid, false);
   assert.equal(validateTransactionRequest({ ...base, amount_minor_units: '0' }, 'request-key-123').valid, false);
   assert.equal(validateTransactionRequest({ ...base, amount_minor_units: '1.25' }, 'request-key-123').valid, false);
   assert.equal(validateTransactionRequest(base, 'short').valid, false);
-  assert.equal(validateTransactionRequest({ ...base, currency_code: 'ngn' }, 'request-key-123').valid, false);
+  assert.equal(validateTransactionRequest({ ...base, currency_code: 'gbp' }, 'request-key-123').valid, false);
   assert.equal(validateTransactionRequest({ ...base, customer_note: 'x'.repeat(501) }, 'request-key-123').valid, false);
 });
 
 test('withdrawal request validation requires a UUID beneficiary and excludes beneficiary from deposits', () => {
   const key = 'request-key-123';
-  const withdrawal = { request_type: 'withdrawal', amount_minor_units: '500', currency_code: 'NGN' };
+  const withdrawal = { request_type: 'withdrawal', amount_minor_units: '500', currency_code: 'GBP' };
   assert.equal(validateTransactionRequest(withdrawal, key).valid, false);
   const beneficiaryId = 'a1b2c3d4-e5f6-4789-8123-abcdef123456';
   const valid = validateTransactionRequest({ ...withdrawal, beneficiary_id: beneficiaryId }, key);
   assert.equal(valid.valid, true);
   assert.equal(valid.value.beneficiary_id, beneficiaryId);
-  const deposit = validateTransactionRequest({ request_type: 'deposit', amount_minor_units: '500', currency_code: 'NGN', beneficiary_id: beneficiaryId }, key);
+  const deposit = validateTransactionRequest({ request_type: 'deposit', amount_minor_units: '500', currency_code: 'GBP', beneficiary_id: beneficiaryId }, key);
   assert.equal(deposit.valid, true);
   assert.equal(Object.hasOwn(deposit.value, 'beneficiary_id'), false);
 });
