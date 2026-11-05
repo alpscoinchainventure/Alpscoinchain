@@ -5,9 +5,17 @@ const SUPABASE_PUBLIC_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publisha
 const ACCOUNT_OFFICER_URL = 'https://t.me/Alpscoinchainaccountofficer';
 
 function serviceKey() {
-  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key) throw new Error('Telegram integration requires SUPABASE_SERVICE_ROLE_KEY.');
-  return key;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+  if (!key) throw new Error('Telegram integration requires a server-side Supabase secret key.');
+  // Accept the modern Supabase secret API key or a legacy service_role JWT.
+  // Never fall back to a publishable/anon key for privileged account queries.
+  if (key.startsWith('sb_secret_')) return key;
+  try {
+    const payload = JSON.parse(Buffer.from(key.split('.')[1] || '', 'base64url').toString('utf8'));
+    if (payload.role === 'service_role') return key;
+  } catch {}
+  console.error('Telegram database credential rejected: expected a Supabase secret key or service_role JWT.');
+  throw new Error('The account service is misconfigured. Please contact official support.');
 }
 
 function botToken() {
@@ -178,6 +186,19 @@ async function handleText(message) {
         '\n' + p.description + '\nRisk: ' + p.risk_disclosure;
     });
     return reply(chatId, output.join('\n\n').slice(0, 3900));
+  }
+
+  if (command === '/reply') {
+    if (String(chatId) !== String(process.env.TELEGRAM_ADMIN_CHAT_ID || '')) {
+      return reply(chatId, 'This command is reserved for the AlpsCoinChain support administrator.');
+    }
+    const targetChatId = args[0];
+    const responseText = args.slice(1).join(' ').trim();
+    if (!/^[-]?\\d+$/.test(targetChatId || '') || !responseText) {
+      return reply(chatId, 'Format: /reply TELEGRAM_CHAT_ID Your message\\nUse the chat ID included in the customer support notification.');
+    }
+    await reply(targetChatId, 'AlpsCoinChain support team\\n\\n' + responseText.slice(0, 3000));
+    return reply(chatId, 'Your reply has been sent to the customer.');
   }
 
   if (command === '/support' || (message.chat?.type === 'private' && !command.startsWith('/'))) {
