@@ -291,33 +291,60 @@ async function handleText(message) {
   return reply(chatId, 'I did not recognize that command. Send /help to see available options.');
 }
 
-export function registerTelegramRoutes(app) {
-  // Keep Telegram's webhook registered from the server environment. This avoids
-  // requiring a local CLI/token entry on the administrator's device.
-  const configuredToken = process.env.TELEGRAM_BOT_TOKEN;
-  const configuredSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (configuredToken && configuredSecret) {
-    fetch('https://api.telegram.org/bot' + configuredToken + '/setWebhook', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        url: 'https://www.alpscoinchaininvestment.uk/api/telegram/webhook',
-        secret_token: configuredSecret,
-        allowed_updates: ['message']
-      })
-    }).then(async response => {
-      const result = await response.json();
+let webhookRegistrationPromise;
+
+async function ensureTelegramWebhook() {
+  if (webhookRegistrationPromise) return webhookRegistrationPromise;
+  webhookRegistrationPromise = (async () => {
+    const configuredToken = process.env.TELEGRAM_BOT_TOKEN;
+    const configuredSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    if (!configuredToken || !configuredSecret) {
+      console.warn('Telegram webhook registration skipped: bot token or webhook secret is missing.');
+      return;
+    }
+    try {
+      // Await registration during a real request. A fire-and-forget request during
+      // serverless module initialization can be terminated before it completes.
+      const response = await fetch('https://api.telegram.org/bot' + configuredToken + '/setWebhook', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          url: 'https://www.alpscoinchaininvestment.uk/api/telegram/webhook',
+          secret_token: configuredSecret,
+          allowed_updates: ['message']
+        }),
+        signal: AbortSignal.timeout(12000)
+      });
+      const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.ok) {
-        console.error('Telegram webhook registration failed:', result.description || response.status);
-      } else {
-        console.log('Telegram webhook registration confirmed.');
+        console.error('Telegram webhook registration rejected:', {
+          httpStatus: response.status,
+          telegramErrorCode: result.error_code || null,
+          description: result.description || 'No description returned'
+        });
+        webhookRegistrationPromise = null;
+        return;
       }
-    }).catch(error => {
-      console.error('Telegram webhook registration request failed:', error.message);
-    });
-  } else {
-    console.warn('Telegram webhook registration skipped: bot token or webhook secret is missing.');
-  }
+      console.log('Telegram webhook registration confirmed.');
+    } catch (error) {
+      console.error('Telegram webhook registration connection failed:', {
+        message: error?.message || 'Unknown connection error',
+        causeCode: error?.cause?.code || null,
+        causeMessage: error?.cause?.message || null
+      });
+      webhookRegistrationPromise = null;
+    }
+  })();
+  return webhookRegistrationPromise;
+}
+
+export function registerTelegramRoutes(app) {
+  // Complete webhook registration as part of the first ordinary site request,
+  // not as an unawaited serverless startup side effect.
+  app.use(async (req, res, next) => {
+    if (req.path !== '/api/telegram/webhook') await ensureTelegramWebhook();
+    next();
+  });
   app.post('/api/telegram/link-code', async (req, res) => {
     const authorization = req.get('authorization') || '';
     const match = authorization.match(/^Bearer\s+(.+)$/i);
