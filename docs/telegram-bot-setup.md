@@ -19,7 +19,7 @@ Never put any of these values in GitHub source, public HTML, or a message to Cha
 
 ## Database migration
 
-Apply `supabase/migrations/20261105090000_telegram_account_linking.sql` to the AlpsCoinChain Supabase project. The two tables have RLS enabled and no anon/authenticated grants; only the server-side service role can access them.
+Apply `supabase/migrations/20261105090000_telegram_account_linking.sql` to the AlpsCoinChain Supabase project. The two tables have RLS enabled and no anon/authenticated grants; only the server-side Supabase secret/service key can access them.
 
 ## Deploy and set the Telegram webhook
 
@@ -43,7 +43,11 @@ A signed-in customer opens `/telegram-link.html`, generates a one-time 8-charact
 
 ## Commands implemented
 
-- `/start`, `/help`
+- `/start`, `/help`, `/learn`, `/beginner`
+- `/forex`, `/crypto`, `/risks`
+- `/steps`, `/gettingstarted`, `/website`, `/signup`
+- `/groupintro` (responds only when a group owner/admin explicitly invokes it)
+- `/outreach` (admin-only approved community-post draft; manual sharing only)
 - `/link CODE`
 - `/account`, `/balance`, `/history`
 - `/plans`, `/apy`, `/profits`
@@ -54,6 +58,10 @@ A signed-in customer opens `/telegram-link.html`, generates a one-time 8-charact
 - `/withdraw` (directs the customer to the authenticated dashboard and saved-beneficiary workflow)
 
 APY reports remain informational. They never alter ledger balances. Only actual posted ledger entries are reflected in /balance. Withdrawals are not executed by Telegram.
+
+## Community discovery and outreach
+
+The bot does not automatically join groups, scrape member lists, send unsolicited private messages, or post promotional messages without an administrator request. A group owner/admin can add the bot and explicitly invoke `/groupintro`. The private admin chat can use `/outreach` to generate a compliant draft for manual sharing only where promotion is allowed. Other social networks require their own approved platform integrations and human review.
 
 ## Operational notes
 
