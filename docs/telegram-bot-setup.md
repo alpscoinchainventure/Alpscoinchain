@@ -63,6 +63,36 @@ APY reports remain informational. They never alter ledger balances. Only actual 
 
 The bot does not automatically join groups, scrape member lists, send unsolicited private messages, or post promotional messages without an administrator request. A group owner/admin can add the bot and explicitly invoke `/groupintro`. The private admin chat can use `/outreach` to generate a compliant draft for manual sharing only where promotion is allowed. Other social networks require their own approved platform integrations and human review.
 
+## BotFather command list
+
+Register these commands with `/setcommands`:
+
+```text
+start - Welcome and customer menu
+help - Show all commands
+learn - Beginner learning path
+forex - Learn forex basics
+crypto - Learn crypto-asset basics
+risks - Understand investment risks
+steps - Step-by-step getting started guide
+website - Official website and signup
+plans - View published investment plans
+apy - View published APY information
+profits - View published return reports
+link - Link your customer account
+account - View linked account status
+balance - View posted ledger balances
+history - View recent posted ledger activity
+deposit - Submit a deposit request for review
+transaction - Check a request reference
+notifications - Manage account notifications
+support - Contact customer support
+groupintro - Admin-approved introduction in an invited group
+outreach - Generate an admin-only community post draft
+```
+
+Enable group joining in BotFather only if you intend to invite the bot to a group. Keep privacy mode enabled; group administrators can invoke `/groupintro` explicitly without the bot reading every group message.
+
 ## Operational notes
 
 Vercel serverless functions use Telegram webhooks; do not run long-polling in a serverless deployment. Telegram delivery is best-effort and must never change or roll back an account or ledger transaction.
