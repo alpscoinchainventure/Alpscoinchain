@@ -82,16 +82,53 @@ async function handleText(message) {
   const command = rawCommand.split('@')[0].toLowerCase();
   const argText = args.join(' ').trim();
 
+  // Public education and onboarding commands are available before account linking.
+  if (command === '/website' || command === '/signup') {
+    return reply(chatId, 'Official website: https://www.alpscoinchaininvestment.uk/\n\nGetting started:\n1. Review the website, product information and risk disclosures.\n2. Select Sign Up: https://www.alpscoinchaininvestment.uk/signup.html\n3. Enter accurate details and complete any email confirmation.\n4. Sign in: https://www.alpscoinchaininvestment.uk/login.html\n5. Review your dashboard, fees, terms, eligibility and withdrawal conditions.\n6. Complete any required identity checks only through the secure website.\n\nCreating an account does not guarantee acceptance or returns. Never send passwords, identity documents, card details, private keys or recovery phrases in Telegram. Use /learn and /risks before deciding.');
+  }
+
+  if (command === '/learn' || command === '/beginner') {
+    return reply(chatId, 'Beginner learning path\n\n1. Investing means committing money with the possibility of gain or loss. You can lose some or all of it.\n2. Forex is the exchange of one currency for another.\n3. Crypto-assets are digital assets whose prices can be highly volatile.\n4. Investment products differ in risks, fees, time horizons and withdrawal conditions.\n5. Learn how a product works before depositing. Account creation is not a commitment to invest.\n\nContinue: /forex, /crypto, /risks, /steps.');
+  }
+
+  if (command === '/forex') {
+    return reply(chatId, 'Forex (foreign exchange) is the market where currencies are exchanged, for example EUR/USD. Key concepts:\n• Bid/ask spread: difference between buy and sell prices.\n• Leverage: magnifies exposure and losses as well as gains.\n• Margin: funds required to maintain a leveraged position.\n• Volatility: how quickly prices move.\n\nForex trading is high risk. Leverage can cause rapid losses, potentially exceeding the amount initially committed depending on the product and jurisdiction. This bot does not provide personal trading signals or promise profits. Read /risks and independently review product terms.');
+  }
+
+  if (command === '/crypto') {
+    return reply(chatId, 'Crypto-assets are digital assets that may use blockchain networks. Prices can move sharply, liquidity can change, and transfers may be irreversible. Networks and tokens are not interchangeable.\n\nBefore transferring, verify the exact asset, network, destination address and fees using the official dashboard. Never share a seed phrase or private key. Crypto-assets are not bank deposits and may not have deposit protection. You can lose the full amount invested. Read /risks.');
+  }
+
+  if (command === '/risks') {
+    return reply(chatId, 'Important investment risks\n\n• Returns and APY are not guaranteed; past performance does not predict future results.\n• Forex leverage magnifies losses.\n• Crypto-assets can be extremely volatile or become illiquid.\n• Fees, spreads, lock-ups, withdrawal conditions and counterparty risks matter.\n• Do not invest money needed for essentials or borrow to invest.\n• Beware of impersonators, guaranteed-profit claims and pressure to deposit quickly.\n\nUse https://www.alpscoinchaininvestment.uk/ and independently verify the operator, regulatory status, terms and risks relevant to your country before sending money. Educational information only, not personal financial advice.');
+  }
+
+  if (command === '/steps' || command === '/gettingstarted') {
+    return reply(chatId, 'Your getting-started checklist\n\n1. Learn the basics: /learn.\n2. Explore forex: /forex.\n3. Explore crypto-assets: /crypto.\n4. Read the risks: /risks.\n5. Visit https://www.alpscoinchaininvestment.uk/.\n6. Sign up: https://www.alpscoinchaininvestment.uk/signup.html.\n7. Use your own accurate details and complete any email confirmation.\n8. Sign in: https://www.alpscoinchaininvestment.uk/login.html.\n9. Review available products, fees, terms and withdrawal conditions.\n10. Complete required verification only through the secure website.\n11. Do not deposit until you understand the product and its risks.\n\nThe bot cannot approve accounts or verify payments by chat. Use /support for help.');
+  }
+
+  if (command === '/groupintro') {
+    if (!['group', 'supergroup'].includes(message.chat?.type)) return reply(chatId, 'Use /groupintro only in a group where administrators have invited this bot and approved its introduction.');
+    const member = await telegram('getChatMember', { chat_id: chatId, user_id: message.from?.id });
+    if (!['creator', 'administrator'].includes(member?.status)) return reply(chatId, 'Only a group owner or administrator can request the introduction.');
+    return reply(chatId, 'AlpsCoinChain Investment Ventures\n\nMembers who are interested can independently review our website: https://www.alpscoinchaininvestment.uk/.\n\nNew to investing? Start with /learn, /forex, /crypto and /risks. Investments involve risk; returns are not guaranteed. Please follow this group’s promotion rules and do your own independent checks.');
+  }
+
+  if (command === '/outreach') {
+    if (String(chatId) !== String(process.env.TELEGRAM_ADMIN_CHAT_ID || '')) return reply(chatId, 'This command is reserved for the AlpsCoinChain support administrator.');
+    return reply(chatId, 'Admin-approved community introduction draft:\n\nHello everyone. We are sharing AlpsCoinChain Investment Ventures as a resource for people researching digital assets, forex and investment concepts. You can independently review the website and product information at https://www.alpscoinchaininvestment.uk/. Newcomers can start with our educational guides about forex, crypto-assets and investment risks. Please review all terms, fees, eligibility and risk disclosures independently. Returns are not guaranteed and this is not personal financial advice.\n\nShare only where promotion is permitted. Do not mass-DM members or post repeatedly.');
+  }
+
   if (command === '/start') {
     return reply(chatId,
-      'Welcome to AlpsCoinChain Investment Ventures. I can help with support, published investment information and account enquiries.\n\nTo view private account information, first link your account using a code generated while signed in to the official client dashboard.\n\nUse /help to see commands.',
-      { reply_markup: { keyboard: [[{ text: '/help' }, { text: '/plans' }], [{ text: '/support' }, { text: '/link' }]], resize_keyboard: true } }
+      'Welcome to AlpsCoinChain Investment Ventures! I can guide beginners through forex, crypto-assets, investment risks and account setup, as well as help existing customers.\n\nStart with /learn or /steps. Visit https://www.alpscoinchaininvestment.uk/ for official information.\n\nFor private account services, link your account from the signed-in dashboard. Use /help for all commands.',
+      { reply_markup: { keyboard: [[{ text: '/learn' }, { text: '/forex' }], [{ text: '/steps' }, { text: '/risks' }], [{ text: '/website' }, { text: '/support' }]], resize_keyboard: true } }
     );
   }
 
   if (command === '/help') {
     return reply(chatId,
-      'AlpsCoinChain customer assistant\n\n/link CODE — securely link your signed-in account\n/account — account status\n/balance — balances calculated from posted ledger entries\n/history — recent posted ledger activity\n/plans — published investment plans\n/apy — your published performance reports\n/profits — reported returns (not necessarily credited)\n/deposit AMOUNT ASSET — submit a deposit request for review\n/transaction REFERENCE — check a request reference\n/notifications — toggle account notifications\n/support MESSAGE — contact support\n\nNever send passwords, one-time codes, private keys or recovery phrases.'
+      'AlpsCoinChain customer assistant\n\n/start — welcome menu\n/learn — beginner learning path\n/forex — forex basics\n/crypto — crypto basics\n/risks — investment risk guide\n/steps — step-by-step signup guide\n/website — official website and signup\n/groupintro — admin-approved group introduction\n/outreach — admin-only community post draft\n\n/link CODE — securely link your signed-in account\n/account — account status\n/balance — posted ledger balances\n/history — recent ledger activity\n/plans — published investment plans\n/apy — published performance reports\n/profits — reported returns\n/deposit AMOUNT ASSET — submit a request for review\n/transaction REFERENCE — check a request reference\n/notifications — toggle notifications\n/support MESSAGE — contact support\n\nNever send passwords, private keys or recovery phrases. Returns are not guaranteed.'
     );
   }
 
