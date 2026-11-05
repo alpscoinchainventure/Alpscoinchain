@@ -11,7 +11,7 @@ Set these only in the AlpsCoinChain Vercel project's Production and Preview envi
 - `TELEGRAM_BOT_TOKEN`: newly rotated token from BotFather. Do not reuse the token previously pasted into chat.
 - `TELEGRAM_WEBHOOK_SECRET`: random 32+ character secret used to authenticate Telegram webhook requests.
 - `TELEGRAM_ADMIN_CHAT_ID`: private Telegram chat ID for support escalations (optional but required for /support forwarding).
-- `SUPABASE_SERVICE_ROLE_KEY`: service-role secret for the AlpsCoinChain Supabase project `uevofmlzpwrdidjnwxfd`. Server-side only; never put in browser code or commit it.
+- `SUPABASE_SECRET_KEY`: preferred `sb_secret_...` server-side secret key for the AlpsCoinChain Supabase project `uevofmlzpwrdidjnwxfd`. Server-side only; never put in browser code or commit it. The legacy `SUPABASE_SERVICE_ROLE_KEY` is accepted as a temporary fallback.
 - `SUPABASE_URL`: optional; defaults to the AlpsCoinChain project URL.
 - `SUPABASE_PUBLISHABLE_KEY`: optional; defaults to the existing public publishable key.
 
