@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://uevofmlzpwrdidjnwxfd.supabase.co';
 const SUPABASE_PUBLIC_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
+const ACCOUNT_OFFICER_URL = 'https://t.me/Alpscoinchainaccountofficer';
 
 function serviceKey() {
   const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -83,6 +84,9 @@ async function handleText(message) {
   const argText = args.join(' ').trim();
 
   // Public education and onboarding commands are available before account linking.
+  if (command === '/officer' || command === '/accountofficer' || command === '/referral') {
+    return reply(chatId, 'AlpsCoinChain Ventures — Account Officer\nContact the account officer on Telegram: ' + ACCOUNT_OFFICER_URL + '\n\nFor safety, verify any instructions through the official website. Never share passwords, one-time codes, private keys or recovery phrases in Telegram.');
+  }
   if (command === '/website' || command === '/signup') {
     return reply(chatId, 'Official website: https://www.alpscoinchaininvestment.uk/\n\nGetting started:\n1. Review the website, product information and risk disclosures.\n2. Select Sign Up: https://www.alpscoinchaininvestment.uk/signup.html\n3. Enter accurate details and complete any email confirmation.\n4. Sign in: https://www.alpscoinchaininvestment.uk/login.html\n5. Review your dashboard, fees, terms, eligibility and withdrawal conditions.\n6. Complete any required identity checks only through the secure website.\n\nCreating an account does not guarantee acceptance or returns. Never send passwords, identity documents, card details, private keys or recovery phrases in Telegram. Use /learn and /risks before deciding.');
   }
@@ -104,7 +108,7 @@ async function handleText(message) {
   }
 
   if (command === '/steps' || command === '/gettingstarted') {
-    return reply(chatId, 'Your getting-started checklist\n\n1. Learn the basics: /learn.\n2. Explore forex: /forex.\n3. Explore crypto-assets: /crypto.\n4. Read the risks: /risks.\n5. Visit https://www.alpscoinchaininvestment.uk/.\n6. Sign up: https://www.alpscoinchaininvestment.uk/signup.html.\n7. Use your own accurate details and complete any email confirmation.\n8. Sign in: https://www.alpscoinchaininvestment.uk/login.html.\n9. Review available products, fees, terms and withdrawal conditions.\n10. Complete required verification only through the secure website.\n11. Do not deposit until you understand the product and its risks.\n\nThe bot cannot approve accounts or verify payments by chat. Use /support for help.');
+    return reply(chatId, 'Your getting-started checklist\n\n1. Learn the basics: /learn.\n2. Explore forex: /forex.\n3. Explore crypto-assets: /crypto.\n4. Read the risks: /risks.\n5. Visit https://www.alpscoinchaininvestment.uk/.\n6. Sign up: https://www.alpscoinchaininvestment.uk/signup.html.\n7. Use your own accurate details and complete any email confirmation.\n8. Sign in: https://www.alpscoinchaininvestment.uk/login.html.\n9. Review available products, fees, terms and withdrawal conditions.\n10. Complete required verification only through the secure website.\n11. Do not deposit until you understand the product and its risks.\n\nAccount Officer: ' + ACCOUNT_OFFICER_URL + '\n\nThe bot cannot approve accounts or verify payments by chat. Use /support for help.');
   }
 
   if (command === '/groupintro') {
@@ -121,14 +125,14 @@ async function handleText(message) {
 
   if (command === '/start') {
     return reply(chatId,
-      'Welcome to AlpsCoinChain Investment Ventures! I can guide beginners through forex, crypto-assets, investment risks and account setup, as well as help existing customers.\n\nStart with /learn or /steps. Visit https://www.alpscoinchaininvestment.uk/ for official information.\n\nFor private account services, link your account from the signed-in dashboard. Use /help for all commands.',
+      'Welcome to AlpsCoinChain Investment Ventures! I can guide beginners through forex, crypto-assets, investment risks and account setup, as well as help existing customers.\n\nStart with /learn or /steps. Visit https://www.alpscoinchaininvestment.uk/ for official information.\n\nAccount Officer: ' + ACCOUNT_OFFICER_URL + '\nFor private account services, link your account from the signed-in dashboard. Use /help for all commands.',
       { reply_markup: { keyboard: [[{ text: '/learn' }, { text: '/forex' }], [{ text: '/steps' }, { text: '/risks' }], [{ text: '/website' }, { text: '/support' }]], resize_keyboard: true } }
     );
   }
 
   if (command === '/help') {
     return reply(chatId,
-      'AlpsCoinChain customer assistant\n\n/start — welcome menu\n/learn — beginner learning path\n/forex — forex basics\n/crypto — crypto basics\n/risks — investment risk guide\n/steps — step-by-step signup guide\n/website — official website and signup\n/groupintro — admin-approved group introduction\n/outreach — admin-only community post draft\n\n/link CODE — securely link your signed-in account\n/account — account status\n/balance — posted ledger balances\n/history — recent ledger activity\n/plans — published investment plans\n/apy — published performance reports\n/profits — reported returns\n/deposit AMOUNT ASSET — submit a request for review\n/transaction REFERENCE — check a request reference\n/notifications — toggle notifications\n/support MESSAGE — contact support\n\nNever send passwords, private keys or recovery phrases. Returns are not guaranteed.'
+      'AlpsCoinChain customer assistant\n\n/start — welcome menu\n/learn — beginner learning path\n/forex — forex basics\n/crypto — crypto basics\n/risks — investment risk guide\n/steps — step-by-step signup guide\n/website — official website and signup\n/officer — contact the account officer\n/groupintro — admin-approved group introduction\n/outreach — admin-only community post draft\n\n/link CODE — securely link your signed-in account\n/account — account status\n/balance — posted ledger balances\n/history — recent ledger activity\n/plans — published investment plans\n/apy — published performance reports\n/profits — reported returns\n/deposit AMOUNT ASSET — submit a request for review\n/transaction REFERENCE — check a request reference\n/notifications — toggle notifications\n/support MESSAGE — contact support\n\n/officer — contact the AlpsCoinChain Ventures account officer\n\nNever send passwords, private keys or recovery phrases. Returns are not guaranteed.'
     );
   }
 
@@ -183,7 +187,7 @@ async function handleText(message) {
     const customer = profile?.full_name || (message.from?.username ? '@' + message.from.username : 'Unlinked Telegram user');
     await reply(adminChat, 'New AlpsCoinChain Telegram support request\nCustomer: ' + customer +
       '\nTelegram chat: ' + chatId + '\nMessage: ' + argText.slice(0, 2500));
-    return reply(chatId, 'Your support message has been forwarded to the AlpsCoinChain support team. Do not include passwords, private keys or recovery phrases.');
+    return reply(chatId, 'Your support message has been forwarded to the AlpsCoinChain support team. For direct account-officer contact: ' + ACCOUNT_OFFICER_URL + '\\nDo not include passwords, private keys or recovery phrases.');
   }
 
   const account = await linkedAccount(chatId);
