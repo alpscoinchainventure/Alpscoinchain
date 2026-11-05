@@ -205,11 +205,18 @@ async function handleText(message) {
     const balances = new Map();
     for (const entry of entries || []) {
       const asset = String(entry.asset).toUpperCase();
-      const signed = Number(entry.amount) * (entry.entry_type === 'credit' ? 1 : -1);
-      balances.set(asset, (balances.get(asset) || 0) + signed);
+      const raw = String(entry.amount);
+      const [whole = '0', fraction = ''] = raw.split('.');
+      const units = BigInt(whole || '0') * 10000000000n + BigInt((fraction + '0000000000').slice(0, 10));
+      const signed = entry.entry_type === 'credit' ? units : -units;
+      balances.set(asset, (balances.get(asset) || 0n) + signed);
     }
     const lines = [...balances.entries()].sort((a,b) => a[0].localeCompare(b[0]))
-      .map(([asset, amount]) => asset + ': ' + amount.toFixed(8).replace(/0+$/, '').replace(/\.$/, ''));
+      .map(([asset, units]) => {
+        const whole = units / 10000000000n;
+        const fraction = (units % 10000000000n).toString().padStart(10, '0').replace(/0+$/, '');
+        return asset + ': ' + whole.toString() + (fraction ? '.' + fraction : '');
+      });
     return reply(chatId, lines.length ? 'Posted ledger balances (not pending requests):\n' + lines.join('\n') : 'No posted ledger entries were found for your account.');
   }
 
