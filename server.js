@@ -11,7 +11,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-registerTelegramRoutes(app);
 const port = process.env.PORT || 3000;
 
 const resend = process.env.RESEND_API_KEY
@@ -20,6 +19,9 @@ const resend = process.env.RESEND_API_KEY
 
 app.use(express.json({ limit: '20kb' }));
 app.use(express.urlencoded({ extended: true, limit: '20kb' }));
+
+// Register Telegram routes after JSON parsing so webhook updates are available in req.body.
+registerTelegramRoutes(app);
 
 // Prevent stale HTML pages from being reused after production design updates.
 // This covers the homepage and all .html routes, including sign-in and sign-up.
