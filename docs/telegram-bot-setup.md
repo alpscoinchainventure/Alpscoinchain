@@ -37,6 +37,10 @@ Check webhook status without sharing the token:
 curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getWebhookInfo"
 ```
 
+## Account-officer handoff
+
+The bot first guides a prospective client through education and the getting-started checklist. At the end of `/steps`, it offers a **Contact an Account Officer** button linking to the existing `https://t.me/Alpscoinchainaccountofficer` human Telegram account. The officer account is not a bot. The `/officer` command is also available when a client requests direct contact.
+
 ## Customer account linking
 
 A signed-in customer opens `/telegram-link.html`, generates a one-time 8-character code (10-minute expiry), then sends `/link CODE` to the bot. The code is hashed in the database and cannot be reused. Private account commands are unavailable until linking succeeds.
@@ -46,6 +50,7 @@ A signed-in customer opens `/telegram-link.html`, generates a one-time 8-charact
 - `/start`, `/help`, `/learn`, `/beginner`
 - `/forex`, `/crypto`, `/risks`
 - `/steps`, `/gettingstarted`, `/website`, `/signup`
+- `/officer`, `/accountofficer`, `/referral` (opens the existing human account-officer Telegram account; it is not another bot)
 - `/groupintro` (responds only when a group owner/admin explicitly invokes it)
 - `/outreach` (admin-only approved community-post draft; manual sharing only)
 - `/link CODE`
@@ -76,6 +81,7 @@ crypto - Learn crypto-asset basics
 risks - Understand investment risks
 steps - Step-by-step getting started guide
 website - Official website and signup
+officer - Contact the AlpsCoinChain account officer
 plans - View published investment plans
 apy - View published APY information
 profits - View published return reports
