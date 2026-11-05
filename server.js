@@ -5,6 +5,7 @@ import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { registerTelegramRoutes, sendTelegramAccountNotification } from './telegram-bot.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +19,9 @@ const resend = process.env.RESEND_API_KEY
 
 app.use(express.json({ limit: '20kb' }));
 app.use(express.urlencoded({ extended: true, limit: '20kb' }));
+
+// Register Telegram routes after JSON parsing so webhook updates are available in req.body.
+registerTelegramRoutes(app);
 
 // Prevent stale HTML pages from being reused after production design updates.
 // This covers the homepage and all .html routes, including sign-in and sign-up.
@@ -286,6 +290,10 @@ app.post('/api/notifications/event', async (req, res) => {
       metadata: event.metadata
     });
     await sendEmail({ to: recipient, ...email });
+    // Telegram delivery is best-effort and never affects the database event or email result.
+    if (event.user_id) {
+      await sendTelegramAccountNotification(String(event.user_id), { title: event.title, summary: event.summary });
+    }
     return res.status(200).json({ success: true, notification_id: event.notification_id });
   } catch (error) {
     console.error('Account notification delivery failed:', {

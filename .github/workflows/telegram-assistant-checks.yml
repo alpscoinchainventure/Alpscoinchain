@@ -1,0 +1,24 @@
+name: Telegram assistant syntax checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feature/alpscoinchain-telegram-assistant]
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check server and Telegram module syntax
+        run: |
+          node --check server.js
+          node --check telegram-bot.js
+      - name: Validate Telegram link page markup is present
+        run: |
+          test -s telegram-link.html
+          grep -q '/api/telegram/link-code' telegram-link.html
