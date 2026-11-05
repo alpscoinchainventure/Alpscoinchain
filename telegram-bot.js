@@ -215,7 +215,7 @@ async function handleText(message) {
       : 'Your request could not be recorded. Please try again later.');
   }
 
-  if (command === '/transaction') {
+  if (command === '/transaction' || command === '/reference') {
     if (!argText) return reply(chatId, 'Send /transaction followed by your request reference.');
     const rows = await db('fund_requests?select=request_type,amount,asset,status,reference,created_at&user_id=eq.' +
       encodeURIComponent(account.user_id) + '&reference=eq.' + encodeURIComponent(argText) + '&limit=1');
