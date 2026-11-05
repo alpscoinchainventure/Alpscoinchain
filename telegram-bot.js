@@ -85,7 +85,9 @@ async function handleText(message) {
 
   // Public education and onboarding commands are available before account linking.
   if (command === '/officer' || command === '/accountofficer' || command === '/referral') {
-    return reply(chatId, 'AlpsCoinChain Ventures — Account Officer\nContact the account officer on Telegram: ' + ACCOUNT_OFFICER_URL + '\n\nFor safety, verify any instructions through the official website. Never share passwords, one-time codes, private keys or recovery phrases in Telegram.');
+    return reply(chatId, 'AlpsCoinChain Ventures — Account Officer\\nTap below to open the separate human account-officer Telegram account.\\n\\nFor safety, verify any instructions through the official website. Never share passwords, one-time codes, private keys or recovery phrases in Telegram.', {
+      reply_markup: { inline_keyboard: [[{ text: 'Contact an Account Officer', url: ACCOUNT_OFFICER_URL }]] }
+    });
   }
   if (command === '/website' || command === '/signup') {
     return reply(chatId, 'Official website: https://www.alpscoinchaininvestment.uk/\n\nGetting started:\n1. Review the website, product information and risk disclosures.\n2. Select Sign Up: https://www.alpscoinchaininvestment.uk/signup.html\n3. Enter accurate details and complete any email confirmation.\n4. Sign in: https://www.alpscoinchaininvestment.uk/login.html\n5. Review your dashboard, fees, terms, eligibility and withdrawal conditions.\n6. Complete any required identity checks only through the secure website.\n\nCreating an account does not guarantee acceptance or returns. Never send passwords, identity documents, card details, private keys or recovery phrases in Telegram. Use /learn and /risks before deciding.');
@@ -126,7 +128,7 @@ async function handleText(message) {
   if (command === '/start') {
     return reply(chatId,
       'Welcome to AlpsCoinChain Investment Ventures! I can guide beginners through forex, crypto-assets, investment risks and account setup, as well as help existing customers.\n\nStart with /learn or /steps. Visit https://www.alpscoinchaininvestment.uk/ for official information.\n\nAfter you have explored the guide and are ready for personal assistance, I can connect you with the account officer. Use /help for all commands.',
-      { reply_markup: { keyboard: [[{ text: '/learn' }, { text: '/forex' }], [{ text: '/steps' }, { text: '/risks' }], [{ text: '/website' }, { text: '/support' }]], resize_keyboard: true } }
+      { reply_markup: { keyboard: [[{ text: '/learn' }, { text: '/forex' }], [{ text: '/steps' }, { text: '/risks' }], [{ text: '/website' }, { text: '/officer' }], [{ text: '/support' }]], resize_keyboard: true } }
     );
   }
 
@@ -178,16 +180,15 @@ async function handleText(message) {
     return reply(chatId, output.join('\n\n').slice(0, 3900));
   }
 
-  if (command === '/support') {
-    if (!argText) return reply(chatId, 'Please send your question after the command, for example: /support I need help with a deposit reference.');
+  if (command === '/support' || (message.chat?.type === 'private' && !command.startsWith('/'))) {
+    const supportText = command === '/support' ? argText : text;
+    if (!supportText) return reply(chatId, 'Please type your support question after /support, or simply send your message here in this private chat.');
     const adminChat = process.env.TELEGRAM_ADMIN_CHAT_ID;
     if (!adminChat) return reply(chatId, 'Support messaging is not fully configured yet. Please use the support contact on the official website.');
-    const account = await linkedAccount(chatId);
-    const profile = account ? await getProfile(account.user_id) : null;
-    const customer = profile?.full_name || (message.from?.username ? '@' + message.from.username : 'Unlinked Telegram user');
-    await reply(adminChat, 'New AlpsCoinChain Telegram support request\nCustomer: ' + customer +
-      '\nTelegram chat: ' + chatId + '\nMessage: ' + argText.slice(0, 2500));
-    return reply(chatId, 'Your support message has been forwarded to the AlpsCoinChain support team. For direct account-officer contact: ' + ACCOUNT_OFFICER_URL + '\\nDo not include passwords, private keys or recovery phrases.');
+    const customer = message.from?.username ? '@' + message.from.username : 'Telegram user ' + String(message.from?.id || 'unknown');
+    await reply(adminChat, 'New AlpsCoinChain Telegram support request\\nCustomer: ' + customer +
+      '\\nTelegram chat: ' + chatId + '\\nMessage: ' + supportText.slice(0, 2500));
+    return reply(chatId, 'Your message has been forwarded to the AlpsCoinChain support team. A team member can follow up here. For direct account-officer contact, tap /officer.\\nDo not include passwords, private keys or recovery phrases.');
   }
 
   const account = await linkedAccount(chatId);
