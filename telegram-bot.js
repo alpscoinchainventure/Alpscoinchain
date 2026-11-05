@@ -292,6 +292,32 @@ async function handleText(message) {
 }
 
 export function registerTelegramRoutes(app) {
+  // Keep Telegram's webhook registered from the server environment. This avoids
+  // requiring a local CLI/token entry on the administrator's device.
+  const configuredToken = process.env.TELEGRAM_BOT_TOKEN;
+  const configuredSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (configuredToken && configuredSecret) {
+    fetch('https://api.telegram.org/bot' + configuredToken + '/setWebhook', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        url: 'https://www.alpscoinchaininvestment.uk/api/telegram/webhook',
+        secret_token: configuredSecret,
+        allowed_updates: ['message']
+      })
+    }).then(async response => {
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        console.error('Telegram webhook registration failed:', result.description || response.status);
+      } else {
+        console.log('Telegram webhook registration confirmed.');
+      }
+    }).catch(error => {
+      console.error('Telegram webhook registration request failed:', error.message);
+    });
+  } else {
+    console.warn('Telegram webhook registration skipped: bot token or webhook secret is missing.');
+  }
   app.post('/api/telegram/link-code', async (req, res) => {
     const authorization = req.get('authorization') || '';
     const match = authorization.match(/^Bearer\s+(.+)$/i);
