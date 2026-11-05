@@ -4,7 +4,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || 'https://uevofmlzpwrdidjnwxfd.s
 const SUPABASE_PUBLIC_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB';
 
 function serviceKey() {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) throw new Error('Telegram integration requires SUPABASE_SERVICE_ROLE_KEY.');
   return key;
 }
@@ -21,7 +21,7 @@ async function db(path, options = {}) {
     ...options,
     headers: {
       apikey: key,
-      Authorization: 'Bearer ' + key,
+      ...(key.startsWith('sb_secret_') ? {} : { Authorization: 'Bearer ' + key }),
       'Content-Type': 'application/json',
       ...(options.headers || {})
     }
@@ -295,7 +295,7 @@ export function registerTelegramRoutes(app) {
 }
 
 export async function sendTelegramAccountNotification(userId, event) {
-  if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.SUPABASE_SERVICE_ROLE_KEY) return;
+  if (!process.env.TELEGRAM_BOT_TOKEN || !(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)) return;
   try {
     const links = await db('telegram_account_links?select=chat_id,notifications_enabled&user_id=eq.' +
       encodeURIComponent(userId) + '&limit=1');
