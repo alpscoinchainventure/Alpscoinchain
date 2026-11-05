@@ -108,7 +108,7 @@ async function handleText(message) {
   }
 
   if (command === '/steps' || command === '/gettingstarted') {
-    return reply(chatId, 'Your getting-started checklist\n\n1. Learn the basics: /learn.\n2. Explore forex: /forex.\n3. Explore crypto-assets: /crypto.\n4. Read the risks: /risks.\n5. Visit https://www.alpscoinchaininvestment.uk/.\n6. Sign up: https://www.alpscoinchaininvestment.uk/signup.html.\n7. Use your own accurate details and complete any email confirmation.\n8. Sign in: https://www.alpscoinchaininvestment.uk/login.html.\n9. Review available products, fees, terms and withdrawal conditions.\n10. Complete required verification only through the secure website.\n11. Do not deposit until you understand the product and its risks.\n\nAccount Officer: ' + ACCOUNT_OFFICER_URL + '\n\nThe bot cannot approve accounts or verify payments by chat. Use /support for help.');
+    return reply(chatId, 'Your getting-started checklist\n\n1. Learn the basics: /learn.\n2. Explore forex: /forex.\n3. Explore crypto-assets: /crypto.\n4. Read the risks: /risks.\n5. Visit https://www.alpscoinchaininvestment.uk/.\n6. Sign up: https://www.alpscoinchaininvestment.uk/signup.html.\n7. Use your own accurate details and complete any email confirmation.\n8. Sign in: https://www.alpscoinchaininvestment.uk/login.html.\n9. Review available products, fees, terms and withdrawal conditions.\n10. Complete required verification only through the secure website.\n11. Do not deposit until you understand the product and its risks.\n\nWould you like personal guidance with the next steps? Use the button below to contact the separate AlpsCoinChain account-officer Telegram account. The bot cannot approve accounts or verify payments by chat.', { reply_markup: { inline_keyboard: [[{ text: 'Contact an Account Officer', url: ACCOUNT_OFFICER_URL }]] } });
   }
 
   if (command === '/groupintro') {
@@ -125,7 +125,7 @@ async function handleText(message) {
 
   if (command === '/start') {
     return reply(chatId,
-      'Welcome to AlpsCoinChain Investment Ventures! I can guide beginners through forex, crypto-assets, investment risks and account setup, as well as help existing customers.\n\nStart with /learn or /steps. Visit https://www.alpscoinchaininvestment.uk/ for official information.\n\nAccount Officer: ' + ACCOUNT_OFFICER_URL + '\nFor private account services, link your account from the signed-in dashboard. Use /help for all commands.',
+      'Welcome to AlpsCoinChain Investment Ventures! I can guide beginners through forex, crypto-assets, investment risks and account setup, as well as help existing customers.\n\nStart with /learn or /steps. Visit https://www.alpscoinchaininvestment.uk/ for official information.\n\nAfter you have explored the guide and are ready for personal assistance, I can connect you with the account officer. Use /help for all commands.',
       { reply_markup: { keyboard: [[{ text: '/learn' }, { text: '/forex' }], [{ text: '/steps' }, { text: '/risks' }], [{ text: '/website' }, { text: '/support' }]], resize_keyboard: true } }
     );
   }
