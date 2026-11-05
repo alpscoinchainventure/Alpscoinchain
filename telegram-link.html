@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#102b50">
+<title>Link Telegram | AlpsCoinChain</title>
+<style>
+:root{color-scheme:dark;font:15px/1.6 system-ui,sans-serif;background:#07111f;color:#edf5ff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 15% 0%,#17385a 0,transparent 45%),#07111f}
+main{width:min(520px,100%);padding:26px;border:1px solid #29435f;border-radius:18px;background:#102137;box-shadow:0 20px 60px #0005}
+h1{margin:0 0 8px;font-size:24px}p{color:#afc3da}button,a{display:inline-block;border:0;border-radius:10px;padding:12px 16px;background:#2679e8;color:white;text-decoration:none;font-weight:700;cursor:pointer}
+#code{font:800 28px ui-monospace,monospace;letter-spacing:.18em;padding:18px;margin:18px 0;border:1px dashed #6d9bd0;border-radius:12px;text-align:center;overflow-wrap:anywhere}
+#status{min-height:24px;color:#8ee0bd}small{color:#afc3da}
+</style>
+</head>
+<body><main>
+<h1>Connect your Telegram account</h1>
+<p>Generate a one-time code while signed in. Then open the AlpsCoinChain bot and send <strong>/link CODE</strong>. The code expires in 10 minutes and can only be used once.</p>
+<button id="generate" type="button">Generate secure linking code</button>
+<div id="code" hidden></div><p id="status" role="status" aria-live="polite"></p>
+<p><a href="https://t.me/Alpscoinchaininvest_Bot">Open AlpsCoinChain Telegram bot</a></p>
+<small>Never share this code with anyone. It links your Telegram chat to your account.</small>
+</main>
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const supabase=createClient("https://uevofmlzpwrdidjnwxfd.supabase.co","sb_publishable_OLqZsWFBHY8CaTkko0-FcA_26y2jhJB");
+const button=document.getElementById("generate"),code=document.getElementById("code"),status=document.getElementById("status");
+button.addEventListener("click",async()=>{
+ button.disabled=true;status.textContent="Checking your sign-in…";code.hidden=true;
+ try{
+  const {data,error}=await supabase.auth.getSession();if(error)throw error;
+  if(!data.session){location.href="/login.html";return}
+  const response=await fetch("/api/telegram/link-code",{method:"POST",headers:{Authorization:"Bearer "+data.session.access_token}});
+  const result=await response.json();if(!response.ok||!result.success)throw new Error(result.message||"Could not create a linking code.");
+  code.textContent=result.code;code.hidden=false;status.textContent="Code expires in 10 minutes. Send /link "+result.code+" to the bot.";
+ }catch(error){status.textContent=error.message||"Unable to generate a code."}
+ finally{button.disabled=false}
+});
+</script></body></html>
