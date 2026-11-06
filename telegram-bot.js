@@ -91,9 +91,19 @@ async function handleText(message) {
   const command = rawCommand.split('@')[0].toLowerCase();
   const argText = args.join(' ').trim();
 
+  // Account-linked operations must never run in a group or channel.
+  const privateOnlyCommands = new Set([
+    '/link', '/account', '/balance', '/history', '/apy', '/profits',
+    '/deposit', '/transaction', '/reference', '/notifications',
+    '/withdraw', '/support', '/reply', '/outreach'
+  ]);
+  if (message.chat?.type !== 'private' && privateOnlyCommands.has(command)) {
+    return reply(chatId, 'For account security, use this command in a private chat with @Alpscoinchaininvest_Bot.');
+  }
+
   // Public education and onboarding commands are available before account linking.
   if (command === '/officer' || command === '/accountofficer' || command === '/referral') {
-    return reply(chatId, 'AlpsCoinChain Ventures — Account Officer\\nTap below to open the separate human account-officer Telegram account.\\n\\nFor safety, verify any instructions through the official website. Never share passwords, one-time codes, private keys or recovery phrases in Telegram.', {
+    return reply(chatId, 'AlpsCoinChain Ventures — Account Officer\nTap below to open the separate human account-officer Telegram account.\n\nFor safety, verify any instructions through the official website. Never share passwords, one-time codes, private keys or recovery phrases in Telegram.', {
       reply_markup: { inline_keyboard: [[{ text: 'Contact an Account Officer', url: ACCOUNT_OFFICER_URL }]] }
     });
   }
@@ -194,10 +204,10 @@ async function handleText(message) {
     }
     const targetChatId = args[0];
     const responseText = args.slice(1).join(' ').trim();
-    if (!/^[-]?\\d+$/.test(targetChatId || '') || !responseText) {
-      return reply(chatId, 'Format: /reply TELEGRAM_CHAT_ID Your message\\nUse the chat ID included in the customer support notification.');
+    if (!/^-?\d+$/.test(targetChatId || '') || !responseText) {
+      return reply(chatId, 'Format: /reply TELEGRAM_CHAT_ID Your message\nUse the chat ID included in the customer support notification.');
     }
-    await reply(targetChatId, 'AlpsCoinChain support team\\n\\n' + responseText.slice(0, 3000));
+    await reply(targetChatId, 'AlpsCoinChain support team\n\n' + responseText.slice(0, 3000));
     return reply(chatId, 'Your reply has been sent to the customer.');
   }
 
@@ -207,9 +217,9 @@ async function handleText(message) {
     const adminChat = process.env.TELEGRAM_ADMIN_CHAT_ID;
     if (!adminChat) return reply(chatId, 'Support messaging is not fully configured yet. Please use the support contact on the official website.');
     const customer = message.from?.username ? '@' + message.from.username : 'Telegram user ' + String(message.from?.id || 'unknown');
-    await reply(adminChat, 'New AlpsCoinChain Telegram support request\\nCustomer: ' + customer +
-      '\\nTelegram chat: ' + chatId + '\\nMessage: ' + supportText.slice(0, 2500));
-    return reply(chatId, 'Your message has been forwarded to the AlpsCoinChain support team. A team member can follow up here. For direct account-officer contact, tap /officer.\\nDo not include passwords, private keys or recovery phrases.');
+    await reply(adminChat, 'New AlpsCoinChain Telegram support request\nCustomer: ' + customer +
+      '\nTelegram chat: ' + chatId + '\nMessage: ' + supportText.slice(0, 2500));
+    return reply(chatId, 'Your message has been forwarded to the AlpsCoinChain support team. A team member can follow up here. For direct account-officer contact, tap /officer.\nDo not include passwords, private keys or recovery phrases.');
   }
 
   const account = await linkedAccount(chatId);
