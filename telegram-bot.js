@@ -102,6 +102,14 @@ async function handleText(message) {
   }
 
   // Public education and onboarding commands are available before account linking.
+  if (command === '/share' || command === '/invite') {
+    const shareText = 'Explore educational guides about forex, crypto-assets and investment risks from AlpsCoinChain Investment Ventures. Returns are not guaranteed; review all risks and terms independently.';
+    const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent('https://t.me/Alpscoinchaininvest_Bot') + '&text=' + encodeURIComponent(shareText);
+    return reply(chatId, 'Invite someone who has independently expressed interest. This opens Telegram’s share sheet so you choose whether and with whom to share. The bot will not message anyone automatically.', {
+      reply_markup: { inline_keyboard: [[{ text: 'Share the bot voluntarily', url: shareUrl }]] }
+    });
+  }
+
   if (command === '/officer' || command === '/accountofficer' || command === '/referral') {
     return reply(chatId, 'AlpsCoinChain Ventures — Account Officer\nTap below to open the separate human account-officer Telegram account.\n\nFor safety, verify any instructions through the official website. Never share passwords, one-time codes, private keys or recovery phrases in Telegram.', {
       reply_markup: { inline_keyboard: [[{ text: 'Contact an Account Officer', url: ACCOUNT_OFFICER_URL }]] }
@@ -146,13 +154,13 @@ async function handleText(message) {
   if (command === '/start') {
     return reply(chatId,
       'Welcome to AlpsCoinChain Investment Ventures! I can guide beginners through forex, crypto-assets, investment risks and account setup, as well as help existing customers.\n\nStart with /learn or /steps. Visit https://www.alpscoinchaininvestment.uk/ for official information.\n\nAfter you have explored the guide and are ready for personal assistance, I can connect you with the account officer. Use /help for all commands.',
-      { reply_markup: { keyboard: [[{ text: '/learn' }, { text: '/forex' }], [{ text: '/steps' }, { text: '/risks' }], [{ text: '/website' }, { text: '/officer' }], [{ text: '/support' }]], resize_keyboard: true } }
+      { reply_markup: { keyboard: [[{ text: '/learn' }, { text: '/forex' }], [{ text: '/steps' }, { text: '/risks' }], [{ text: '/website' }, { text: '/officer' }], [{ text: '/share' }, { text: '/support' }]], resize_keyboard: true } }
     );
   }
 
   if (command === '/help') {
     return reply(chatId,
-      'AlpsCoinChain customer assistant\n\n/start — welcome menu\n/learn — beginner learning path\n/forex — forex basics\n/crypto — crypto basics\n/risks — investment risk guide\n/steps — step-by-step signup guide\n/website — official website and signup\n/officer — contact the account officer\n/groupintro — admin-approved group introduction\n/outreach — admin-only community post draft\n\n/link CODE — securely link your signed-in account\n/account — account status\n/balance — posted ledger balances\n/history — recent ledger activity\n/plans — published investment plans\n/apy — published performance reports\n/profits — reported returns\n/deposit AMOUNT ASSET — submit a request for review\n/transaction REFERENCE — check a request reference\n/notifications — toggle notifications\n/support MESSAGE — contact support\n\n/officer — contact the AlpsCoinChain Ventures account officer\n\nNever send passwords, private keys or recovery phrases. Returns are not guaranteed.'
+      'AlpsCoinChain customer assistant\n\n/start — welcome menu\n/learn — beginner learning path\n/forex — forex basics\n/crypto — crypto basics\n/risks — investment risk guide\n/steps — step-by-step signup guide\n/website — official website and signup\n/officer — contact the account officer\n/share — voluntarily share the bot with someone\n/groupintro — admin-approved group introduction\n/outreach — admin-only community post draft\n\n/link CODE — securely link your signed-in account\n/account — account status\n/balance — posted ledger balances\n/history — recent ledger activity\n/plans — published investment plans\n/apy — published performance reports\n/profits — reported returns\n/deposit AMOUNT ASSET — submit a request for review\n/transaction REFERENCE — check a request reference\n/notifications — toggle notifications\n/support MESSAGE — contact support\n\n/officer — contact the AlpsCoinChain Ventures account officer\n\nNever send passwords, private keys or recovery phrases. Returns are not guaranteed.'
     );
   }
 
